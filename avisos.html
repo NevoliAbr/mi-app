@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crear Avisos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Palette ──
+       #1A1A1A  black
+       #C41010  red
+       #757575  gray
+       #1565C0  blue
+       #5C0A14  wine (navbar)
+    ─────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    /* ── NAVBAR ─────────────────────────────── */
+    nav {
+      background:#5C0A14; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:7px; display:block; }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    #admin-nombre { color:rgba(255,255,255,.85); font-size:13px; font-weight:700; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+
+    /* ── PAGE HEADER ──────────────────────────── */
+    .page-header {
+      background:linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      padding:32px 40px 28px; color:white;
+    }
+    .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#757575,#1565C0); }
+
+    /* ── MAIN ─────────────────────────────────── */
+    main { padding:32px 40px; max-width:1100px; margin:0 auto; }
+
+    /* ── FORM CARD ────────────────────────────── */
+    .form-card {
+      background:white; border-radius:14px;
+      box-shadow:0 1px 6px rgba(0,0,0,.09);
+      overflow:hidden; margin-bottom:32px;
+    }
+    .form-card-header {
+      padding:18px 24px; border-bottom:1px solid #F0F0F0;
+      display:flex; align-items:center; gap:10px;
+    }
+    .form-card-header h2 { font-size:15px; font-weight:800; color:#1A1A1A; }
+    .form-body { padding:28px 24px; }
+
+    .form-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:20px;
+    }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group.full { grid-column:1 / -1; }
+    .form-group label {
+      font-size:11px; font-weight:800; color:#6B7280;
+      text-transform:uppercase; letter-spacing:.6px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      padding:10px 14px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
+      outline:none; transition:border-color .15s; background:#FAFAFA;
+      resize:vertical;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color:#1565C0; background:#fff; }
+    .form-group textarea { min-height:100px; }
+
+    /* ── IMAGE UPLOAD ─────────────────────────── */
+    .img-upload-zone {
+      border:2px dashed #D1D5DB; border-radius:10px;
+      padding:24px; text-align:center; cursor:pointer;
+      transition:border-color .15s, background .15s;
+      background:#FAFAFA;
+    }
+    .img-upload-zone:hover { border-color:#1565C0; background:#EFF6FF; }
+    .img-upload-zone input { display:none; }
+    .img-upload-icon { font-size:28px; margin-bottom:8px; }
+    .img-upload-text { font-size:12px; color:#6B7280; font-weight:600; }
+    .img-upload-sub  { font-size:11px; color:#9CA3AF; margin-top:4px; }
+
+    .img-previews {
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;
+    }
+    .img-preview-item {
+      position:relative; width:90px; height:90px;
+    }
+    .img-preview-item img {
+      width:100%; height:100%; object-fit:cover; border-radius:8px;
+      border:2px solid #E5E7EB;
+    }
+    .img-remove {
+      position:absolute; top:-6px; right:-6px;
+      background:#C41010; color:white; border:none; border-radius:50%;
+      width:20px; height:20px; font-size:13px; line-height:1;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      font-weight:900;
+    }
+
+    /* ── LINK PREVIEW ─────────────────────────── */
+    .link-preview {
+      display:flex; align-items:center; gap:8px; margin-top:6px;
+      font-size:12px; color:#6B7280; font-weight:600;
+      min-height:20px;
+    }
+    .fb-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      background:#1877F2; color:white; border-radius:20px;
+      padding:3px 10px; font-size:11px; font-weight:700;
+    }
+
+    /* ── SUBMIT BTN ───────────────────────────── */
+    .btn-submit {
+      margin-top:24px; background:#1565C0; color:white; border:none;
+      padding:12px 32px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:13px; font-weight:800; cursor:pointer;
+      transition:background .15s; letter-spacing:.3px;
+    }
+    .btn-submit:hover { background:#1251A3; }
+    .btn-submit:disabled { background:#9CA3AF; cursor:not-allowed; }
+
+    .form-msg {
+      margin-top:12px; font-size:13px; font-weight:700;
+      padding:10px 14px; border-radius:8px; display:none;
+    }
+    .form-msg.ok    { background:#DCFCE7; color:#166534; display:block; }
+    .form-msg.error { background:#FEE2E2; color:#991B1B; display:block; }
+
+    /* ── AVISOS LIST ──────────────────────────── */
+    .table-card {
+      background:white; border-radius:14px;
+      box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden;
+    }
+    .table-toolbar {
+      padding:18px 24px; display:flex; align-items:center;
+      justify-content:space-between; gap:16px; flex-wrap:wrap;
+      border-bottom:1px solid #F0F0F0;
+    }
+    .toolbar-title { font-size:15px; font-weight:800; color:#1A1A1A; }
+    #aviso-count   { font-size:12px; color:#9CA3AF; font-weight:600; }
+
+    .aviso-cards { padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+    .aviso-card {
+      border:1px solid #E5E7EB; border-radius:10px; overflow:hidden;
+      display:flex; gap:0; transition:box-shadow .15s;
+    }
+    .aviso-card:hover { box-shadow:0 2px 10px rgba(0,0,0,.1); }
+
+    .aviso-images {
+      display:flex; flex-direction:column; gap:4px;
+      padding:10px; background:#F9FAFB; min-width:90px; max-width:180px;
+    }
+    .aviso-images img {
+      width:80px; height:60px; object-fit:cover; border-radius:6px;
+      border:1px solid #E5E7EB;
+    }
+    .aviso-no-img {
+      width:80px; height:60px; border-radius:6px;
+      background:#F3F4F6; border:2px dashed #D1D5DB;
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; color:#9CA3AF;
+    }
+
+    .aviso-body { padding:14px 18px; flex:1; display:flex; flex-direction:column; gap:6px; }
+    .aviso-titulo { font-size:15px; font-weight:800; color:#1A1A1A; }
+    .aviso-texto  { font-size:12px; color:#6B7280; font-weight:500; line-height:1.5;
+                    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .aviso-meta   { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:4px; }
+    .aviso-date   { font-size:11px; color:#9CA3AF; font-weight:700; }
+    .aviso-link-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:11px; font-weight:700; color:#1565C0;
+      background:#EFF6FF; border-radius:20px; padding:2px 8px;
+      text-decoration:none; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .aviso-link-badge.fb { background:#E7F0FE; color:#1877F2; }
+
+    .aviso-actions { display:flex; flex-direction:column; gap:8px; padding:14px 12px; justify-content:center; }
+    .btn-action {
+      border:none; border-radius:7px; padding:7px 12px; font-family:'Montserrat',sans-serif;
+      font-size:11px; font-weight:800; cursor:pointer; transition:opacity .15s;
+      letter-spacing:.3px; white-space:nowrap;
+    }
+    .btn-action:hover { opacity:.82; }
+    .btn-del    { background:#FEE2E2; color:#991B1B; }
+    .btn-toggle { background:#F3F4F6; color:#374151; }
+    .btn-toggle.activo { background:#DCFCE7; color:#166534; }
+
+    .badge-estado {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 8px; border-radius:20px; font-size:10px; font-weight:800;
+      letter-spacing:.3px;
+    }
+    .badge-activo   { background:#DCFCE7; color:#166534; }
+    .badge-inactivo { background:#F3F4F6; color:#6B7280; }
+    .badge-vencido  { background:#FEF3C7; color:#92400E; }
+
+    .empty-state {
+      padding:48px 24px; text-align:center; color:#9CA3AF;
+      font-size:13px; font-weight:600;
+    }
+    .empty-icon { font-size:36px; margin-bottom:10px; }
+
+    @media(max-width:700px){
+      main { padding:20px 16px; }
+      nav  { padding:0 16px; }
+      .page-header { padding:24px 16px; }
+      .form-grid { grid-template-columns:1fr; }
+      .aviso-card { flex-direction:column; }
+      .aviso-images { flex-direction:row; max-width:none; min-width:0; }
+      .aviso-actions { flex-direction:row; padding:10px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ──────────────────────────────────────────── -->
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">PANEL DE AVISOS</span>
+  </div>
+  <div class="nav-right">
+    <span id="admin-nombre"></span>
+    <a href="admin.html" class="btn-nav">👥 Usuarios</a>
+    <a href="index.html" class="btn-nav">← Inicio</a>
+  </div>
+</nav>
+
+<!-- ── PAGE HEADER ─────────────────────────────────────── -->
+<div class="page-header">
+  <h1>📢 Crear Avisos</h1>
+  <p>Publica anuncios que aparecerán en la página de inicio.</p>
+</div>
+<div class="header-stripe"></div>
+
+<!-- ── MAIN ───────────────────────────────────────────── -->
+<main>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <h2>Nuevo Aviso</h2>
+    </div>
+    <div class="form-body">
+      <form id="aviso-form" novalidate>
+
+        <!-- Zona de imágenes -->
+        <div class="form-group full" style="margin-bottom:20px;">
+          <label>Imágenes (máx. 10)</label>
+          <div class="img-upload-zone" id="upload-zone" onclick="document.getElementById('img-input').click()">
+            <input type="file" id="img-input" accept="image/*" multiple />
+            <div class="img-upload-icon">🖼️</div>
+            <div class="img-upload-text">Haz clic para seleccionar imágenes</div>
+            <div class="img-upload-sub">JPG, PNG, GIF, WEBP · Máx. 5 MB por imagen</div>
+          </div>
+          <div class="img-previews" id="img-previews"></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Título <span style="color:#C41010">*</span></label>
+            <input type="text" id="f-titulo" placeholder="Ej: Reunión de Alabanza" maxlength="200" required />
+          </div>
+
+          <div class="form-group full">
+            <label>Texto explicativo</label>
+            <textarea id="f-texto" placeholder="Describe el aviso con más detalle..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha de vencimiento <span style="color:#C41010">*</span></label>
+            <input type="date" id="f-fecha" required />
+          </div>
+
+          <div class="form-group">
+            <label>Link (opcional)</label>
+            <input type="url" id="f-link" placeholder="https://..." oninput="previewLink()" />
+            <div class="link-preview" id="link-preview"></div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn-submit">Publicar Aviso</button>
+        <div class="form-msg" id="form-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div>
+        <div class="toolbar-title">Avisos publicados</div>
+        <div id="aviso-count">Cargando…</div>
+      </div>
+    </div>
+    <div id="aviso-cards" class="aviso-cards">
+      <div class="empty-state"><div class="img-upload-icon">⏳</div>Cargando avisos…</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ── Guard: solo superusuario ─────────────────── */
+const session = JSON.parse(localStorage.getItem('session') || 'null');
+if (!session || session.rol !== 'superusuario') {
+  window.location.replace('index.html');
+}
+document.getElementById('admin-nombre').textContent = session ? session.nombre : '';
+
+/* ── Utilidades ───────────────────────────────── */
+const API = 'http://localhost:3001';
+
+function isFB(url) {
+  return url && (url.includes('facebook.com') || url.includes('fb.com') || url.includes('fb.watch'));
+}
+
+const FB_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+  <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.514c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+</svg>`;
+
+/* ── Selección de imágenes ────────────────────── */
+let selectedFiles = [];
+
+document.getElementById('img-input').addEventListener('change', function() {
+  const newFiles = Array.from(this.files);
+  const combined = [...selectedFiles, ...newFiles].slice(0, 10);
+  selectedFiles = combined;
+  renderPreviews();
+  this.value = '';
+});
+
+function renderPreviews() {
+  const container = document.getElementById('img-previews');
+  container.innerHTML = '';
+  selectedFiles.forEach((file, i) => {
+    const url = URL.createObjectURL(file);
+    const item = document.createElement('div');
+    item.className = 'img-preview-item';
+    item.innerHTML = `
+      <img src="${url}" alt="preview" />
+      <button type="button" class="img-remove" onclick="removeImg(${i})">×</button>`;
+    container.appendChild(item);
+  });
+}
+
+function removeImg(index) {
+  selectedFiles.splice(index, 1);
+  renderPreviews();
+}
+
+/* ── Link preview ─────────────────────────────── */
+function previewLink() {
+  const val = document.getElementById('f-link').value.trim();
+  const preview = document.getElementById('link-preview');
+  if (!val) { preview.innerHTML = ''; return; }
+  if (isFB(val)) {
+    preview.innerHTML = `<span class="fb-badge">${FB_SVG} Facebook</span>`;
+  } else {
+    preview.innerHTML = `<span>🔗 Link detectado</span>`;
+  }
+}
+
+/* ── Fecha mínima = hoy ───────────────────────── */
+const todayStr = new Date().toISOString().split('T')[0];
+document.getElementById('f-fecha').min = todayStr;
+document.getElementById('f-fecha').value = todayStr;
+
+/* ── Envío del formulario ─────────────────────── */
+document.getElementById('aviso-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const titulo  = document.getElementById('f-titulo').value.trim();
+  const texto   = document.getElementById('f-texto').value.trim();
+  const fecha   = document.getElementById('f-fecha').value;
+  const link    = document.getElementById('f-link').value.trim();
+  const msgEl   = document.getElementById('form-msg');
+  const btn     = document.getElementById('btn-submit');
+
+  msgEl.className = 'form-msg';
+  msgEl.style.display = 'none';
+
+  if (!titulo) { showMsg('El título es obligatorio.', 'error'); return; }
+  if (!fecha)  { showMsg('La fecha de vencimiento es obligatoria.', 'error'); return; }
+
+  const fd = new FormData();
+  fd.append('titulo',    titulo);
+  fd.append('texto',     texto);
+  fd.append('fecha_fin', fecha);
+  if (link) fd.append('link', link);
+  selectedFiles.forEach(f => fd.append('imagenes', f));
+
+  btn.disabled = true;
+  btn.textContent = 'Publicando…';
+
+  try {
+    const resp = await fetch(`${API}/api/avisos`, { method:'POST', body: fd });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Error al publicar.');
+    showMsg('¡Aviso publicado correctamente!', 'ok');
+    document.getElementById('f-titulo').value = '';
+    document.getElementById('f-texto').value  = '';
+    document.getElementById('f-fecha').value  = todayStr;
+    document.getElementById('f-link').value   = '';
+    document.getElementById('link-preview').innerHTML = '';
+    selectedFiles = [];
+    renderPreviews();
+    loadAvisos();
+  } catch (err) {
+    showMsg(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Publicar Aviso';
+  }
+});
+
+function showMsg(text, type) {
+  const el = document.getElementById('form-msg');
+  el.textContent = text;
+  el.className = 'form-msg ' + type;
+}
+
+/* ── Cargar lista de avisos ───────────────────── */
+async function loadAvisos() {
+  const container = document.getElementById('aviso-cards');
+  const countEl   = document.getElementById('aviso-count');
+  try {
+    const resp = await fetch(`${API}/api/admin/avisos`);
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+
+    const avisos = data.avisos;
+    countEl.textContent = `${avisos.length} aviso${avisos.length !== 1 ? 's' : ''}`;
+
+    if (avisos.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>No hay avisos publicados.</div>`;
+      return;
+    }
+
+    container.innerHTML = avisos.map(a => {
+      const today   = new Date().toISOString().split('T')[0];
+      const vencido = a.fecha_fin < today;
+      const estado  = vencido ? 'vencido' : (a.activo ? 'activo' : 'inactivo');
+      const estadoLabel = vencido ? '⌛ Vencido' : (a.activo ? '✅ Activo' : '⏸ Inactivo');
+      const estadoClass = vencido ? 'badge-vencido' : (a.activo ? 'badge-activo' : 'badge-inactivo');
+
+      const imgsHtml = a.imagenes && a.imagenes.length
+        ? a.imagenes.map(r => `<img src="${API}${r}" alt="img">`).join('')
+        : `<div class="aviso-no-img">🖼️</div>`;
+
+      const linkHtml = a.link
+        ? isFB(a.link)
+          ? `<a class="aviso-link-badge fb" href="${a.link}" target="_blank" rel="noopener">${FB_SVG} Facebook</a>`
+          : `<a class="aviso-link-badge" href="${a.link}" target="_blank" rel="noopener">🔗 Ver enlace</a>`
+        : '';
+
+      const fechaDisplay = a.fecha_fin ? a.fecha_fin.split('T')[0] : '';
+
+      return `
+        <div class="aviso-card" id="acard-${a.id}">
+          <div class="aviso-images">${imgsHtml}</div>
+          <div class="aviso-body">
+            <div class="aviso-titulo">${escHtml(a.titulo)}</div>
+            ${a.texto ? `<div class="aviso-texto">${escHtml(a.texto)}</div>` : ''}
+            <div class="aviso-meta">
+              <span class="badge-estado ${estadoClass}">${estadoLabel}</span>
+              <span class="aviso-date">Vence: ${fechaDisplay}</span>
+              ${linkHtml}
+            </div>
+          </div>
+          <div class="aviso-actions">
+            ${!vencido ? `
+              <button class="btn-action btn-toggle ${a.activo ? 'activo' : ''}"
+                onclick="toggleActivo(${a.id}, ${a.activo ? 0 : 1})">
+                ${a.activo ? '⏸ Pausar' : '▶ Activar'}
+              </button>` : ''}
+            <button class="btn-action btn-del" onclick="deleteAviso(${a.id})">🗑 Eliminar</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state" style="color:#991B1B;">Error: ${err.message}</div>`;
+  }
+}
+
+async function toggleActivo(id, nuevoActivo) {
+  try {
+    const resp = await fetch(`${API}/api/avisos/${id}/activo`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo: nuevoActivo })
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+    loadAvisos();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function deleteAviso(id) {
+  if (!confirm('¿Eliminar este aviso? Esta acción no se puede deshacer.')) return;
+  try {
+    const resp = await fetch(`${API}/api/avisos/${id}`, { method: 'DELETE' });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+    loadAvisos();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Init ─────────────────────────────────────── */
+loadAvisos();
+</script>
+</body>
+</html>

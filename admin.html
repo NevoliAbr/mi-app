@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administración de Usuarios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Palette ──
+       #1A1A1A  black
+       #C41010  red
+       #757575  gray
+       #1565C0  blue
+       #5C0A14  wine (navbar)
+    ─────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    /* ── NAVBAR ─────────────────────────────── */
+    nav {
+      background:#5C0A14; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:7px; display:block; }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    #admin-nombre {
+      color:rgba(255,255,255,.85); font-size:13px; font-weight:700;
+    }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+    .btn-nav.primary { background:#1565C0; border-color:#1565C0; }
+    .btn-nav.primary:hover { background:#1251A3; border-color:#1251A3; }
+
+    /* ── PAGE HEADER ──────────────────────────── */
+    .page-header {
+      background:linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      padding:32px 40px 28px;
+      color:white;
+    }
+    .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#757575,#1565C0); }
+
+    /* ── MAIN ─────────────────────────────────── */
+    main { padding:32px 40px; max-width:1200px; margin:0 auto; }
+
+    /* ── STATS CARDS ──────────────────────────── */
+    .stats { display:flex; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+    .stat-card {
+      background:white; border-radius:12px; padding:18px 24px;
+      flex:1; min-width:140px;
+      box-shadow:0 1px 4px rgba(0,0,0,.08);
+      border-top:4px solid transparent;
+    }
+    .stat-card.total   { border-top-color:#1565C0; }
+    .stat-card.activos { border-top-color:#16A34A; }
+    .stat-card.admins  { border-top-color:#C41010; }
+    .stat-card.inactivos { border-top-color:#757575; }
+    .stat-num  { font-size:32px; font-weight:900; color:#1A1A1A; }
+    .stat-label{ font-size:11px; font-weight:700; color:#9CA3AF; letter-spacing:.6px;
+                 text-transform:uppercase; margin-top:2px; }
+
+    /* ── TABLE CARD ───────────────────────────── */
+    .table-card {
+      background:white; border-radius:14px;
+      box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden;
+    }
+    .table-toolbar {
+      padding:18px 24px; display:flex; align-items:center;
+      justify-content:space-between; gap:16px; flex-wrap:wrap;
+      border-bottom:1px solid #F0F0F0;
+    }
+    .table-toolbar-left { display:flex; align-items:center; gap:10px; }
+    .toolbar-title { font-size:15px; font-weight:800; color:#1A1A1A; }
+    #user-count    { font-size:12px; color:#9CA3AF; font-weight:600; }
+    .search-wrap   { position:relative; }
+    .search-wrap input {
+      padding:9px 14px 9px 36px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
+      outline:none; transition:border-color .15s; width:230px; background:#FAFAFA;
+    }
+    .search-wrap input:focus { border-color:#1565C0; background:#fff; }
+    .search-icon {
+      position:absolute; left:11px; top:50%; transform:translateY(-50%);
+      color:#9CA3AF; font-size:14px; pointer-events:none;
+    }
+
+    /* ── TABLE ────────────────────────────────── */
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    th {
+      padding:12px 16px; text-align:left; font-size:11px; font-weight:800;
+      color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap;
+    }
+    tbody tr {
+      border-bottom:1px solid #F3F4F6;
+      transition:background .1s;
+    }
+    tbody tr:hover { background:#F9FAFB; }
+    tbody tr:last-child { border-bottom:none; }
+    td { padding:14px 16px; font-size:13px; color:#374151; vertical-align:middle; }
+    .td-id    { font-weight:800; color:#9CA3AF; width:50px; }
+    .td-name  { font-weight:700; color:#1A1A1A; }
+    .td-email { color:#6B7280; }
+    .td-date  { color:#9CA3AF; font-size:12px; white-space:nowrap; }
+
+    /* ── BADGES ───────────────────────────────── */
+    .badge {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:4px 10px; border-radius:20px; font-size:11px; font-weight:800;
+      letter-spacing:.3px;
+    }
+    .badge-super   { background:#FEE2E2; color:#C41010; }
+    .badge-usuario { background:#EFF6FF; color:#1565C0; }
+    .badge-activo  { background:#D1FAE5; color:#065F46; }
+    .badge-inactivo{ background:#F3F4F6; color:#6B7280; }
+
+    /* ── ACTION BUTTONS ───────────────────────── */
+    .td-actions { display:flex; gap:6px; align-items:center; }
+    .btn-action {
+      width:32px; height:32px; border:none; border-radius:7px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; transition:background .15s, transform .1s;
+    }
+    .btn-action:hover { transform:scale(1.1); }
+    .btn-action:active{ transform:scale(.95); }
+    .btn-role   { background:#EFF6FF; }
+    .btn-role:hover   { background:#DBEAFE; }
+    .btn-toggle { background:#F0FDF4; }
+    .btn-toggle:hover { background:#DCFCE7; }
+    .btn-delete { background:#FEF2F2; }
+    .btn-delete:hover { background:#FEE2E2; }
+    .btn-edit   { background:#FFFBEB; }
+    .btn-edit:hover   { background:#FEF3C7; }
+
+    /* ── EMPTY / LOADING ──────────────────────── */
+    .td-center { text-align:center; padding:40px 16px; color:#9CA3AF; font-size:14px; }
+
+    /* ── TOAST ────────────────────────────────── */
+    #toast {
+      position:fixed; bottom:28px; right:28px; z-index:9999;
+      padding:13px 20px; border-radius:10px; font-size:13px; font-weight:700;
+      color:white; box-shadow:0 6px 24px rgba(0,0,0,.2);
+      display:none; animation:fadeInUp .2s ease;
+    }
+    #toast.success { background:#16A34A; }
+    #toast.error   { background:#C41010; }
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── CONFIRM DIALOG ───────────────────────── */
+    .confirm-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+      z-index:200; align-items:center; justify-content:center;
+      backdrop-filter:blur(4px);
+    }
+    .confirm-overlay.active { display:flex; }
+    .confirm-card {
+      background:white; border-radius:14px; padding:32px 28px; max-width:380px;
+      width:100%; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.3);
+      animation:modalIn .2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform:scale(.94); }
+      to   { opacity:1; transform:scale(1); }
+    }
+    .confirm-icon { font-size:40px; margin-bottom:12px; }
+    .confirm-title{ font-size:17px; font-weight:800; color:#1A1A1A; margin-bottom:8px; }
+    .confirm-msg  { font-size:13px; color:#6B7280; margin-bottom:24px; line-height:1.5; }
+    .confirm-btns { display:flex; gap:10px; justify-content:center; }
+    .confirm-btn  {
+      padding:10px 24px; border-radius:8px; border:none; cursor:pointer;
+      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      letter-spacing:.5px; transition:opacity .15s;
+    }
+    .confirm-btn:hover { opacity:.85; }
+    .confirm-btn.cancel  { background:#F3F4F6; color:#374151; }
+    .confirm-btn.danger  { background:#C41010; color:white; }
+
+    /* ── PERFIL MODAL ────────────────────────── */
+    .profile-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.72);
+      z-index:200; align-items:center; justify-content:center;
+      backdrop-filter:blur(5px); padding:16px;
+    }
+    .profile-overlay.active { display:flex; }
+    .profile-card {
+      background:#fff; border-radius:16px; width:100%; max-width:560px;
+      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.4);
+      animation:modalIn .22s ease; max-height:90vh; display:flex; flex-direction:column;
+    }
+    .profile-header {
+      background:linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      padding:20px 24px; display:flex; align-items:center; justify-content:space-between;
+      color:white; flex-shrink:0;
+    }
+    .profile-header-left { display:flex; align-items:center; gap:12px; }
+    .profile-header-icon {
+      width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.15);
+      display:flex; align-items:center; justify-content:center; font-size:18px;
+    }
+    .profile-header h2 { font-size:18px; font-weight:800; }
+    .profile-header-close {
+      background:none; border:none; color:white; font-size:22px;
+      cursor:pointer; opacity:.65; transition:opacity .15s; padding:4px;
+    }
+    .profile-header-close:hover { opacity:1; }
+    .profile-stripe { height:3px; background:linear-gradient(90deg,#757575,#1565C0); flex-shrink:0; }
+    .profile-body { padding:24px; overflow-y:auto; flex:1; }
+    .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .profile-grid .full { grid-column:1/-1; }
+
+    /* Photo upload */
+    .photo-section {
+      display:flex; align-items:center; gap:20px;
+      background:#F9FAFB; border-radius:10px; padding:16px; margin-bottom:20px;
+    }
+    .photo-circle {
+      width:80px; height:80px; border-radius:50%; overflow:hidden;
+      background:#E5E7EB; display:flex; align-items:center; justify-content:center;
+      font-size:32px; flex-shrink:0; border:3px solid #E5E7EB;
+    }
+    .photo-circle img { width:100%; height:100%; object-fit:cover; }
+    .photo-info p  { font-size:12px; color:#9CA3AF; margin-top:4px; }
+    .btn-photo {
+      display:inline-block; padding:8px 18px; background:#1565C0; color:white;
+      border-radius:7px; font-family:'Montserrat',sans-serif; font-size:12px;
+      font-weight:700; cursor:pointer; transition:background .15s;
+    }
+    .btn-photo:hover { background:#1251A3; }
+
+    /* Form inside profile */
+    .pf-group { display:flex; flex-direction:column; gap:6px; }
+    .pf-group label {
+      font-size:11px; font-weight:800; color:#374151; letter-spacing:.6px; text-transform:uppercase;
+    }
+    .pf-group input, .pf-group select {
+      padding:10px 12px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
+      background:#FAFAFA; outline:none; transition:border-color .15s;
+    }
+    .pf-group input:focus, .pf-group select:focus { border-color:#1565C0; background:#fff; }
+    .pf-alert {
+      padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;
+      margin-bottom:16px; display:none;
+    }
+    .pf-alert.error   { background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
+    .pf-alert.success { background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
+    .pf-alert.show    { display:block; }
+    .profile-footer {
+      padding:16px 24px; border-top:1px solid #F3F4F6; display:flex;
+      justify-content:flex-end; gap:10px; flex-shrink:0; background:#fff;
+    }
+    .btn-pf-cancel {
+      padding:10px 22px; background:#F3F4F6; color:#374151; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:700; cursor:pointer; transition:background .15s;
+    }
+    .btn-pf-cancel:hover { background:#E5E7EB; }
+    .btn-pf-save {
+      padding:10px 28px; background:#1565C0; color:white; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; letter-spacing:.8px; cursor:pointer;
+      transition:background .15s; box-shadow:0 3px 12px rgba(21,101,192,.3);
+    }
+    .btn-pf-save:hover    { background:#1251A3; }
+    .btn-pf-save:disabled { background:#93C5FD; box-shadow:none; cursor:not-allowed; }
+
+    /* ── Checkboxes ministerios ───────────────── */
+    .ministerios-checks {
+      display:flex; flex-wrap:wrap; gap:8px;
+      background:#F9FAFB; border:2px solid #E5E7EB;
+      border-radius:8px; padding:12px;
+    }
+    .min-check-label {
+      display:flex; align-items:center; gap:7px;
+      background:white; border:2px solid #E5E7EB;
+      border-radius:20px; padding:5px 12px;
+      font-size:12px; font-weight:700; cursor:pointer;
+      transition:border-color .15s, background .15s;
+      user-select:none;
+    }
+    .min-check-label:hover { border-color:#1565C0; }
+    .min-check-label input { display:none; }
+    .min-check-label.checked { background:#EFF6FF; border-color:#1565C0; color:#1565C0; }
+
+    /* ── RESPONSIVE ───────────────────────────── */
+    @media (max-width:768px) {
+      nav { padding:0 16px; }
+      .page-header { padding:24px 16px 20px; }
+      main { padding:20px 16px; }
+      .stats { gap:10px; }
+      .table-toolbar { padding:14px 16px; }
+      .search-wrap input { width:180px; }
+      th, td { padding:10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ NAVBAR ══════════════════════════════════════ -->
+  <nav>
+    <div class="nav-left">
+      <a href="index.html">
+        <img src="logo.png" alt="Logo" class="logo-img" />
+      </a>
+      <span class="nav-title">/ Administración</span>
+    </div>
+    <div class="nav-right">
+      <span id="admin-nombre"></span>
+      <a href="index.html" class="btn-nav">&#8592; Inicio</a>
+      <button id="btn-logout" class="btn-nav">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <!-- ══ PAGE HEADER ══════════════════════════════════ -->
+  <div class="page-header">
+    <h1>Administración de Usuarios</h1>
+    <p>Gestiona roles, estado y acceso de los usuarios registrados</p>
+  </div>
+  <div class="header-stripe"></div>
+
+  <!-- ══ MAIN ══════════════════════════════════════════ -->
+  <main>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card total">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card activos">
+        <div class="stat-num" id="stat-activos">—</div>
+        <div class="stat-label">Activos</div>
+      </div>
+      <div class="stat-card admins">
+        <div class="stat-num" id="stat-admins">—</div>
+        <div class="stat-label">Superusuarios</div>
+      </div>
+      <div class="stat-card inactivos">
+        <div class="stat-num" id="stat-inactivos">—</div>
+        <div class="stat-label">Inactivos</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div class="table-toolbar-left">
+          <span class="toolbar-title">Usuarios</span>
+          <span id="user-count"></span>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon">&#128269;</span>
+          <input type="text" id="search-input" placeholder="Buscar por nombre o correo..." />
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Correo electrónico</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Registrado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="7" class="td-center">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══ PERFIL MODAL ═════════════════════════════════════ -->
+  <div class="profile-overlay" id="profile-overlay">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-header-left">
+          <div class="profile-header-icon">&#128100;</div>
+          <h2 id="profile-title">Perfil de usuario</h2>
+        </div>
+        <button class="profile-header-close" id="profile-close">&#10005;</button>
+      </div>
+      <div class="profile-stripe"></div>
+      <div class="profile-body">
+        <div class="pf-alert" id="pf-alert"></div>
+
+        <!-- Foto -->
+        <div class="photo-section">
+          <div class="photo-circle" id="pf-photo-circle">&#128247;</div>
+          <div class="photo-info">
+            <label class="btn-photo" for="pf-foto">Cambiar foto</label>
+            <input type="file" id="pf-foto" accept="image/*" style="display:none" />
+            <p>JPG, PNG o WEBP · máx. 5 MB</p>
+          </div>
+        </div>
+
+        <div class="profile-grid">
+          <div class="pf-group">
+            <label for="pf-fnac">Fecha de nacimiento</label>
+            <input type="date" id="pf-fnac" />
+          </div>
+          <div class="pf-group">
+            <label for="pf-ecivil">Estado civil</label>
+            <select id="pf-ecivil">
+              <option value="">— Seleccionar —</option>
+              <option>Soltero/a</option>
+              <option>Casado/a</option>
+              <option>Divorciado/a</option>
+              <option>Viudo/a</option>
+              <option>Unión libre</option>
+            </select>
+          </div>
+          <div class="pf-group full">
+            <label for="pf-dir">Dirección</label>
+            <input type="text" id="pf-dir" placeholder="Calle, ciudad, estado..." />
+          </div>
+          <div class="pf-group full">
+            <label>Ministerios</label>
+            <div id="pf-ministerios-list" class="ministerios-checks"></div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-footer">
+        <button class="btn-pf-cancel" id="profile-cancel">Cancelar</button>
+        <button class="btn-pf-save"   id="profile-save">GUARDAR CAMBIOS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══════════════════════════════════════════ -->
+  <div id="toast"></div>
+
+  <!-- ══ CONFIRM DIALOG ════════════════════════════════ -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-card">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-title" id="confirm-title">¿Eliminar usuario?</div>
+      <div class="confirm-msg"  id="confirm-msg"></div>
+      <div class="confirm-btns">
+        <button class="confirm-btn cancel" id="confirm-cancel">Cancelar</button>
+        <button class="confirm-btn danger" id="confirm-ok">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ JAVASCRIPT ════════════════════════════════════ -->
+  <script>
+    const API = 'http://localhost:3001';
+
+    /* ── Guard: solo superusuario ────────────── */
+    const session = (() => {
+      try { return JSON.parse(localStorage.getItem('session')); } catch { return null; }
+    })();
+    if (!session || session.rol !== 'superusuario') {
+      window.location.replace('index.html');
+    }
+
+    document.getElementById('admin-nombre').textContent = session.nombre;
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      localStorage.removeItem('session');
+      window.location.href = 'index.html';
+    });
+
+    /* ── Toast ───────────────────────────────── */
+    let toastTimer;
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = type;
+      t.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+
+    /* ── Confirm dialog ──────────────────────── */
+    let confirmResolve = null;
+    function confirm(title, msg) {
+      return new Promise(resolve => {
+        confirmResolve = resolve;
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-msg').textContent   = msg;
+        document.getElementById('confirm-overlay').classList.add('active');
+      });
+    }
+    document.getElementById('confirm-cancel').addEventListener('click', () => {
+      document.getElementById('confirm-overlay').classList.remove('active');
+      if (confirmResolve) confirmResolve(false);
+    });
+    document.getElementById('confirm-ok').addEventListener('click', () => {
+      document.getElementById('confirm-overlay').classList.remove('active');
+      if (confirmResolve) confirmResolve(true);
+    });
+
+    /* ── Helpers ─────────────────────────────── */
+    function esc(str) {
+      return String(str ?? '').replace(/[&<>"']/g, m =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])
+      );
+    }
+    function fmtDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'numeric' });
+    }
+
+    /* ── Estado global ───────────────────────── */
+    let allUsers = [];
+
+    /* ── Cargar usuarios ─────────────────────── */
+    async function loadUsers() {
+      try {
+        const res  = await fetch(`${API}/api/admin/usuarios`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        allUsers = data.usuarios;
+        updateStats(allUsers);
+        renderTable(allUsers);
+      } catch (err) {
+        document.getElementById('users-tbody').innerHTML =
+          `<tr><td colspan="7" class="td-center" style="color:#C41010">Error al cargar: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function updateStats(users) {
+      document.getElementById('stat-total').textContent    = users.length;
+      document.getElementById('stat-activos').textContent  = users.filter(u => u.activo).length;
+      document.getElementById('stat-admins').textContent   = users.filter(u => u.rol === 'superusuario').length;
+      document.getElementById('stat-inactivos').textContent= users.filter(u => !u.activo).length;
+    }
+
+    function renderTable(users) {
+      const count = document.getElementById('user-count');
+      count.textContent = `${users.length} resultado${users.length !== 1 ? 's' : ''}`;
+
+      if (users.length === 0) {
+        document.getElementById('users-tbody').innerHTML =
+          '<tr><td colspan="7" class="td-center">No se encontraron usuarios</td></tr>';
+        return;
+      }
+
+      document.getElementById('users-tbody').innerHTML = users.map(u => `
+        <tr>
+          <td class="td-id">${u.id}</td>
+          <td class="td-name">${esc(u.nombre)}</td>
+          <td class="td-email">${esc(u.email)}</td>
+          <td>
+            <span class="badge ${u.rol === 'superusuario' ? 'badge-super' : 'badge-usuario'}">
+              ${u.rol === 'superusuario' ? '&#11088; Super' : '&#128100; Usuario'}
+            </span>
+          </td>
+          <td>
+            <span class="badge ${u.activo ? 'badge-activo' : 'badge-inactivo'}">
+              ${u.activo ? '&#10003; Activo' : '&#8212; Inactivo'}
+            </span>
+          </td>
+          <td class="td-date">${fmtDate(u.creado_en)}</td>
+          <td>
+            <div class="td-actions">
+              ${u.rol !== 'superusuario' ? `
+              <button class="btn-action btn-role"
+                title="Hacer superusuario"
+                onclick="changeRole(${u.id}, 'superusuario')">
+                &#11088;
+              </button>` : ''}
+              <button class="btn-action btn-toggle"
+                title="${u.activo ? 'Bloquear usuario' : 'Desbloquear usuario'}"
+                onclick="toggleActivo(${u.id}, ${!u.activo})">
+                ${u.activo ? '&#128308;' : '&#128994;'}
+              </button>
+              <button class="btn-action btn-delete"
+                title="Eliminar usuario"
+                onclick="deleteUser(${u.id}, '${esc(u.nombre)}')">
+                &#128465;
+              </button>
+              <button class="btn-action btn-edit"
+                title="Ver / editar perfil"
+                onclick="openProfile(${u.id}, '${esc(u.nombre)}')">
+                &#128100;
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    /* ── Búsqueda ────────────────────────────── */
+    document.getElementById('search-input').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      renderTable(
+        allUsers.filter(u =>
+          u.nombre.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q)  ||
+          u.rol.toLowerCase().includes(q)
+        )
+      );
+    });
+
+    /* ── Acciones ────────────────────────────── */
+    async function changeRole(id, newRol) {
+      try {
+        const res  = await fetch(`${API}/api/admin/usuarios/${id}/rol`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rol: newRol })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        showToast(`Rol actualizado a "${newRol}"`);
+        await loadUsers();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function toggleActivo(id, newActivo) {
+      try {
+        const res  = await fetch(`${API}/api/admin/usuarios/${id}/activo`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ activo: newActivo })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        showToast(newActivo ? 'Usuario activado' : 'Usuario desactivado');
+        await loadUsers();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function deleteUser(id, nombre) {
+      const ok = await confirm(
+        `¿Eliminar a "${nombre}"?`,
+        'Esta acción es permanente y no se puede deshacer.'
+      );
+      if (!ok) return;
+      try {
+        const res  = await fetch(`${API}/api/admin/usuarios/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        showToast(`Usuario "${nombre}" eliminado`);
+        await loadUsers();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    /* ── Init ────────────────────────────────── */
+    loadUsers();
+
+    /* ── Ministerios (checkboxes) ────────────── */
+    let ministerios = [];
+
+    async function loadMinisterios() {
+      if (ministerios.length) return;
+      try {
+        const res  = await fetch(`${API}/api/ministerios`);
+        const data = await res.json();
+        if (!data.success) return;
+        ministerios = data.ministerios;
+        renderMinCheckboxes([]);
+      } catch { /* silencioso */ }
+    }
+
+    function renderMinCheckboxes(checkedIds) {
+      const container = document.getElementById('pf-ministerios-list');
+      container.innerHTML = ministerios.map(m => {
+        const checked = checkedIds.includes(m.id);
+        return `<label class="min-check-label ${checked ? 'checked' : ''}" data-id="${m.id}">
+          <input type="checkbox" value="${m.id}" ${checked ? 'checked' : ''} />
+          ${esc(m.nombre)}
+        </label>`;
+      }).join('');
+      container.querySelectorAll('.min-check-label').forEach(lbl => {
+        lbl.addEventListener('click', () => {
+          const cb = lbl.querySelector('input');
+          cb.checked = !cb.checked;
+          lbl.classList.toggle('checked', cb.checked);
+        });
+      });
+    }
+
+    function getCheckedMinisterios() {
+      return [...document.querySelectorAll('#pf-ministerios-list input:checked')]
+        .map(cb => parseInt(cb.value));
+    }
+
+    /* ── Perfil: abrir ───────────────────────── */
+    let currentProfileId = null;
+
+    async function openProfile(id, nombre) {
+      currentProfileId = id;
+      document.getElementById('profile-title').textContent = `Perfil — ${nombre}`;
+      document.getElementById('pf-alert').className = 'pf-alert';
+      document.getElementById('pf-fnac').value = '';
+      document.getElementById('pf-ecivil').value = '';
+      document.getElementById('pf-dir').value = '';
+      document.getElementById('pf-foto').value = '';
+      document.getElementById('pf-photo-circle').innerHTML = '&#128247;';
+
+      await loadMinisterios();
+      renderMinCheckboxes([]);
+
+      try {
+        const res  = await fetch(`${API}/api/usuarios/${id}/info`);
+        const data = await res.json();
+        if (data.success && data.info) {
+          const info = data.info;
+          if (info.fecha_nacimiento)
+            document.getElementById('pf-fnac').value = info.fecha_nacimiento.split('T')[0];
+          document.getElementById('pf-ecivil').value = info.estado_civil || '';
+          document.getElementById('pf-dir').value    = info.direccion    || '';
+          if (info.foto)
+            document.getElementById('pf-photo-circle').innerHTML =
+              `<img src="${API}${info.foto}" alt="Foto" />`;
+        }
+        if (data.success && data.ministerios?.length) {
+          renderMinCheckboxes(data.ministerios.map(m => m.id));
+        }
+      } catch { /* sin info previa */ }
+
+      document.getElementById('profile-overlay').classList.add('active');
+    }
+
+    /* ── Perfil: cerrar ──────────────────────── */
+    function closeProfile() {
+      document.getElementById('profile-overlay').classList.remove('active');
+      currentProfileId = null;
+    }
+    document.getElementById('profile-close').addEventListener('click',  closeProfile);
+    document.getElementById('profile-cancel').addEventListener('click', closeProfile);
+    document.getElementById('profile-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('profile-overlay')) closeProfile();
+    });
+
+    /* ── Perfil: preview foto ────────────────── */
+    document.getElementById('pf-foto').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        document.getElementById('pf-photo-circle').innerHTML =
+          `<img src="${ev.target.result}" alt="Preview" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    /* ── Perfil: guardar ─────────────────────── */
+    document.getElementById('profile-save').addEventListener('click', async () => {
+      if (!currentProfileId) return;
+      const btn = document.getElementById('profile-save');
+      btn.disabled = true; btn.textContent = 'GUARDANDO...';
+      document.getElementById('pf-alert').className = 'pf-alert';
+
+      const fd = new FormData();
+      fd.append('fecha_nacimiento', document.getElementById('pf-fnac').value);
+      fd.append('direccion',        document.getElementById('pf-dir').value);
+      fd.append('estado_civil',     document.getElementById('pf-ecivil').value);
+      fd.append('ministerio_ids', JSON.stringify(getCheckedMinisterios()));
+      const fotoFile = document.getElementById('pf-foto').files[0];
+      if (fotoFile) fd.append('foto', fotoFile);
+
+      try {
+        const res  = await fetch(`${API}/api/usuarios/${currentProfileId}/info`, {
+          method: 'POST', body: fd
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Perfil guardado correctamente');
+          closeProfile();
+          await loadUsers();
+        } else {
+          const al = document.getElementById('pf-alert');
+          al.textContent = data.error; al.className = 'pf-alert error show';
+        }
+      } catch {
+        const al = document.getElementById('pf-alert');
+        al.textContent = 'No se pudo conectar con el servidor.';
+        al.className = 'pf-alert error show';
+      }
+
+      btn.disabled = false; btn.textContent = 'GUARDAR CAMBIOS';
+    });
+  </script>
+</body>
+</html>

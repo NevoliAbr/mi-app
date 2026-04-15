@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Música para todos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Palette ────────────────────────────────
+       #1A1A1A  black
+       #C41010  red
+       #757575  gray
+       #1565C0  blue (primary action)
+       #FFFFFF  white
+    ─────────────────────────────────────────── */
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Montserrat',sans-serif; }
+
+    /* ── NAVBAR ─────────────────────────────── */
+    nav {
+      background-color: #5C0A14;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+    }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-img { height:46px; width:46px; object-fit:contain; border-radius:8px; display:block; }
+    .nav-menu { list-style:none; display:flex; align-items:center; gap:28px; }
+    .nav-menu li a {
+      color:white; text-decoration:none; font-size:14px; font-weight:700;
+      letter-spacing:.3px; transition:opacity .15s;
+    }
+    .nav-menu li a:hover { opacity:.8; text-decoration:underline; }
+    #btn4 {
+      color:rgba(255,255,255,.35); font-size:20px; font-weight:300;
+      cursor:default; user-select:none;
+    }
+    #iniciar-sesion {
+      background:#fff; color:#1a1a1a !important; padding:9px 26px;
+      border-radius:30px; font-weight:800; font-size:13px;
+      letter-spacing:.5px; text-decoration:none !important;
+      transition:transform .1s, background .15s !important;
+    }
+    #iniciar-sesion:hover {
+      background:#f0f0f0 !important; transform:scale(1.03);
+      opacity:1 !important; text-decoration:none !important;
+    }
+
+    /* ── CAROUSEL PRINCIPAL ─────────────────── */
+    .avisos-hero {
+      width:100%; background:#0D0D0F;
+      min-height: calc(100vh - 70px);
+      display:flex; flex-direction:column;
+    }
+    .avisos-hero-header {
+      display:flex; align-items:center; justify-content:center;
+      gap:12px; padding:28px 24px 0;
+    }
+    .avisos-hero-title {
+      font-size:clamp(22px,3vw,36px); font-weight:900; color:#fff;
+      letter-spacing:4px; text-transform:uppercase;
+    }
+    .avisos-hero-line {
+      flex:1; max-width:120px; height:2px;
+      background:linear-gradient(90deg,#C41010,transparent);
+    }
+    .avisos-hero-line.right {
+      background:linear-gradient(270deg,#C41010,transparent);
+    }
+
+    .reel-main-wrapper {
+      flex:1; position:relative;
+      display:flex; align-items:center; justify-content:center;
+      padding:24px 0 32px;
+    }
+
+    /* Viewport a todo ancho */
+    .reel-viewport {
+      width:100%; overflow:hidden;
+    }
+    .reel-track {
+      display:flex; transition:transform .55s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Slide */
+    .reel-slide {
+      min-width:100%; position:relative;
+      display:flex; flex-direction:column;
+    }
+    .reel-slide-bg {
+      width:100%;
+      height: clamp(260px, 58vh, 560px);
+      position:relative; overflow:hidden;
+    }
+    .reel-slide-bg img {
+      width:100%; height:100%; object-fit:cover; display:block;
+      transition:transform 6s ease;
+    }
+    .reel-slide:hover .reel-slide-bg img { transform:scale(1.04); }
+    .reel-slide-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.1) 55%, transparent 100%);
+    }
+    .reel-slide-nophoto {
+      width:100%; height:clamp(260px,58vh,560px);
+      background:linear-gradient(135deg,#1A1A1A 0%,#5C0A14 50%,#C41010 100%);
+      display:flex; align-items:center; justify-content:center;
+      font-size:72px;
+    }
+
+    /* Info flotante sobre la imagen */
+    .reel-slide-info {
+      position:absolute; bottom:0; left:0; right:0;
+      padding:28px 40px 32px;
+    }
+    .reel-slide-titulo {
+      color:#fff; font-size:clamp(20px,3.5vw,36px); font-weight:900;
+      line-height:1.15; letter-spacing:-.5px;
+      text-shadow:0 2px 12px rgba(0,0,0,.5);
+      margin-bottom:8px;
+    }
+    .reel-slide-texto {
+      color:rgba(255,255,255,.82); font-size:clamp(12px,1.5vw,15px);
+      font-weight:600; line-height:1.55;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      overflow:hidden; max-width:680px; margin-bottom:14px;
+    }
+    .reel-slide-footer {
+      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    }
+    .reel-date {
+      font-size:11px; color:rgba(255,255,255,.5); font-weight:700; letter-spacing:.5px;
+    }
+    .reel-link {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:8px 20px; border-radius:30px; font-size:12px; font-weight:800;
+      text-decoration:none; transition:opacity .15s, transform .15s;
+      letter-spacing:.5px; text-transform:uppercase;
+    }
+    .reel-link.fb  { background:#1877F2; color:white; }
+    .reel-link.web { background:white;   color:#1A1A1A; }
+    .reel-link:hover { opacity:.88; transform:scale(1.03); }
+    .reel-link svg { width:14px; height:14px; fill:currentColor; }
+
+    /* Multiple images strip */
+    .reel-imgs-strip {
+      width:100%; height:clamp(260px,58vh,560px); display:flex;
+    }
+    .reel-imgs-strip img {
+      flex:1; object-fit:cover; min-width:0;
+      border-right:3px solid #0D0D0F;
+    }
+    .reel-imgs-strip img:last-child { border-right:none; }
+
+    /* Arrows */
+    .reel-btn {
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.2);
+      color:white; width:52px; height:52px; border-radius:50%;
+      font-size:28px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .15s, border-color .15s;
+      flex-shrink:0; z-index:10; line-height:1;
+      backdrop-filter:blur(6px);
+    }
+    .reel-btn:hover   { background:rgba(255,255,255,.28); border-color:rgba(255,255,255,.5); }
+    .reel-btn:disabled { opacity:.2; cursor:default; }
+    #reel-prev { left:20px; }
+    #reel-next { right:20px; }
+
+    /* Dots */
+    .reel-dots {
+      display:flex; justify-content:center; gap:8px;
+      padding-bottom:24px; padding-top:16px;
+    }
+    .reel-dot {
+      width:8px; height:8px; border-radius:50%;
+      background:rgba(255,255,255,.2); border:none; cursor:pointer;
+      transition:background .2s, transform .2s, width .2s; padding:0;
+    }
+    .reel-dot.active {
+      background:white; transform:scale(1.2); width:24px; border-radius:4px;
+    }
+
+    /* Empty state */
+    .reel-empty {
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      color:rgba(255,255,255,.25); gap:14px; padding:60px 24px;
+    }
+    .reel-empty-icon { font-size:52px; }
+    .reel-empty-text { font-size:14px; font-weight:700; letter-spacing:.5px; }
+
+    /* ── WIZARD STEPS ───────────────────────── */
+    .step-indicator {
+      display:flex; align-items:center; gap:0; margin-bottom:22px;
+    }
+    .step-dot {
+      width:28px; height:28px; border-radius:50%; background:#E5E7EB;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:800; color:#9CA3AF; flex-shrink:0;
+      transition:background .2s, color .2s;
+    }
+    .step-dot.active   { background:#1565C0; color:white; }
+    .step-dot.done     { background:#16A34A; color:white; }
+    .step-line {
+      flex:1; height:2px; background:#E5E7EB;
+      margin:0 8px; transition:background .2s;
+    }
+    .step-line.done { background:#16A34A; }
+    .step-label {
+      font-size:11px; font-weight:700; color:#9CA3AF; margin-top:4px; text-align:center;
+    }
+    .step-label.active { color:#1565C0; }
+
+    /* Photo upload (register) */
+    .reg-photo-section {
+      display:flex; align-items:center; gap:16px;
+      background:#F9FAFB; border-radius:10px; padding:12px 14px; margin-bottom:4px;
+    }
+    .reg-photo-circle {
+      width:60px; height:60px; border-radius:50%; background:#E5E7EB;
+      display:flex; align-items:center; justify-content:center;
+      font-size:24px; flex-shrink:0; overflow:hidden;
+      border:2px solid #E5E7EB;
+    }
+    .reg-photo-circle img { width:100%; height:100%; object-fit:cover; }
+    .btn-reg-photo {
+      display:inline-block; padding:7px 16px; background:#1565C0; color:white;
+      border-radius:7px; font-size:12px; font-weight:700; cursor:pointer;
+    }
+    .btn-reg-photo:hover { background:#1251A3; }
+    .reg-photo-hint { font-size:11px; color:#9CA3AF; margin-top:3px; }
+
+    /* Select inside modal */
+    .form-group select {
+      width:100%; padding:12px 14px; border:2px solid #D1D5DB;
+      border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:14px; color:#1A1A1A; background:#F9FAFB;
+      outline:none; transition:border-color .15s; appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239CA3AF' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center;
+      padding-right:36px;
+    }
+    .form-group select:focus { border-color:#1565C0; background-color:#fff; }
+
+    /* Two-col grid for step 2 */
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+    .form-grid-2 .full { grid-column:1/-1; }
+    @media (max-width:440px) { .form-grid-2 { grid-template-columns:1fr; } }
+
+    /* Back button */
+    .btn-back {
+      width:100%; padding:12px; background:#F3F4F6; color:#374151; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:700; cursor:pointer; margin-bottom:8px; transition:background .15s;
+    }
+    .btn-back:hover { background:#E5E7EB; }
+
+    /* ── Checkboxes ministerios ─────────────── */
+    .ministerios-checks {
+      display:flex; flex-wrap:wrap; gap:8px;
+      background:#F9FAFB; border:2px solid #D1D5DB;
+      border-radius:8px; padding:10px;
+    }
+    .min-check-label {
+      display:flex; align-items:center; gap:6px;
+      background:white; border:2px solid #E5E7EB;
+      border-radius:20px; padding:5px 12px;
+      font-size:12px; font-weight:700; cursor:pointer;
+      transition:border-color .15s, background .15s;
+      user-select:none;
+    }
+    .min-check-label:hover { border-color:#1565C0; }
+    .min-check-label input { display:none; }
+    .min-check-label.checked { background:#EFF6FF; border-color:#1565C0; color:#1565C0; }
+
+    /* ── MODAL BASE ─────────────────────────── */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.72); z-index:1000;
+      align-items:center; justify-content:center;
+      backdrop-filter:blur(5px); padding:16px;
+    }
+    .modal-overlay.active { display:flex; }
+
+    .modal-card {
+      background:#fff; border-radius:16px; width:100%; max-width:440px;
+      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.45);
+      animation:modalIn .24s ease;
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform:translateY(-18px) scale(.96); }
+      to   { opacity:1; transform:translateY(0)     scale(1); }
+    }
+
+    /* ── MODAL HEADER ───────────────────────── */
+    .modal-header {
+      /* Inspired by the logo: black top-left → red top-right */
+      background: linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      padding:22px 28px;
+      display:flex; align-items:center; justify-content:space-between;
+      color:#fff;
+    }
+    .modal-header-left { display:flex; align-items:center; gap:12px; }
+    .modal-header-icon {
+      width:36px; height:36px; border-radius:50%;
+      background:rgba(255,255,255,.15);
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+    }
+    .modal-header h2 { font-size:19px; font-weight:800; letter-spacing:.2px; }
+    .modal-close {
+      background:none; border:none; color:#fff; font-size:22px;
+      cursor:pointer; opacity:.65; line-height:1; transition:opacity .15s;
+      padding:4px;
+    }
+    .modal-close:hover { opacity:1; }
+
+    /* ── MODAL BODY ─────────────────────────── */
+    .modal-body { padding:28px 28px 32px; }
+
+    .alert {
+      padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;
+      margin-bottom:18px; display:none;
+    }
+    .alert.error   { background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
+    .alert.success { background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
+    .alert.show    { display:block; }
+
+    .form-group { margin-bottom:18px; }
+    .form-group label {
+      display:block; font-size:11px; font-weight:800; color:#1A1A1A;
+      margin-bottom:7px; letter-spacing:.8px; text-transform:uppercase;
+    }
+    .form-group input {
+      width:100%; padding:12px 14px; border:2px solid #D1D5DB;
+      border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:14px; color:#1A1A1A; background:#F9FAFB;
+      outline:none; transition:border-color .15s, background .15s;
+    }
+    .form-group input:focus { border-color:#1565C0; background:#fff; }
+    .form-group input::placeholder { color:#9CA3AF; }
+
+    /* password toggle wrapper */
+    .pw-wrap { position:relative; }
+    .pw-wrap input { padding-right:44px; }
+    .pw-toggle {
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      background:none; border:none; cursor:pointer; color:#9CA3AF;
+      font-size:18px; line-height:1; transition:color .15s; padding:2px;
+    }
+    .pw-toggle:hover { color:#1A1A1A; }
+
+    .submit-btn {
+      width:100%; padding:14px; background:#1565C0; color:#fff; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; letter-spacing:1.8px; text-transform:uppercase;
+      cursor:pointer; margin-top:8px;
+      transition:background .15s, transform .1s, box-shadow .15s;
+      box-shadow:0 4px 16px rgba(21,101,192,.35);
+    }
+    .submit-btn:hover  { background:#1251A3; box-shadow:0 6px 20px rgba(21,101,192,.45); }
+    .submit-btn:active { transform:scale(.98); }
+    .submit-btn:disabled { background:#93C5FD; box-shadow:none; cursor:not-allowed; }
+
+    .divider {
+      display:flex; align-items:center; gap:12px; margin:20px 0;
+      color:#9CA3AF; font-size:11px; font-weight:700; letter-spacing:.5px;
+    }
+    .divider::before, .divider::after {
+      content:''; flex:1; height:1px; background:#E5E7EB;
+    }
+
+    .modal-footer { text-align:center; margin-top:18px; font-size:13px; color:#6B7280; }
+    .modal-footer a {
+      color:#C41010; font-weight:700; cursor:pointer; text-decoration:none;
+      transition:opacity .15s;
+    }
+    .modal-footer a:hover { opacity:.75; text-decoration:underline; }
+
+    /* accent stripe at bottom of modal header (gray separator) */
+    .modal-header-stripe {
+      height:3px;
+      background:linear-gradient(90deg, #757575 0%, #1565C0 100%);
+    }
+
+    /* ── USUARIO AUTENTICADO (navbar) ──────── */
+    #auth-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #user-greeting {
+      color: rgba(255,255,255,.85);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    #btn-logout {
+      background: transparent;
+      border: 2px solid rgba(255,255,255,.55);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    #btn-logout:hover {
+      border-color: white;
+      background: rgba(255,255,255,.12);
+    }
+
+
+    /* ── MODAL DETALLE AVISO ────────────────── */
+    .aviso-detail-overlay {
+      display:none; position:fixed; inset:0; z-index:2000;
+      background:rgba(0,0,0,.82); backdrop-filter:blur(8px);
+      align-items:center; justify-content:center; padding:20px;
+    }
+    .aviso-detail-overlay.active { display:flex; }
+
+    .aviso-detail-card {
+      background:#fff; border-radius:20px; width:100%; max-width:680px;
+      max-height:90vh; overflow:hidden; display:flex; flex-direction:column;
+      box-shadow:0 32px 80px rgba(0,0,0,.6);
+      animation:detailIn .28s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes detailIn {
+      from { opacity:0; transform:scale(.88) translateY(24px); }
+      to   { opacity:1; transform:scale(1)   translateY(0); }
+    }
+
+    /* imagen(es) */
+    .aviso-detail-media {
+      width:100%; position:relative; flex-shrink:0;
+      background:#111;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+    }
+    .aviso-detail-media img.single {
+      max-width:100%; max-height:380px;
+      width:auto; height:auto;
+      object-fit:contain; display:block;
+      margin:0 auto;
+    }
+    .aviso-detail-gallery {
+      display:flex; gap:4px;
+      width:100%; max-height:360px;
+      align-items:center; justify-content:center;
+    }
+    .aviso-detail-gallery img {
+      flex:1; min-width:0; max-width:100%;
+      height:300px; object-fit:cover; display:block;
+      border-radius:4px;
+    }
+    .aviso-detail-nophoto {
+      height:180px;
+      background:linear-gradient(135deg,#1A1A1A 0%,#5C0A14 50%,#C41010 100%);
+      display:flex; align-items:center; justify-content:center;
+      font-size:64px;
+    }
+    /* gradiente sobre la imagen */
+    .aviso-detail-media-overlay {
+      position:absolute; bottom:0; left:0; right:0; height:80px;
+      background:linear-gradient(to top, rgba(0,0,0,.55), transparent);
+      pointer-events:none;
+    }
+
+    /* botón cerrar flotante */
+    .aviso-detail-close {
+      position:absolute; top:14px; right:14px;
+      background:rgba(0,0,0,.55); border:none; color:white;
+      width:36px; height:36px; border-radius:50%; font-size:18px;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      backdrop-filter:blur(4px); transition:background .15s; z-index:10;
+      line-height:1;
+    }
+    .aviso-detail-close:hover { background:rgba(0,0,0,.8); }
+
+    /* cuerpo del modal */
+    .aviso-detail-body {
+      padding:28px 32px 32px; overflow-y:auto; flex:1;
+    }
+    .aviso-detail-titulo {
+      font-size:clamp(20px,3vw,28px); font-weight:900; color:#1A1A1A;
+      line-height:1.2; margin-bottom:14px;
+    }
+    .aviso-detail-texto {
+      font-size:14px; color:#374151; line-height:1.7;
+      font-weight:500; white-space:pre-line; margin-bottom:20px;
+    }
+    .aviso-detail-footer {
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:12px; padding-top:16px;
+      border-top:1px solid #F3F4F6;
+    }
+    .aviso-detail-date {
+      font-size:12px; color:#9CA3AF; font-weight:700;
+      display:flex; align-items:center; gap:6px;
+    }
+    .aviso-detail-link {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 24px; border-radius:30px; font-size:13px; font-weight:800;
+      text-decoration:none; transition:opacity .15s, transform .15s;
+      letter-spacing:.4px;
+    }
+    .aviso-detail-link.fb  { background:#1877F2; color:white; }
+    .aviso-detail-link.web { background:#1565C0; color:white; }
+    .aviso-detail-link:hover { opacity:.88; transform:scale(1.03); }
+    .aviso-detail-link svg { width:16px; height:16px; fill:currentColor; }
+
+    /* slide clickable */
+    .reel-slide { cursor:pointer; }
+    .reel-slide:hover .reel-slide-titulo { text-decoration:underline; text-decoration-color:rgba(255,255,255,.5); }
+
+    /* ── RESPONSIVE ─────────────────────────── */
+    @media (max-width:640px) {
+      nav { padding:12px 20px; height:auto; flex-wrap:wrap; gap:10px; }
+      .nav-menu { gap:14px; flex-wrap:wrap; justify-content:flex-end; }
+      .nav-menu li a { font-size:12px; }
+      #iniciar-sesion { padding:7px 18px; font-size:11px; }
+      .hero h1 { letter-spacing:-1px; }
+      .cta-btn { padding:15px 36px; font-size:13px; letter-spacing:2px; }
+      .modal-card { border-radius:12px; }
+      .modal-header { padding:18px 20px; }
+      .modal-body { padding:22px 20px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ NAVBAR ══════════════════════════════════════ -->
+  <nav>
+    <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+      <img src="logo.png" alt="Logo" class="logo-img" />
+    </a>
+    <ul class="nav-menu">
+      <li><a href="#" id="btn1">Premium</a></li>
+      <li id="nav-btn2" style="display:none"><a href="avisos.html" id="btn2">Crear Avisos</a></li>
+      <li id="nav-btn3" style="display:none"><a href="#" id="btn3">Descargar</a></li>
+      <li id="auth-sep"><span id="btn4">|</span></li>
+      <li id="auth-reg"><a href="#" id="btn5">Regístrate</a></li>
+      <li id="auth-login"><a href="#" id="iniciar-sesion">Inicia sesión</a></li>
+      <li id="auth-user" style="display:none">
+        <span id="user-greeting"></span>
+        <button id="btn-logout">Cerrar sesión</button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ══ CAROUSEL DE AVISOS ══════════════════════════ -->
+  <section class="avisos-hero" id="avisos-section">
+    <div class="avisos-hero-header">
+      <div class="avisos-hero-line"></div>
+      <span class="avisos-hero-title">&#128226; Avisos</span>
+      <div class="avisos-hero-line right"></div>
+    </div>
+    <div class="reel-main-wrapper">
+      <button class="reel-btn" id="reel-prev">&#8249;</button>
+      <div class="reel-viewport">
+        <div class="reel-track" id="reel-track"></div>
+      </div>
+      <button class="reel-btn" id="reel-next">&#8250;</button>
+    </div>
+    <div class="reel-dots" id="reel-dots"></div>
+  </section>
+
+  <!-- ══ MODAL: DETALLE DE AVISO ════════════════════ -->
+  <div class="aviso-detail-overlay" id="modal-aviso" role="dialog" aria-modal="true">
+    <div class="aviso-detail-card">
+      <div class="aviso-detail-media" id="aviso-detail-media">
+        <button class="aviso-detail-close" id="aviso-detail-close" aria-label="Cerrar">&#10005;</button>
+        <div class="aviso-detail-media-overlay"></div>
+      </div>
+      <div class="aviso-detail-body">
+        <div class="aviso-detail-titulo" id="aviso-detail-titulo"></div>
+        <div class="aviso-detail-texto"  id="aviso-detail-texto"></div>
+        <div class="aviso-detail-footer">
+          <span class="aviso-detail-date" id="aviso-detail-date"></span>
+          <a class="aviso-detail-link" id="aviso-detail-link" target="_blank" rel="noopener" style="display:none"></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: INICIAR SESIÓN ═══════════════════════ -->
+  <div class="modal-overlay" id="modal-login" role="dialog" aria-modal="true" aria-label="Iniciar sesión">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-header-icon">🎵</div>
+          <h2>Inicia sesión</h2>
+        </div>
+        <button class="modal-close" data-close="modal-login" aria-label="Cerrar">&#10005;</button>
+      </div>
+      <div class="modal-header-stripe"></div>
+      <div class="modal-body">
+        <div class="alert" id="alert-login"></div>
+        <form id="form-login" novalidate>
+          <div class="form-group">
+            <label for="login-email">Correo electrónico</label>
+            <input type="email" id="login-email" placeholder="tu@correo.com" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Contraseña</label>
+            <div class="pw-wrap">
+              <input type="password" id="login-password" placeholder="Tu contraseña" autocomplete="current-password" required />
+              <button type="button" class="pw-toggle" data-target="login-password" aria-label="Ver contraseña">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="submit-btn">INICIAR SESIÓN</button>
+        </form>
+        <div class="divider">o</div>
+        <p class="modal-footer">
+          ¿No tienes cuenta?&nbsp;
+          <a id="go-to-register">Regístrate aquí</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: REGISTRO ═════════════════════════════ -->
+  <div class="modal-overlay" id="modal-register" role="dialog" aria-modal="true" aria-label="Crear cuenta">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-header-icon">✨</div>
+          <h2>Crear cuenta</h2>
+        </div>
+        <button class="modal-close" data-close="modal-register" aria-label="Cerrar">&#10005;</button>
+      </div>
+      <div class="modal-header-stripe"></div>
+      <div class="modal-body">
+        <div class="alert" id="alert-register"></div>
+
+        <!-- Indicador de pasos -->
+        <div class="step-indicator">
+          <div class="step-dot active" id="reg-dot-1">1</div>
+          <div class="step-line" id="reg-line-1"></div>
+          <div class="step-dot" id="reg-dot-2">2</div>
+        </div>
+
+        <form id="form-register" novalidate>
+          <!-- ── PASO 1: Cuenta ── -->
+          <div id="reg-step-1">
+            <div class="form-group">
+              <label for="reg-nombre">Nombre completo</label>
+              <input type="text" id="reg-nombre" placeholder="Tu nombre" autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="reg-email">Correo electrónico</label>
+              <input type="email" id="reg-email" placeholder="tu@correo.com" autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="reg-password">Contraseña</label>
+              <div class="pw-wrap">
+                <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+                <button type="button" class="pw-toggle" data-target="reg-password" aria-label="Ver contraseña">👁</button>
+              </div>
+            </div>
+            <button type="button" class="submit-btn" id="btn-reg-next">SIGUIENTE →</button>
+          </div>
+
+          <!-- ── PASO 2: Información personal ── -->
+          <div id="reg-step-2" style="display:none">
+            <div class="form-group full">
+              <label>Foto de perfil</label>
+              <div class="reg-photo-section">
+                <div class="reg-photo-circle" id="reg-photo-circle">📷</div>
+                <div>
+                  <label class="btn-reg-photo" for="reg-foto">Subir foto</label>
+                  <input type="file" id="reg-foto" accept="image/*" style="display:none" />
+                  <p class="reg-photo-hint">Opcional · JPG, PNG · máx. 5 MB</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="reg-fnac">Fecha de nacimiento</label>
+                <input type="date" id="reg-fnac" />
+              </div>
+              <div class="form-group">
+                <label for="reg-ecivil">Estado civil</label>
+                <select id="reg-ecivil">
+                  <option value="">— Seleccionar —</option>
+                  <option>Soltero/a</option>
+                  <option>Casado/a</option>
+                  <option>Divorciado/a</option>
+                  <option>Viudo/a</option>
+                  <option>Unión libre</option>
+                </select>
+              </div>
+              <div class="form-group full">
+                <label for="reg-dir">Dirección</label>
+                <input type="text" id="reg-dir" placeholder="Calle, ciudad..." />
+              </div>
+              <div class="form-group full">
+                <label>Ministerios</label>
+                <div id="reg-ministerios-list" class="ministerios-checks"></div>
+              </div>
+            </div>
+            <button type="button" class="btn-back" id="btn-reg-back">← ATRÁS</button>
+            <button type="submit" class="submit-btn">CREAR CUENTA</button>
+          </div>
+        </form>
+        <div class="divider">o</div>
+        <p class="modal-footer">
+          ¿Ya tienes cuenta?&nbsp;
+          <a id="go-to-login">Inicia sesión aquí</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ JAVASCRIPT ══════════════════════════════════ -->
+  <script>
+    const API = 'http://localhost:3001';
+
+    /* ── Sesión ──────────────────────────────────── */
+    function updateAuthUI(user) {
+      const loggedIn = !!user;
+      document.getElementById('auth-sep').style.display     = loggedIn ? 'none' : '';
+      document.getElementById('auth-reg').style.display     = loggedIn ? 'none' : '';
+      document.getElementById('auth-login').style.display   = loggedIn ? 'none' : '';
+      document.getElementById('auth-user').style.display    = loggedIn ? 'flex' : 'none';
+      if (user) document.getElementById('user-greeting').textContent = `Hola, ${user.nombre}`;
+
+      // btn2: solo superusuario ve "Crear Avisos"
+      document.getElementById('nav-btn2').style.display =
+        (loggedIn && user.rol === 'superusuario') ? '' : 'none';
+
+      // btn3: oculto sin sesión, "Descargar" para usuarios, "Usuarios" para superusuario
+      const navBtn3 = document.getElementById('nav-btn3');
+      const btn3    = document.getElementById('btn3');
+      navBtn3.style.display = loggedIn ? '' : 'none';
+      if (loggedIn && user.rol === 'superusuario') {
+        btn3.textContent = 'Usuarios';
+        btn3.href = 'admin.html';
+      } else {
+        btn3.textContent = 'Descargar';
+        btn3.href = '#';
+      }
+    }
+
+    function setSession(user) {
+      localStorage.setItem('session', JSON.stringify(user));
+      updateAuthUI(user);
+    }
+
+    function clearSession() {
+      localStorage.removeItem('session');
+      updateAuthUI(null);
+    }
+
+    // Restaurar sesión al cargar la página
+    (function () {
+      const saved = localStorage.getItem('session');
+      if (saved) try { updateAuthUI(JSON.parse(saved)); } catch { clearSession(); }
+    })();
+
+    document.getElementById('btn-logout').addEventListener('click', clearSession);
+
+    /* ── Helpers ─────────────────────────────────── */
+    function openModal(id)  { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function showAlert(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = `alert ${type} show`;
+    }
+    function hideAlert(id) {
+      const el = document.getElementById(id);
+      el.className = 'alert';
+    }
+
+    function setLoading(btn, loading, defaultText) {
+      btn.disabled = loading;
+      btn.textContent = loading ? 'CARGANDO...' : defaultText;
+    }
+
+    /* ── Abrir modales ───────────────────────────── */
+    document.getElementById('iniciar-sesion').addEventListener('click', e => {
+      e.preventDefault(); openModal('modal-login');
+    });
+    document.getElementById('btn5').addEventListener('click', e => {
+      e.preventDefault(); openModal('modal-register');
+    });
+
+    /* ── Cerrar modales ──────────────────────────── */
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal(overlay.id);
+      });
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
+        closeAvisoDetail();
+      }
+    });
+
+    /* ── Cambiar entre modales ───────────────────── */
+    document.getElementById('go-to-register').addEventListener('click', () => {
+      closeModal('modal-login'); openModal('modal-register');
+    });
+    document.getElementById('go-to-login').addEventListener('click', () => {
+      closeModal('modal-register'); openModal('modal-login');
+    });
+
+    /* ── Toggle contraseña ───────────────────────── */
+    document.querySelectorAll('.pw-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.textContent = isHidden ? '🙈' : '👁';
+      });
+    });
+
+    /* ── Login ───────────────────────────────────── */
+    document.getElementById('form-login').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = e.target.querySelector('.submit-btn');
+      hideAlert('alert-login');
+      setLoading(btn, true, 'INICIAR SESIÓN');
+
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      try {
+        const res  = await fetch(`${API}/api/auth/login`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('alert-login', `¡Bienvenido, ${data.user.nombre}! 🎉`, 'success');
+          setSession(data.user);
+          setTimeout(() => closeModal('modal-login'), 1800);
+        } else {
+          showAlert('alert-login', data.error || 'Error al iniciar sesión.', 'error');
+        }
+      } catch {
+        showAlert('alert-login', 'No se pudo conectar con el servidor.', 'error');
+      }
+
+      setLoading(btn, false, 'INICIAR SESIÓN');
+    });
+
+    /* ── Registro: wizard ───────────────────────── */
+    let regMinistrLoaded = false;
+
+    async function loadRegMinisterios() {
+      if (regMinistrLoaded) return;
+      try {
+        const res  = await fetch(`${API}/api/ministerios`);
+        const data = await res.json();
+        if (!data.success) return;
+        const container = document.getElementById('reg-ministerios-list');
+        container.innerHTML = data.ministerios.map(m =>
+          `<label class="min-check-label" data-id="${m.id}">
+            <input type="checkbox" value="${m.id}" />
+            ${m.nombre}
+          </label>`
+        ).join('');
+        container.querySelectorAll('.min-check-label').forEach(lbl => {
+          lbl.addEventListener('click', () => {
+            const cb = lbl.querySelector('input');
+            cb.checked = !cb.checked;
+            lbl.classList.toggle('checked', cb.checked);
+          });
+        });
+        regMinistrLoaded = true;
+      } catch { /* silencioso */ }
+    }
+
+    function getRegMinisterios() {
+      return [...document.querySelectorAll('#reg-ministerios-list input:checked')]
+        .map(cb => parseInt(cb.value));
+    }
+
+    // Foto preview
+    document.getElementById('reg-foto').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        document.getElementById('reg-photo-circle').innerHTML =
+          `<img src="${ev.target.result}" alt="Preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Paso 1 → 2
+    document.getElementById('btn-reg-next').addEventListener('click', () => {
+      const nombre   = document.getElementById('reg-nombre').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      hideAlert('alert-register');
+
+      if (!nombre)              return showAlert('alert-register', 'Ingresa tu nombre.', 'error');
+      if (!email)               return showAlert('alert-register', 'Ingresa tu correo.', 'error');
+      if (password.length < 6)  return showAlert('alert-register', 'Contraseña mínimo 6 caracteres.', 'error');
+
+      document.getElementById('reg-step-1').style.display = 'none';
+      document.getElementById('reg-step-2').style.display = '';
+      document.getElementById('reg-dot-1').className = 'step-dot done';
+      document.getElementById('reg-dot-2').className = 'step-dot active';
+      document.getElementById('reg-line-1').className = 'step-line done';
+      loadRegMinisterios();
+    });
+
+    // Paso 2 → 1
+    document.getElementById('btn-reg-back').addEventListener('click', () => {
+      document.getElementById('reg-step-2').style.display = 'none';
+      document.getElementById('reg-step-1').style.display = '';
+      document.getElementById('reg-dot-1').className = 'step-dot active';
+      document.getElementById('reg-dot-2').className = 'step-dot';
+      document.getElementById('reg-line-1').className = 'step-line';
+    });
+
+    // Submit final
+    document.getElementById('form-register').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = e.target.querySelector('[type="submit"]');
+      hideAlert('alert-register');
+      btn.disabled = true; btn.textContent = 'REGISTRANDO...';
+
+      const nombre   = document.getElementById('reg-nombre').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+
+      try {
+        // Paso 1: crear cuenta
+        const res1  = await fetch(`${API}/api/auth/register`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ nombre, email, password })
+        });
+        const data1 = await res1.json();
+        if (!data1.success) {
+          showAlert('alert-register', data1.error || 'Error al registrarse.', 'error');
+          btn.disabled = false; btn.textContent = 'CREAR CUENTA';
+          return;
+        }
+
+        // Paso 2: guardar info personal (si hay algo)
+        const fd = new FormData();
+        fd.append('fecha_nacimiento', document.getElementById('reg-fnac').value);
+        fd.append('direccion',        document.getElementById('reg-dir').value);
+        fd.append('estado_civil',     document.getElementById('reg-ecivil').value);
+        fd.append('ministerio_ids', JSON.stringify(getRegMinisterios()));
+        const fotoFile = document.getElementById('reg-foto').files[0];
+        if (fotoFile) fd.append('foto', fotoFile);
+
+        await fetch(`${API}/api/usuarios/${data1.userId}/info`, { method: 'POST', body: fd });
+
+        showAlert('alert-register', '¡Cuenta creada! Redirigiendo al login...', 'success');
+        e.target.reset();
+        document.getElementById('reg-photo-circle').innerHTML = '📷';
+        // Resetear wizard a paso 1
+        document.getElementById('reg-step-2').style.display = 'none';
+        document.getElementById('reg-step-1').style.display = '';
+        document.getElementById('reg-dot-1').className = 'step-dot active';
+        document.getElementById('reg-dot-2').className = 'step-dot';
+        document.getElementById('reg-line-1').className = 'step-line';
+
+        setTimeout(() => { closeModal('modal-register'); openModal('modal-login'); }, 1800);
+      } catch {
+        showAlert('alert-register', 'No se pudo conectar con el servidor.', 'error');
+      }
+
+      btn.disabled = false; btn.textContent = 'CREAR CUENTA';
+    });
+
+    /* ══ CAROUSEL DE AVISOS ════════════════════════ */
+    const FB_SVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954
+      10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669
+      1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328
+      l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+
+    function isFB(url) {
+      return url && (url.includes('facebook.com') || url.includes('fb.com') || url.includes('fb.watch'));
+    }
+    function fmtDate(d) {
+      if (!d) return '';
+      return new Date(d).toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' });
+    }
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    let reelAvisos = [], reelIdx = 0, reelTimer = null;
+
+    function buildSlide(av) {
+      const imgs = av.imagenes || [];
+      let mediaHtml;
+      if (imgs.length === 0) {
+        mediaHtml = `<div class="reel-slide-nophoto">📢</div>`;
+      } else if (imgs.length === 1) {
+        mediaHtml = `
+          <div class="reel-slide-bg">
+            <img src="${API}${imgs[0]}" alt="${escH(av.titulo)}" />
+            <div class="reel-slide-overlay"></div>
+          </div>`;
+      } else {
+        const strip = imgs.slice(0,3).map(r => `<img src="${API}${r}" alt="" />`).join('');
+        mediaHtml = `
+          <div class="reel-slide-bg" style="position:relative">
+            <div class="reel-imgs-strip">${strip}</div>
+            <div class="reel-slide-overlay" style="position:absolute;inset:0"></div>
+          </div>`;
+      }
+
+      const linkHtml = av.link
+        ? `<a href="${av.link}" target="_blank" rel="noopener"
+              class="reel-link ${isFB(av.link) ? 'fb' : 'web'}">
+             ${isFB(av.link) ? FB_SVG : '🔗'}
+             ${isFB(av.link) ? 'Ver en Facebook' : 'Ver más'}
+           </a>`
+        : '';
+
+      return `
+        <div class="reel-slide">
+          ${mediaHtml}
+          <div class="reel-slide-info">
+            <div class="reel-slide-titulo">${escH(av.titulo)}</div>
+            ${av.texto ? `<div class="reel-slide-texto">${escH(av.texto)}</div>` : ''}
+            <div class="reel-slide-footer">
+              <span class="reel-date">Hasta: ${fmtDate(av.fecha_fin)}</span>
+              ${linkHtml}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function reelGoto(idx) {
+      reelIdx = ((idx % reelAvisos.length) + reelAvisos.length) % reelAvisos.length;
+      document.getElementById('reel-track').style.transform = `translateX(-${reelIdx * 100}%)`;
+      document.querySelectorAll('.reel-dot').forEach((d, i) =>
+        d.classList.toggle('active', i === reelIdx));
+      // Con loop infinito ambos botones siempre activos
+      document.getElementById('reel-prev').disabled = false;
+      document.getElementById('reel-next').disabled = false;
+    }
+
+    function startReelTimer() {
+      clearInterval(reelTimer);
+      if (reelAvisos.length < 2) return;
+      reelTimer = setInterval(() => reelGoto(reelIdx + 1), 5000);
+    }
+
+    async function loadReel() {
+      const track  = document.getElementById('reel-track');
+      const dotsEl = document.getElementById('reel-dots');
+      try {
+        const res  = await fetch(`${API}/api/avisos`);
+        const data = await res.json();
+
+        if (!data.success || !data.avisos.length) {
+          track.innerHTML = `
+            <div class="reel-slide">
+              <div class="reel-empty">
+                <div class="reel-empty-icon">📭</div>
+                <div class="reel-empty-text">No hay avisos activos por el momento.</div>
+              </div>
+            </div>`;
+          document.getElementById('reel-prev').style.display = 'none';
+          document.getElementById('reel-next').style.display = 'none';
+          return;
+        }
+
+        reelAvisos = data.avisos;
+        track.innerHTML = reelAvisos.map(buildSlide).join('');
+
+        // Click en cada slide abre el detalle
+        track.querySelectorAll('.reel-slide').forEach((slide, i) => {
+          slide.addEventListener('click', e => {
+            // No abrir si hicieron click en un link del slide
+            if (e.target.closest('a')) return;
+            openAvisoDetail(reelAvisos[i]);
+          });
+        });
+
+        dotsEl.innerHTML = reelAvisos.map((_, i) =>
+          `<button class="reel-dot ${i===0?'active':''}"
+             onclick="reelGoto(${i});startReelTimer()"></button>`
+        ).join('');
+
+        document.getElementById('reel-prev').addEventListener('click', e => {
+          e.stopPropagation(); reelGoto(reelIdx - 1); startReelTimer();
+        });
+        document.getElementById('reel-next').addEventListener('click', e => {
+          e.stopPropagation(); reelGoto(reelIdx + 1); startReelTimer();
+        });
+
+        if (reelAvisos.length < 2) {
+          document.getElementById('reel-prev').style.display = 'none';
+          document.getElementById('reel-next').style.display = 'none';
+        }
+
+        reelGoto(0);
+        startReelTimer();
+      } catch {
+        track.innerHTML = `
+          <div class="reel-slide">
+            <div class="reel-empty">
+              <div class="reel-empty-icon">⚠️</div>
+              <div class="reel-empty-text">No se pudo cargar los avisos.</div>
+            </div>
+          </div>`;
+        document.getElementById('reel-prev').style.display = 'none';
+        document.getElementById('reel-next').style.display = 'none';
+      }
+    }
+
+    /* ── Modal detalle aviso ─────────────────────── */
+    const FB_SVG_LG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;fill:currentColor">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954
+      10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669
+      1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328
+      l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+
+    function openAvisoDetail(av) {
+      const overlay = document.getElementById('modal-aviso');
+      const media   = document.getElementById('aviso-detail-media');
+      const imgs    = av.imagenes || [];
+
+      // Limpiar media anterior (excepto botón cerrar y overlay)
+      const closeBtn     = document.getElementById('aviso-detail-close');
+      const mediaOverlay = media.querySelector('.aviso-detail-media-overlay');
+      media.innerHTML = '';
+      media.appendChild(closeBtn);
+
+      // Imágenes
+      if (imgs.length === 0) {
+        const np = document.createElement('div');
+        np.className = 'aviso-detail-nophoto';
+        np.textContent = '📢';
+        media.appendChild(np);
+      } else if (imgs.length === 1) {
+        const im = document.createElement('img');
+        im.className = 'single';
+        im.src = `${API}${imgs[0]}`;
+        im.alt = av.titulo;
+        media.appendChild(im);
+      } else {
+        const gal = document.createElement('div');
+        gal.className = 'aviso-detail-gallery';
+        imgs.slice(0, 4).forEach(r => {
+          const im = document.createElement('img');
+          im.src = `${API}${r}`;
+          im.alt = '';
+          gal.appendChild(im);
+        });
+        media.appendChild(gal);
+      }
+
+      const ov = document.createElement('div');
+      ov.className = 'aviso-detail-media-overlay';
+      media.appendChild(ov);
+
+      // Textos
+      document.getElementById('aviso-detail-titulo').textContent = av.titulo;
+      const textoEl = document.getElementById('aviso-detail-texto');
+      textoEl.textContent = av.texto || '';
+      textoEl.style.display = av.texto ? '' : 'none';
+
+      // Fecha
+      document.getElementById('aviso-detail-date').innerHTML =
+        `📅 Válido hasta: <strong>${fmtDate(av.fecha_fin)}</strong>`;
+
+      // Link
+      const linkEl = document.getElementById('aviso-detail-link');
+      if (av.link) {
+        const fb = isFB(av.link);
+        linkEl.href = av.link;
+        linkEl.className = `aviso-detail-link ${fb ? 'fb' : 'web'}`;
+        linkEl.innerHTML = fb
+          ? `${FB_SVG_LG} Ver en Facebook`
+          : `🔗 Ver enlace`;
+        linkEl.style.display = '';
+      } else {
+        linkEl.style.display = 'none';
+      }
+
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeAvisoDetail() {
+      document.getElementById('modal-aviso').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('aviso-detail-close').addEventListener('click', closeAvisoDetail);
+
+    document.getElementById('modal-aviso').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-aviso')) closeAvisoDetail();
+    });
+
+    // ESC ya está manejado globalmente abajo, agrego modal-aviso al handler existente
+
+    loadReel();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(reg add:*)",
+      "Bash(powershell -Command \"Set-ItemProperty -Path 'HKLM:\\\\SOFTWARE\\\\Microsoft\\\\Microsoft SQL Server\\\\MSSQL17.SQLEXPRESS\\\\MSSQLServer\\\\SuperSocketNetLib\\\\Tcp' -Name 'Enabled' -Value 1 -Type DWord\")",
+      "Bash(powershell -Command \"Get-ItemProperty -Path 'HKLM:\\\\SOFTWARE\\\\Microsoft\\\\Microsoft SQL Server\\\\MSSQL17.SQLEXPRESS\\\\MSSQLServer' -Name 'LoginMode'\")"
+    ]
+  }
+}
