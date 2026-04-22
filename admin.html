@@ -9,25 +9,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     /* ── Palette ──
-       #1A1A1A  black
-       #C41010  red
-       #757575  gray
-       #1565C0  blue
-       #5C0A14  wine (navbar)
+       #005D97  azul corporativo (primario)
+       #003E66  azul profundo (hover / footer)
+       #00AEEF  cian digital (acento)
+       #333333  gris carbón (texto)
+       #A7A9AC  gris neutro (secundario)
+       #E6E7E8  gris claro (divisores)
+       #FFFFFF  blanco (fondo)
     ─────────────── */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
 
     /* ── NAVBAR ─────────────────────────────── */
     nav {
-      background:#5C0A14; padding:0 40px; height:64px;
+      background:#005D97; padding:0 40px; height:64px;
       display:flex; align-items:center; justify-content:space-between;
       position:sticky; top:0; z-index:100;
       box-shadow:0 2px 12px rgba(0,0,0,.35);
     }
     .nav-left  { display:flex; align-items:center; gap:16px; }
     .nav-right { display:flex; align-items:center; gap:14px; }
-    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:7px; display:block; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
     .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
     #admin-nombre {
       color:rgba(255,255,255,.85); font-size:13px; font-weight:700;
@@ -40,18 +42,18 @@
       transition:border-color .15s, background .15s;
     }
     .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
-    .btn-nav.primary { background:#1565C0; border-color:#1565C0; }
-    .btn-nav.primary:hover { background:#1251A3; border-color:#1251A3; }
+    .btn-nav.primary { background:#005D97; border-color:#005D97; }
+    .btn-nav.primary:hover { background:#003E66; border-color:#003E66; }
 
     /* ── PAGE HEADER ──────────────────────────── */
     .page-header {
-      background:linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
       padding:32px 40px 28px;
       color:white;
     }
     .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
     .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
-    .header-stripe  { height:3px; background:linear-gradient(90deg,#757575,#1565C0); }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
 
     /* ── MAIN ─────────────────────────────────── */
     main { padding:32px 40px; max-width:1200px; margin:0 auto; }
@@ -64,10 +66,10 @@
       box-shadow:0 1px 4px rgba(0,0,0,.08);
       border-top:4px solid transparent;
     }
-    .stat-card.total   { border-top-color:#1565C0; }
+    .stat-card.total   { border-top-color:#005D97; }
     .stat-card.activos { border-top-color:#16A34A; }
-    .stat-card.admins  { border-top-color:#C41010; }
-    .stat-card.inactivos { border-top-color:#757575; }
+    .stat-card.admins  { border-top-color:#00AEEF; }
+    .stat-card.inactivos { border-top-color:#A7A9AC; }
     .stat-num  { font-size:32px; font-weight:900; color:#1A1A1A; }
     .stat-label{ font-size:11px; font-weight:700; color:#9CA3AF; letter-spacing:.6px;
                  text-transform:uppercase; margin-top:2px; }
@@ -91,7 +93,7 @@
       font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
       outline:none; transition:border-color .15s; width:230px; background:#FAFAFA;
     }
-    .search-wrap input:focus { border-color:#1565C0; background:#fff; }
+    .search-wrap input:focus { border-color:#005D97; background:#fff; }
     .search-icon {
       position:absolute; left:11px; top:50%; transform:translateY(-50%);
       color:#9CA3AF; font-size:14px; pointer-events:none;
@@ -123,8 +125,8 @@
       padding:4px 10px; border-radius:20px; font-size:11px; font-weight:800;
       letter-spacing:.3px;
     }
-    .badge-super   { background:#FEE2E2; color:#C41010; }
-    .badge-usuario { background:#EFF6FF; color:#1565C0; }
+    .badge-super   { background:#E0F0FF; color:#003E66; }
+    .badge-usuario { background:#EFF6FF; color:#005D97; }
     .badge-activo  { background:#D1FAE5; color:#065F46; }
     .badge-inactivo{ background:#F3F4F6; color:#6B7280; }
 
@@ -205,7 +207,7 @@
       animation:modalIn .22s ease; max-height:90vh; display:flex; flex-direction:column;
     }
     .profile-header {
-      background:linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
       padding:20px 24px; display:flex; align-items:center; justify-content:space-between;
       color:white; flex-shrink:0;
     }
@@ -220,7 +222,7 @@
       cursor:pointer; opacity:.65; transition:opacity .15s; padding:4px;
     }
     .profile-header-close:hover { opacity:1; }
-    .profile-stripe { height:3px; background:linear-gradient(90deg,#757575,#1565C0); flex-shrink:0; }
+    .profile-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); flex-shrink:0; }
     .profile-body { padding:24px; overflow-y:auto; flex:1; }
     .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .profile-grid .full { grid-column:1/-1; }
@@ -238,11 +240,11 @@
     .photo-circle img { width:100%; height:100%; object-fit:cover; }
     .photo-info p  { font-size:12px; color:#9CA3AF; margin-top:4px; }
     .btn-photo {
-      display:inline-block; padding:8px 18px; background:#1565C0; color:white;
+      display:inline-block; padding:8px 18px; background:#005D97; color:white;
       border-radius:7px; font-family:'Montserrat',sans-serif; font-size:12px;
       font-weight:700; cursor:pointer; transition:background .15s;
     }
-    .btn-photo:hover { background:#1251A3; }
+    .btn-photo:hover { background:#003E66; }
 
     /* Form inside profile */
     .pf-group { display:flex; flex-direction:column; gap:6px; }
@@ -254,7 +256,7 @@
       font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
       background:#FAFAFA; outline:none; transition:border-color .15s;
     }
-    .pf-group input:focus, .pf-group select:focus { border-color:#1565C0; background:#fff; }
+    .pf-group input:focus, .pf-group select:focus { border-color:#005D97; background:#fff; }
     .pf-alert {
       padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;
       margin-bottom:16px; display:none;
@@ -273,16 +275,16 @@
     }
     .btn-pf-cancel:hover { background:#E5E7EB; }
     .btn-pf-save {
-      padding:10px 28px; background:#1565C0; color:white; border:none;
+      padding:10px 28px; background:#005D97; color:white; border:none;
       border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
       font-weight:800; letter-spacing:.8px; cursor:pointer;
-      transition:background .15s; box-shadow:0 3px 12px rgba(21,101,192,.3);
+      transition:background .15s; box-shadow:0 3px 12px rgba(0,93,151,.3);
     }
-    .btn-pf-save:hover    { background:#1251A3; }
+    .btn-pf-save:hover    { background:#003E66; }
     .btn-pf-save:disabled { background:#93C5FD; box-shadow:none; cursor:not-allowed; }
 
-    /* ── Checkboxes ministerios ───────────────── */
-    .ministerios-checks {
+    /* ── Checkboxes proyectos ───────────────── */
+    .proyectos-checks {
       display:flex; flex-wrap:wrap; gap:8px;
       background:#F9FAFB; border:2px solid #E5E7EB;
       border-radius:8px; padding:12px;
@@ -295,9 +297,9 @@
       transition:border-color .15s, background .15s;
       user-select:none;
     }
-    .min-check-label:hover { border-color:#1565C0; }
+    .min-check-label:hover { border-color:#005D97; }
     .min-check-label input { display:none; }
-    .min-check-label.checked { background:#EFF6FF; border-color:#1565C0; color:#1565C0; }
+    .min-check-label.checked { background:#EFF6FF; border-color:#005D97; color:#005D97; }
 
     /* ── RESPONSIVE ───────────────────────────── */
     @media (max-width:768px) {
@@ -437,8 +439,8 @@
             <input type="text" id="pf-dir" placeholder="Calle, ciudad, estado..." />
           </div>
           <div class="pf-group full">
-            <label>Ministerios</label>
-            <div id="pf-ministerios-list" class="ministerios-checks"></div>
+            <label>Proyectos</label>
+            <div id="pf-proyectos-list" class="proyectos-checks"></div>
           </div>
         </div>
       </div>
@@ -664,23 +666,23 @@
     /* ── Init ────────────────────────────────── */
     loadUsers();
 
-    /* ── Ministerios (checkboxes) ────────────── */
-    let ministerios = [];
+    /* ── Proyectos (checkboxes) ────────────── */
+    let proyectos = [];
 
-    async function loadMinisterios() {
-      if (ministerios.length) return;
+    async function loadProyectos() {
+      if (proyectos.length) return;
       try {
-        const res  = await fetch(`${API}/api/ministerios`);
+        const res  = await fetch(`${API}/api/proyectos`);
         const data = await res.json();
         if (!data.success) return;
-        ministerios = data.ministerios;
-        renderMinCheckboxes([]);
+        proyectos = data.proyectos;
+        renderProjCheckboxes([]);
       } catch { /* silencioso */ }
     }
 
-    function renderMinCheckboxes(checkedIds) {
-      const container = document.getElementById('pf-ministerios-list');
-      container.innerHTML = ministerios.map(m => {
+    function renderProjCheckboxes(checkedIds) {
+      const container = document.getElementById('pf-proyectos-list');
+      container.innerHTML = proyectos.map(m => {
         const checked = checkedIds.includes(m.id);
         return `<label class="min-check-label ${checked ? 'checked' : ''}" data-id="${m.id}">
           <input type="checkbox" value="${m.id}" ${checked ? 'checked' : ''} />
@@ -696,8 +698,8 @@
       });
     }
 
-    function getCheckedMinisterios() {
-      return [...document.querySelectorAll('#pf-ministerios-list input:checked')]
+    function getCheckedProyectos() {
+      return [...document.querySelectorAll('#pf-proyectos-list input:checked')]
         .map(cb => parseInt(cb.value));
     }
 
@@ -714,8 +716,8 @@
       document.getElementById('pf-foto').value = '';
       document.getElementById('pf-photo-circle').innerHTML = '&#128247;';
 
-      await loadMinisterios();
-      renderMinCheckboxes([]);
+      await loadProyectos();
+      renderProjCheckboxes([]);
 
       try {
         const res  = await fetch(`${API}/api/usuarios/${id}/info`);
@@ -730,8 +732,8 @@
             document.getElementById('pf-photo-circle').innerHTML =
               `<img src="${API}${info.foto}" alt="Foto" />`;
         }
-        if (data.success && data.ministerios?.length) {
-          renderMinCheckboxes(data.ministerios.map(m => m.id));
+        if (data.success && data.proyectos?.length) {
+          renderProjCheckboxes(data.proyectos.map(m => m.id));
         }
       } catch { /* sin info previa */ }
 
@@ -772,7 +774,7 @@
       fd.append('fecha_nacimiento', document.getElementById('pf-fnac').value);
       fd.append('direccion',        document.getElementById('pf-dir').value);
       fd.append('estado_civil',     document.getElementById('pf-ecivil').value);
-      fd.append('ministerio_ids', JSON.stringify(getCheckedMinisterios()));
+      fd.append('proyecto_ids', JSON.stringify(getCheckedProyectos()));
       const fotoFile = document.getElementById('pf-foto').files[0];
       if (fotoFile) fd.append('foto', fotoFile);
 

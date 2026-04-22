@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(sed \"s/\\\\.query\\\\\\('//g\")",
+      "Bash(sed \"s/'$//g\")",
+      "Bash(sc query *)",
+      "Bash(findstr -i \"sql\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":1433\")",
+      "Bash(reg query *)"
     ]
   }
 }

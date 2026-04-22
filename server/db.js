@@ -2,9 +2,10 @@ const sql = require('mssql');
 
 const config = {
   user: 'sa',
-  password: 'Nevoli123',
-  server: 'NEVOLI\\SQLEXPRESS',
-  database: 'Base',
+  password: 'nevoli123',
+  server: 'localhost',
+  port: 1433,
+  database: 'mibase',
   options: {
     trustServerCertificate: true,
     enableArithAbort: true,
@@ -43,6 +44,7 @@ async function connect(intentos = 5, espera = 3000) {
 
 async function getPool() {
   if (!pool) await connect(3, 2000);
+  if (!pool) throw new Error('No se pudo conectar a la base de datos. Verifica que SQL Server esté activo.');
   return pool;
 }
 

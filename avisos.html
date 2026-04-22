@@ -9,25 +9,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     /* ── Palette ──
-       #1A1A1A  black
-       #C41010  red
-       #757575  gray
-       #1565C0  blue
-       #5C0A14  wine (navbar)
+       #005D97  azul corporativo (primario)
+       #003E66  azul profundo (hover / footer)
+       #00AEEF  cian digital (acento)
+       #333333  gris carbón (texto)
+       #A7A9AC  gris neutro (secundario)
+       #E6E7E8  gris claro (divisores)
+       #FFFFFF  blanco (fondo)
     ─────────────── */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
 
     /* ── NAVBAR ─────────────────────────────── */
     nav {
-      background:#5C0A14; padding:0 40px; height:64px;
+      background:#005D97; padding:0 40px; height:64px;
       display:flex; align-items:center; justify-content:space-between;
       position:sticky; top:0; z-index:100;
       box-shadow:0 2px 12px rgba(0,0,0,.35);
     }
     .nav-left  { display:flex; align-items:center; gap:16px; }
     .nav-right { display:flex; align-items:center; gap:14px; }
-    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:7px; display:block; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
     .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
     #admin-nombre { color:rgba(255,255,255,.85); font-size:13px; font-weight:700; }
     .btn-nav {
@@ -41,12 +43,12 @@
 
     /* ── PAGE HEADER ──────────────────────────── */
     .page-header {
-      background:linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
       padding:32px 40px 28px; color:white;
     }
     .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
     .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
-    .header-stripe  { height:3px; background:linear-gradient(90deg,#757575,#1565C0); }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
 
     /* ── MAIN ─────────────────────────────────── */
     main { padding:32px 40px; max-width:1100px; margin:0 auto; }
@@ -82,7 +84,7 @@
       resize:vertical;
     }
     .form-group input:focus,
-    .form-group textarea:focus { border-color:#1565C0; background:#fff; }
+    .form-group textarea:focus { border-color:#005D97; background:#fff; }
     .form-group textarea { min-height:100px; }
 
     /* ── IMAGE UPLOAD ─────────────────────────── */
@@ -92,7 +94,7 @@
       transition:border-color .15s, background .15s;
       background:#FAFAFA;
     }
-    .img-upload-zone:hover { border-color:#1565C0; background:#EFF6FF; }
+    .img-upload-zone:hover { border-color:#005D97; background:#EFF6FF; }
     .img-upload-zone input { display:none; }
     .img-upload-icon { font-size:28px; margin-bottom:8px; }
     .img-upload-text { font-size:12px; color:#6B7280; font-weight:600; }
@@ -110,7 +112,7 @@
     }
     .img-remove {
       position:absolute; top:-6px; right:-6px;
-      background:#C41010; color:white; border:none; border-radius:50%;
+      background:#003E66; color:white; border:none; border-radius:50%;
       width:20px; height:20px; font-size:13px; line-height:1;
       cursor:pointer; display:flex; align-items:center; justify-content:center;
       font-weight:900;
@@ -130,12 +132,12 @@
 
     /* ── SUBMIT BTN ───────────────────────────── */
     .btn-submit {
-      margin-top:24px; background:#1565C0; color:white; border:none;
+      margin-top:24px; background:#005D97; color:white; border:none;
       padding:12px 32px; border-radius:8px; font-family:'Montserrat',sans-serif;
       font-size:13px; font-weight:800; cursor:pointer;
       transition:background .15s; letter-spacing:.3px;
     }
-    .btn-submit:hover { background:#1251A3; }
+    .btn-submit:hover { background:#003E66; }
     .btn-submit:disabled { background:#9CA3AF; cursor:not-allowed; }
 
     .form-msg {
@@ -188,7 +190,7 @@
     .aviso-date   { font-size:11px; color:#9CA3AF; font-weight:700; }
     .aviso-link-badge {
       display:inline-flex; align-items:center; gap:5px;
-      font-size:11px; font-weight:700; color:#1565C0;
+      font-size:11px; font-weight:700; color:#005D97;
       background:#EFF6FF; border-radius:20px; padding:2px 8px;
       text-decoration:none; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     }

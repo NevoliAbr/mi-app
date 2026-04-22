@@ -47,14 +47,14 @@ app.get('/api/test', async (_req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-/* ── Ministerios ─────────────────────────────────── */
-app.get('/api/ministerios', async (_req, res) => {
+/* ── Proyectos ─────────────────────────────────── */
+app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool   = await getPool();
     const result = await pool.request().query(
-      'SELECT id, nombre FROM ministerios WHERE activo = 1 ORDER BY nombre'
+      'SELECT id, nombre FROM proyectos WHERE activo = 1 ORDER BY nombre'
     );
-    res.json({ success: true, ministerios: result.recordset });
+    res.json({ success: true, proyectos: result.recordset });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -125,14 +125,14 @@ app.get('/api/usuarios/:id/info', async (req, res) => {
 
     const minsRes = await pool.request()
       .input('usuario_id', sql.Int, usuarioId)
-      .query(`SELECT m.id, m.nombre FROM ministerios m
-              INNER JOIN usuario_ministerios um ON um.ministerio_id = m.id
+      .query(`SELECT m.id, m.nombre FROM proyectos m
+              INNER JOIN usuario_proyectos um ON um.proyecto_id = m.id
               WHERE um.usuario_id = @usuario_id ORDER BY m.nombre`);
 
     res.json({
       success: true,
       info: infoRes.recordset[0] || null,
-      ministerios: minsRes.recordset
+      proyectos: minsRes.recordset
     });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -140,12 +140,12 @@ app.get('/api/usuarios/:id/info', async (req, res) => {
 /* ── Usuario info: POST (upsert) ────────────────── */
 app.post('/api/usuarios/:id/info', upload.single('foto'), async (req, res) => {
   const usuarioId = parseInt(req.params.id);
-  const { fecha_nacimiento, direccion, estado_civil, ministerio_ids } = req.body;
+  const { fecha_nacimiento, direccion, estado_civil, proyecto_ids } = req.body;
   const fotoNueva = req.file ? `/uploads/${req.file.filename}` : null;
 
-  // Parsear IDs de ministerios (vienen como JSON string o array)
+  // Parsear IDs de proyectos (vienen como JSON string o array)
   let mids = [];
-  try { mids = JSON.parse(ministerio_ids || '[]'); } catch { mids = []; }
+  try { mids = JSON.parse(proyecto_ids || '[]'); } catch { mids = []; }
   mids = mids.map(Number).filter(Boolean);
 
   try {
@@ -184,16 +184,16 @@ app.post('/api/usuarios/:id/info', upload.single('foto'), async (req, res) => {
           VALUES (@usuario_id, @fecha_nacimiento, @direccion, @estado_civil, @foto)`);
     }
 
-    // Reemplazar ministerios (delete + insert)
+    // Reemplazar proyectos (delete + insert)
     await pool.request()
       .input('usuario_id', sql.Int, usuarioId)
-      .query('DELETE FROM usuario_ministerios WHERE usuario_id = @usuario_id');
+      .query('DELETE FROM usuario_proyectos WHERE usuario_id = @usuario_id');
 
     for (const mid of mids) {
       await pool.request()
-        .input('usuario_id',    sql.Int, usuarioId)
-        .input('ministerio_id', sql.Int, mid)
-        .query('INSERT INTO usuario_ministerios (usuario_id, ministerio_id) VALUES (@usuario_id, @ministerio_id)');
+        .input('usuario_id', sql.Int, usuarioId)
+        .input('proyecto_id', sql.Int, mid)
+        .query('INSERT INTO usuario_proyectos (usuario_id, proyecto_id) VALUES (@usuario_id, @proyecto_id)');
     }
 
     res.json({ success: true });

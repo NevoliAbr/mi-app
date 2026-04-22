@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Música para todos</title>
+  <title>Project Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     /* ── Palette ────────────────────────────────
-       #1A1A1A  black
-       #C41010  red
-       #757575  gray
-       #1565C0  blue (primary action)
-       #FFFFFF  white
+       #005D97  azul corporativo (primario)
+       #003E66  azul profundo (hover / footer)
+       #00AEEF  cian digital (acento)
+       #333333  gris carbón (texto)
+       #A7A9AC  gris neutro (secundario)
+       #E6E7E8  gris claro (divisores)
+       #FFFFFF  blanco (fondo)
     ─────────────────────────────────────────── */
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -21,7 +23,7 @@
 
     /* ── NAVBAR ─────────────────────────────── */
     nav {
-      background-color: #5C0A14;
+      background-color: #005D97;
       padding: 16px 40px;
       display: flex;
       align-items: center;
@@ -29,7 +31,7 @@
       height: 70px;
     }
     .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .logo-img { height:46px; width:46px; object-fit:contain; border-radius:8px; display:block; }
+    .logo-img { height:46px; width:46px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
     .nav-menu { list-style:none; display:flex; align-items:center; gap:28px; }
     .nav-menu li a {
       color:white; text-decoration:none; font-size:14px; font-weight:700;
@@ -53,7 +55,7 @@
 
     /* ── CAROUSEL PRINCIPAL ─────────────────── */
     .avisos-hero {
-      width:100%; background:#0D0D0F;
+      width:100%; background:#002A44;
       min-height: calc(100vh - 70px);
       display:flex; flex-direction:column;
     }
@@ -67,10 +69,10 @@
     }
     .avisos-hero-line {
       flex:1; max-width:120px; height:2px;
-      background:linear-gradient(90deg,#C41010,transparent);
+      background:linear-gradient(90deg,#00AEEF,transparent);
     }
     .avisos-hero-line.right {
-      background:linear-gradient(270deg,#C41010,transparent);
+      background:linear-gradient(270deg,#00AEEF,transparent);
     }
 
     .reel-main-wrapper {
@@ -108,7 +110,7 @@
     }
     .reel-slide-nophoto {
       width:100%; height:clamp(260px,58vh,560px);
-      background:linear-gradient(135deg,#1A1A1A 0%,#5C0A14 50%,#C41010 100%);
+      background:linear-gradient(135deg,#001F3F 0%,#003E66 50%,#005D97 100%);
       display:flex; align-items:center; justify-content:center;
       font-size:72px;
     }
@@ -206,7 +208,7 @@
       font-size:12px; font-weight:800; color:#9CA3AF; flex-shrink:0;
       transition:background .2s, color .2s;
     }
-    .step-dot.active   { background:#1565C0; color:white; }
+    .step-dot.active   { background:#005D97; color:white; }
     .step-dot.done     { background:#16A34A; color:white; }
     .step-line {
       flex:1; height:2px; background:#E5E7EB;
@@ -216,7 +218,7 @@
     .step-label {
       font-size:11px; font-weight:700; color:#9CA3AF; margin-top:4px; text-align:center;
     }
-    .step-label.active { color:#1565C0; }
+    .step-label.active { color:#005D97; }
 
     /* Photo upload (register) */
     .reg-photo-section {
@@ -231,10 +233,10 @@
     }
     .reg-photo-circle img { width:100%; height:100%; object-fit:cover; }
     .btn-reg-photo {
-      display:inline-block; padding:7px 16px; background:#1565C0; color:white;
+      display:inline-block; padding:7px 16px; background:#005D97; color:white;
       border-radius:7px; font-size:12px; font-weight:700; cursor:pointer;
     }
-    .btn-reg-photo:hover { background:#1251A3; }
+    .btn-reg-photo:hover { background:#003E66; }
     .reg-photo-hint { font-size:11px; color:#9CA3AF; margin-top:3px; }
 
     /* Select inside modal */
@@ -247,7 +249,7 @@
       background-repeat:no-repeat; background-position:right 14px center;
       padding-right:36px;
     }
-    .form-group select:focus { border-color:#1565C0; background-color:#fff; }
+    .form-group select:focus { border-color:#005D97; background-color:#fff; }
 
     /* Two-col grid for step 2 */
     .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
@@ -262,8 +264,8 @@
     }
     .btn-back:hover { background:#E5E7EB; }
 
-    /* ── Checkboxes ministerios ─────────────── */
-    .ministerios-checks {
+    /* ── Checkboxes proyectos ─────────────── */
+    .proyectos-checks {
       display:flex; flex-wrap:wrap; gap:8px;
       background:#F9FAFB; border:2px solid #D1D5DB;
       border-radius:8px; padding:10px;
@@ -276,9 +278,9 @@
       transition:border-color .15s, background .15s;
       user-select:none;
     }
-    .min-check-label:hover { border-color:#1565C0; }
+    .min-check-label:hover { border-color:#005D97; }
     .min-check-label input { display:none; }
-    .min-check-label.checked { background:#EFF6FF; border-color:#1565C0; color:#1565C0; }
+    .min-check-label.checked { background:#EFF6FF; border-color:#005D97; color:#005D97; }
 
     /* ── MODAL BASE ─────────────────────────── */
     .modal-overlay {
@@ -302,7 +304,7 @@
     /* ── MODAL HEADER ───────────────────────── */
     .modal-header {
       /* Inspired by the logo: black top-left → red top-right */
-      background: linear-gradient(135deg, #1A1A1A 0%, #1A1A1A 45%, #C41010 100%);
+      background: linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
       padding:22px 28px;
       display:flex; align-items:center; justify-content:space-between;
       color:#fff;
@@ -344,7 +346,7 @@
       font-size:14px; color:#1A1A1A; background:#F9FAFB;
       outline:none; transition:border-color .15s, background .15s;
     }
-    .form-group input:focus { border-color:#1565C0; background:#fff; }
+    .form-group input:focus { border-color:#005D97; background:#fff; }
     .form-group input::placeholder { color:#9CA3AF; }
 
     /* password toggle wrapper */
@@ -358,14 +360,14 @@
     .pw-toggle:hover { color:#1A1A1A; }
 
     .submit-btn {
-      width:100%; padding:14px; background:#1565C0; color:#fff; border:none;
+      width:100%; padding:14px; background:#005D97; color:#fff; border:none;
       border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
       font-weight:800; letter-spacing:1.8px; text-transform:uppercase;
       cursor:pointer; margin-top:8px;
       transition:background .15s, transform .1s, box-shadow .15s;
-      box-shadow:0 4px 16px rgba(21,101,192,.35);
+      box-shadow:0 4px 16px rgba(0,93,151,.35);
     }
-    .submit-btn:hover  { background:#1251A3; box-shadow:0 6px 20px rgba(21,101,192,.45); }
+    .submit-btn:hover  { background:#003E66; box-shadow:0 6px 20px rgba(0,93,151,.45); }
     .submit-btn:active { transform:scale(.98); }
     .submit-btn:disabled { background:#93C5FD; box-shadow:none; cursor:not-allowed; }
 
@@ -379,7 +381,7 @@
 
     .modal-footer { text-align:center; margin-top:18px; font-size:13px; color:#6B7280; }
     .modal-footer a {
-      color:#C41010; font-weight:700; cursor:pointer; text-decoration:none;
+      color:#005D97; font-weight:700; cursor:pointer; text-decoration:none;
       transition:opacity .15s;
     }
     .modal-footer a:hover { opacity:.75; text-decoration:underline; }
@@ -387,7 +389,7 @@
     /* accent stripe at bottom of modal header (gray separator) */
     .modal-header-stripe {
       height:3px;
-      background:linear-gradient(90deg, #757575 0%, #1565C0 100%);
+      background:linear-gradient(90deg, #00AEEF 0%, #005D97 100%);
     }
 
     /* ── USUARIO AUTENTICADO (navbar) ──────── */
@@ -464,7 +466,7 @@
     }
     .aviso-detail-nophoto {
       height:180px;
-      background:linear-gradient(135deg,#1A1A1A 0%,#5C0A14 50%,#C41010 100%);
+      background:linear-gradient(135deg,#001F3F 0%,#003E66 50%,#005D97 100%);
       display:flex; align-items:center; justify-content:center;
       font-size:64px;
     }
@@ -514,7 +516,7 @@
       letter-spacing:.4px;
     }
     .aviso-detail-link.fb  { background:#1877F2; color:white; }
-    .aviso-detail-link.web { background:#1565C0; color:white; }
+    .aviso-detail-link.web { background:#005D97; color:white; }
     .aviso-detail-link:hover { opacity:.88; transform:scale(1.03); }
     .aviso-detail-link svg { width:16px; height:16px; fill:currentColor; }
 
@@ -704,8 +706,8 @@
                 <input type="text" id="reg-dir" placeholder="Calle, ciudad..." />
               </div>
               <div class="form-group full">
-                <label>Ministerios</label>
-                <div id="reg-ministerios-list" class="ministerios-checks"></div>
+                <label>Proyectos</label>
+                <div id="reg-proyectos-list" class="proyectos-checks"></div>
               </div>
             </div>
             <button type="button" class="btn-back" id="btn-reg-back">← ATRÁS</button>
@@ -863,16 +865,16 @@
     });
 
     /* ── Registro: wizard ───────────────────────── */
-    let regMinistrLoaded = false;
+    let regProyLoaded = false;
 
-    async function loadRegMinisterios() {
-      if (regMinistrLoaded) return;
+    async function loadRegProyectos() {
+      if (regProyLoaded) return;
       try {
-        const res  = await fetch(`${API}/api/ministerios`);
+        const res  = await fetch(`${API}/api/proyectos`);
         const data = await res.json();
         if (!data.success) return;
-        const container = document.getElementById('reg-ministerios-list');
-        container.innerHTML = data.ministerios.map(m =>
+        const container = document.getElementById('reg-proyectos-list');
+        container.innerHTML = data.proyectos.map(m =>
           `<label class="min-check-label" data-id="${m.id}">
             <input type="checkbox" value="${m.id}" />
             ${m.nombre}
@@ -885,12 +887,12 @@
             lbl.classList.toggle('checked', cb.checked);
           });
         });
-        regMinistrLoaded = true;
+        regProyLoaded = true;
       } catch { /* silencioso */ }
     }
 
-    function getRegMinisterios() {
-      return [...document.querySelectorAll('#reg-ministerios-list input:checked')]
+    function getRegProyectos() {
+      return [...document.querySelectorAll('#reg-proyectos-list input:checked')]
         .map(cb => parseInt(cb.value));
     }
 
@@ -922,7 +924,7 @@
       document.getElementById('reg-dot-1').className = 'step-dot done';
       document.getElementById('reg-dot-2').className = 'step-dot active';
       document.getElementById('reg-line-1').className = 'step-line done';
-      loadRegMinisterios();
+      loadRegProyectos();
     });
 
     // Paso 2 → 1
@@ -964,7 +966,7 @@
         fd.append('fecha_nacimiento', document.getElementById('reg-fnac').value);
         fd.append('direccion',        document.getElementById('reg-dir').value);
         fd.append('estado_civil',     document.getElementById('reg-ecivil').value);
-        fd.append('ministerio_ids', JSON.stringify(getRegMinisterios()));
+        fd.append('proyecto_ids', JSON.stringify(getRegProyectos()));
         const fotoFile = document.getElementById('reg-foto').files[0];
         if (fotoFile) fd.append('foto', fotoFile);
 
