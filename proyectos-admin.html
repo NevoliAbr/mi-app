@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administración de Proyectos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-center{ display:flex; gap:6px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+    .btn-nav-tab {
+      background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
+      padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; text-decoration:none;
+      transition:background .15s, border-color .15s;
+    }
+    .btn-nav-tab:hover  { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.7); }
+    .btn-nav-tab.active { background:rgba(255,255,255,.22); border-color:#fff; }
+
+    .page-header {
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
+      padding:32px 40px 28px; color:white;
+    }
+    .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    main { padding:32px 40px; max-width:900px; margin:0 auto; }
+
+    .stats { display:flex; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+    .stat-card {
+      background:white; border-radius:12px; padding:18px 24px;
+      flex:1; min-width:140px; box-shadow:0 1px 4px rgba(0,0,0,.08);
+      border-top:4px solid transparent;
+    }
+    .stat-card.total   { border-top-color:#005D97; }
+    .stat-card.activos { border-top-color:#16A34A; }
+    .stat-card.inactivos { border-top-color:#A7A9AC; }
+    .stat-num   { font-size:32px; font-weight:900; color:#1A1A1A; }
+    .stat-label { font-size:11px; font-weight:700; color:#9CA3AF; letter-spacing:.6px; text-transform:uppercase; margin-top:2px; }
+
+    .table-card { background:white; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden; }
+    .table-toolbar {
+      padding:18px 24px; display:flex; align-items:center;
+      justify-content:space-between; gap:16px; flex-wrap:wrap;
+      border-bottom:1px solid #F0F0F0;
+    }
+    .toolbar-title { font-size:15px; font-weight:800; color:#1A1A1A; }
+    .search-wrap { position:relative; }
+    .search-wrap input {
+      padding:9px 14px 9px 36px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
+      outline:none; transition:border-color .15s; width:220px; background:#FAFAFA;
+    }
+    .search-wrap input:focus { border-color:#005D97; background:#fff; }
+    .search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#9CA3AF; font-size:14px; pointer-events:none; }
+
+    .btn-add {
+      padding:9px 20px; background:#005D97; color:white; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; letter-spacing:.5px; cursor:pointer;
+      transition:background .15s; display:flex; align-items:center; gap:7px;
+    }
+    .btn-add:hover { background:#003E66; }
+
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    th { padding:12px 16px; text-align:left; font-size:11px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid #F3F4F6; transition:background .1s; }
+    tbody tr:hover { background:#F9FAFB; }
+    tbody tr:last-child { border-bottom:none; }
+    td { padding:13px 16px; font-size:13px; color:#374151; vertical-align:middle; }
+    .td-id   { font-weight:800; color:#9CA3AF; width:60px; }
+    .td-name { font-weight:700; color:#1A1A1A; }
+    .td-center { text-align:center; padding:40px 16px; color:#9CA3AF; font-size:14px; }
+
+    .badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:800; }
+    .badge-activo   { background:#D1FAE5; color:#065F46; }
+    .badge-inactivo { background:#F3F4F6; color:#6B7280; }
+
+    .td-actions { display:flex; gap:6px; align-items:center; }
+    .btn-action {
+      width:32px; height:32px; border:none; border-radius:7px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:15px;
+      transition:background .15s, transform .1s;
+    }
+    .btn-action:hover  { transform:scale(1.1); }
+    .btn-action:active { transform:scale(.95); }
+    .btn-toggle { background:#F0FDF4; }
+    .btn-toggle:hover { background:#DCFCE7; }
+    .btn-edit   { background:#FFFBEB; }
+    .btn-edit:hover { background:#FEF3C7; }
+    .btn-delete { background:#FEF2F2; }
+    .btn-delete:hover { background:#FEE2E2; }
+
+    /* Toast */
+    #toast {
+      position:fixed; bottom:28px; right:28px; z-index:9999;
+      padding:13px 20px; border-radius:10px; font-size:13px; font-weight:700;
+      color:white; box-shadow:0 6px 24px rgba(0,0,0,.2);
+      display:none; animation:fadeInUp .2s ease;
+    }
+    #toast.success { background:#16A34A; }
+    #toast.error   { background:#C41010; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Modal */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+      z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    }
+    .modal-overlay.active { display:flex; }
+    .modal-card {
+      background:white; border-radius:16px; width:100%; max-width:440px;
+      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.4);
+      animation:modalIn .2s ease;
+    }
+    @keyframes modalIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
+    .modal-header {
+      background:linear-gradient(135deg, #003E66 0%, #005D97 100%);
+      padding:20px 24px; display:flex; align-items:center; justify-content:space-between; color:white;
+    }
+    .modal-header h2  { font-size:17px; font-weight:800; }
+    .modal-close { background:none; border:none; color:white; font-size:22px; cursor:pointer; opacity:.65; transition:opacity .15s; padding:4px; }
+    .modal-close:hover { opacity:1; }
+    .modal-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+    .modal-body { padding:24px; }
+    .modal-alert {
+      padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;
+      margin-bottom:16px; display:none;
+    }
+    .modal-alert.error   { display:block; background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
+    .modal-alert.success { display:block; background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
+    .form-group { display:flex; flex-direction:column; gap:6px; margin-bottom:20px; }
+    .form-group label { font-size:11px; font-weight:800; color:#374151; letter-spacing:.6px; text-transform:uppercase; }
+    .form-group input {
+      padding:11px 14px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:14px; color:#1A1A1A;
+      background:#FAFAFA; outline:none; transition:border-color .15s;
+    }
+    .form-group input:focus { border-color:#005D97; background:#fff; box-shadow:0 0 0 4px rgba(0,93,151,.08); }
+    .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
+    .btn-cancel { padding:10px 22px; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
+    .btn-cancel:hover { background:#E5E7EB; }
+    .btn-save {
+      padding:10px 28px; background:#005D97; color:white; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; letter-spacing:.5px; cursor:pointer; transition:background .15s;
+    }
+    .btn-save:hover    { background:#003E66; }
+    .btn-save:disabled { background:#93C5FD; cursor:not-allowed; }
+
+    /* Confirm */
+    .confirm-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:300; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .confirm-overlay.active { display:flex; }
+    .confirm-card { background:white; border-radius:14px; padding:32px 28px; max-width:360px; width:100%; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.3); animation:modalIn .2s ease; }
+    .confirm-icon  { font-size:40px; margin-bottom:12px; }
+    .confirm-title { font-size:17px; font-weight:800; color:#1A1A1A; margin-bottom:8px; }
+    .confirm-msg   { font-size:13px; color:#6B7280; margin-bottom:24px; line-height:1.5; }
+    .confirm-btns  { display:flex; gap:10px; justify-content:center; }
+    .confirm-btn   { padding:10px 24px; border-radius:8px; border:none; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; }
+    .confirm-btn.cancel { background:#F3F4F6; color:#374151; }
+    .confirm-btn.danger { background:#C41010; color:white; }
+
+    @media (max-width:768px) {
+      nav { padding:0 16px; }
+      .page-header { padding:24px 16px 20px; }
+      main { padding:20px 16px; }
+      .search-wrap input { width:160px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-left">
+      <a href="index.html"><img src="logo.png" alt="Logo" class="logo-img" /></a>
+      <span class="nav-title">/ Administración</span>
+    </div>
+    <div class="nav-center">
+      <a href="admin.html" class="btn-nav-tab">👥 Usuarios</a>
+      <a href="proyectos-admin.html" class="btn-nav-tab active">📁 Proyectos</a>
+    </div>
+    <div class="nav-right">
+      <a href="index.html" class="btn-nav">&#8592; Inicio</a>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1>📁 Administración de Proyectos</h1>
+    <p>Agrega, modifica y elimina proyectos del catálogo</p>
+  </div>
+  <div class="header-stripe"></div>
+
+  <main>
+    <div class="stats">
+      <div class="stat-card total">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card activos">
+        <div class="stat-num" id="stat-activos">—</div>
+        <div class="stat-label">Activos</div>
+      </div>
+      <div class="stat-card inactivos">
+        <div class="stat-num" id="stat-inactivos">—</div>
+        <div class="stat-label">Inactivos</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="toolbar-title">Proyectos</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Buscar proyecto…" />
+          </div>
+          <button class="btn-add" id="btn-nuevo">＋ Nuevo proyecto</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="proj-tbody">
+            <tr><td colspan="4" class="td-center">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal agregar / editar -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Nuevo Proyecto</h2>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-stripe"></div>
+      <div class="modal-body">
+        <div class="modal-alert" id="modal-alert"></div>
+        <div class="form-group">
+          <label for="input-nombre">Nombre del proyecto</label>
+          <input type="text" id="input-nombre" placeholder="Ej: Proyecto Alabanza 2025" maxlength="200" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+        <button class="btn-save"   id="modal-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm eliminar -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-card">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-title">Eliminar proyecto</div>
+      <div class="confirm-msg" id="confirm-msg">¿Estás seguro?</div>
+      <div class="confirm-btns">
+        <button class="confirm-btn cancel" id="confirm-cancel">Cancelar</button>
+        <button class="confirm-btn danger" id="confirm-ok">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+    /* Guard superusuario */
+    (function () {
+      const s = JSON.parse(localStorage.getItem('session') || 'null');
+      if (!s || s.rol !== 'superusuario') window.location.href = 'index.html';
+    })();
+
+    let allProyectos = [];
+    let editingId    = null;
+
+    /* ── Toast ── */
+    function showToast(msg, tipo = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = tipo; t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+
+    /* ── Stats ── */
+    function updateStats(list) {
+      document.getElementById('stat-total').textContent    = list.length;
+      document.getElementById('stat-activos').textContent  = list.filter(p => p.activo).length;
+      document.getElementById('stat-inactivos').textContent= list.filter(p => !p.activo).length;
+    }
+
+    /* ── Render tabla ── */
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function renderTable(list) {
+      const tbody = document.getElementById('proj-tbody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="td-center">No se encontraron proyectos.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td class="td-id">${p.id}</td>
+          <td class="td-name">${esc(p.nombre)}</td>
+          <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? '● Activo' : '○ Inactivo'}</span></td>
+          <td>
+            <div class="td-actions">
+              <button class="btn-action btn-edit"   title="Editar"   data-id="${p.id}" data-action="edit">✏️</button>
+              <button class="btn-action btn-toggle" title="${p.activo ? 'Desactivar' : 'Activar'}" data-id="${p.id}" data-action="toggle" data-activo="${p.activo ? 1 : 0}">${p.activo ? '🔒' : '🔓'}</button>
+              <button class="btn-action btn-delete" title="Eliminar" data-id="${p.id}" data-action="delete" data-nombre="${esc(p.nombre)}">🗑️</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+
+    /* ── Cargar ── */
+    async function loadProyectos() {
+      try {
+        const res  = await fetch(`${API}/api/admin/proyectos`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        allProyectos = data.proyectos;
+        updateStats(allProyectos);
+        renderTable(allProyectos);
+      } catch (err) {
+        document.getElementById('proj-tbody').innerHTML =
+          `<tr><td colspan="4" class="td-center" style="color:#C41010">Error al cargar: ${err.message}</td></tr>`;
+      }
+    }
+
+    loadProyectos();
+
+    /* ── Búsqueda ── */
+    document.getElementById('search-input').addEventListener('input', function () {
+      const q = this.value.toLowerCase();
+      renderTable(q ? allProyectos.filter(p => p.nombre.toLowerCase().includes(q)) : allProyectos);
+    });
+
+    /* ── Modal helpers ── */
+    function openModal(titulo, nombre = '', id = null) {
+      editingId = id;
+      document.getElementById('modal-title').textContent  = titulo;
+      document.getElementById('input-nombre').value       = nombre;
+      document.getElementById('modal-alert').className    = 'modal-alert';
+      document.getElementById('modal-alert').textContent  = '';
+      document.getElementById('modal-overlay').classList.add('active');
+      setTimeout(() => document.getElementById('input-nombre').focus(), 50);
+    }
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+      editingId = null;
+    }
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('btn-nuevo').addEventListener('click', () => openModal('Nuevo Proyecto'));
+
+    /* ── Guardar ── */
+    document.getElementById('modal-save').addEventListener('click', async () => {
+      const nombre = document.getElementById('input-nombre').value.trim();
+      const alert  = document.getElementById('modal-alert');
+      const btn    = document.getElementById('modal-save');
+      if (!nombre) { alert.textContent = 'El nombre es requerido.'; alert.className = 'modal-alert error'; return; }
+
+      btn.disabled = true; btn.textContent = 'Guardando…';
+      try {
+        const url    = editingId ? `${API}/api/admin/proyectos/${editingId}` : `${API}/api/admin/proyectos`;
+        const method = editingId ? 'PATCH' : 'POST';
+        const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre }) });
+        const data   = await res.json();
+        if (!data.success) throw new Error(data.error);
+        showToast(editingId ? 'Proyecto actualizado.' : 'Proyecto creado.');
+        closeModal();
+        await loadProyectos();
+      } catch (err) {
+        alert.textContent = err.message; alert.className = 'modal-alert error';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Guardar';
+      }
+    });
+
+    /* ── Confirm dialog ── */
+    let confirmResolve = null;
+    function confirmDialog(msg) {
+      document.getElementById('confirm-msg').textContent = msg;
+      document.getElementById('confirm-overlay').classList.add('active');
+      return new Promise(res => { confirmResolve = res; });
+    }
+    document.getElementById('confirm-cancel').addEventListener('click', () => {
+      document.getElementById('confirm-overlay').classList.remove('active');
+      confirmResolve?.(false);
+    });
+    document.getElementById('confirm-ok').addEventListener('click', () => {
+      document.getElementById('confirm-overlay').classList.remove('active');
+      confirmResolve?.(true);
+    });
+
+    /* ── Acciones tabla ── */
+    document.getElementById('proj-tbody').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const id     = parseInt(btn.dataset.id);
+      const action = btn.dataset.action;
+      const proy   = allProyectos.find(p => p.id === id);
+
+      if (action === 'edit') {
+        openModal('Editar Proyecto', proy.nombre, id);
+        return;
+      }
+
+      if (action === 'toggle') {
+        const nuevoActivo = !proy.activo;
+        try {
+          const res  = await fetch(`${API}/api/admin/proyectos/${id}/activo`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activo: nuevoActivo })
+          });
+          const data = await res.json();
+          if (!data.success) throw new Error(data.error);
+          showToast(nuevoActivo ? 'Proyecto activado.' : 'Proyecto desactivado.');
+          await loadProyectos();
+        } catch (err) { showToast(err.message, 'error'); }
+        return;
+      }
+
+      if (action === 'delete') {
+        const ok = await confirmDialog(`¿Eliminar el proyecto "${proy.nombre}"? Esta acción no se puede deshacer.`);
+        if (!ok) return;
+        try {
+          const res  = await fetch(`${API}/api/admin/proyectos/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!data.success) throw new Error(data.error);
+          showToast('Proyecto eliminado.');
+          await loadProyectos();
+        } catch (err) { showToast(err.message, 'error'); }
+      }
+    });
+
+    /* Enter en input guarda */
+    document.getElementById('input-nombre').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('modal-save').click();
+    });
+  </script>
+</body>
+</html>

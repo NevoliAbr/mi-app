@@ -185,6 +185,14 @@
         📅 Año de trabajo: <strong id="badge-año">—</strong>
       </div>
 
+      <!-- Proyecto -->
+      <div class="form-group">
+        <label for="select-proyecto">Proyecto</label>
+        <select id="select-proyecto">
+          <option value="">— Cargando proyectos… —</option>
+        </select>
+      </div>
+
       <!-- Archivo -->
       <div class="form-group">
         <label>Archivo de entregable (.xlsx)</label>
@@ -237,7 +245,6 @@
       if (user.rol !== 'superusuario') { window.location.href = 'index.html'; return; }
       sessionAño = user.año || new Date().getFullYear();
       document.getElementById('badge-año').textContent = sessionAño;
-      /* Preseleccionar el mes actual */
       document.getElementById('select-mes').value = new Date().getMonth() + 1;
     } catch {
       localStorage.removeItem('session');
@@ -245,32 +252,47 @@
     }
   })();
 
-  /* ── Cargar meses existentes y detectar duplicado ── */
-  let mesesCargados = [];
+  /* ── Cargar proyectos ── */
+  (async () => {
+    try {
+      const res  = await fetch(`${API}/api/proyectos`);
+      const data = await res.json();
+      if (data.success) {
+        const sel = document.getElementById('select-proyecto');
+        sel.innerHTML = '<option value="">— Seleccionar proyecto —</option>' +
+          data.proyectos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+      }
+    } catch {}
+  })();
+
+  /* ── Cargar combos existentes para detectar duplicado ── */
+  let combosExistentes = [];
   (async () => {
     try {
       const res  = await fetch(`${API}/api/entregables`);
       const data = await res.json();
       if (data.success) {
-        mesesCargados = data.entregables
+        combosExistentes = data.entregables
           .filter(e => e.año == sessionAño)
-          .map(e => e.mes);
+          .map(e => ({ proyecto_id: e.proyecto_id, mes: e.mes }));
       }
     } catch {}
-    checkMesDuplicado();
+    checkDuplicado();
   })();
 
-  function checkMesDuplicado() {
-    const mes = parseInt(document.getElementById('select-mes').value);
-    if (mes && mesesCargados.includes(mes)) {
-      showAlert('⚠ Ya hay entregables cargados para este mes. Si subes un nuevo archivo, se borrarán todos los avances registrados.', 'warning');
+  function checkDuplicado() {
+    const mes     = parseInt(document.getElementById('select-mes').value);
+    const proyId  = parseInt(document.getElementById('select-proyecto').value);
+    if (mes && proyId && combosExistentes.some(c => c.proyecto_id == proyId && c.mes == mes)) {
+      showAlert('⚠ Ya hay entregables cargados para este proyecto y mes. Si subes un nuevo archivo, se borrarán todos los avances registrados.', 'warning');
     } else {
       const el = document.getElementById('alert-msg');
       if (el.classList.contains('warning')) el.className = 'alert';
     }
   }
 
-  document.getElementById('select-mes').addEventListener('change', checkMesDuplicado);
+  document.getElementById('select-mes').addEventListener('change', checkDuplicado);
+  document.getElementById('select-proyecto').addEventListener('change', checkDuplicado);
 
   /* ── Mostrar nombre de archivo ── */
   document.getElementById('file-input').addEventListener('change', function () {
@@ -295,17 +317,20 @@
 
   /* ── Subir ── */
   document.getElementById('btn-upload').addEventListener('click', async () => {
-    const file = document.getElementById('file-input').files[0];
-    const mes  = document.getElementById('select-mes').value;
-    const btn  = document.getElementById('btn-upload');
+    const file    = document.getElementById('file-input').files[0];
+    const mes     = document.getElementById('select-mes').value;
+    const proyId  = document.getElementById('select-proyecto').value;
+    const btn     = document.getElementById('btn-upload');
 
-    if (!file) return showAlert('Selecciona un archivo .xlsx.', 'error');
-    if (!mes)  return showAlert('Selecciona el mes correspondiente.', 'error');
+    if (!proyId) return showAlert('Selecciona un proyecto.', 'error');
+    if (!file)   return showAlert('Selecciona un archivo .xlsx.', 'error');
+    if (!mes)    return showAlert('Selecciona el mes correspondiente.', 'error');
 
     const fd = new FormData();
-    fd.append('archivo', file);
-    fd.append('mes',     mes);
-    fd.append('año',     sessionAño);
+    fd.append('archivo',      file);
+    fd.append('mes',          mes);
+    fd.append('año',          sessionAño);
+    fd.append('proyecto_id',  proyId);
 
     btn.disabled    = true;
     btn.textContent = 'Subiendo…';

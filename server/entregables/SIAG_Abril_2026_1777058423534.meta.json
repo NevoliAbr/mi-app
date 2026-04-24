@@ -1,0 +1,237 @@
+{
+  "id": "SIAG_Abril_2026_1777058423534",
+  "mes": 4,
+  "mesNombre": "Abril",
+  "año": 2026,
+  "proyecto_id": 1,
+  "proyectoNombre": "SIAG",
+  "ruta": "/entregables/SIAG_Abril_2026_1777058423534.xlsx",
+  "fecha_carga": "2026-04-24T19:20:23.536Z",
+  "items": [
+    {
+      "num": 1,
+      "nombre": "Acta de Constitución de Proyecto",
+      "etapas": {
+        "creacion": {
+          "completada": true,
+          "fecha": "2026-04-24T19:20:39.803Z"
+        },
+        "revision": {
+          "completada": true,
+          "fecha": "2026-04-24T19:20:40.548Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [],
+          "fecha": "2026-04-24T19:20:41.458Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-24T19:24:03.591Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-24T19:24:04.413Z"
+        },
+        "firma_externa": {
+          "completada": true,
+          "fecha": "2026-04-24T19:24:05.053Z"
+        },
+        "carpeta": {
+          "completada": true,
+          "fecha": "2026-04-24T19:24:05.704Z"
+        },
+        "acuse": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1777058649551.pdf",
+          "fecha": "2026-04-24T19:24:09.566Z"
+        },
+        "vobo_final": {
+          "completada": false,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 2,
+      "nombre": "Presentación de KickOff",
+      "etapas": {
+        "creacion": {
+          "completada": true,
+          "fecha": "2026-04-24T19:27:06.366Z"
+        },
+        "revision": {
+          "completada": true,
+          "fecha": "2026-04-24T21:01:14.915Z"
+        },
+        "vobo": {
+          "completada": false,
+          "rechazado": true,
+          "observaciones": [
+            {
+              "texto": null,
+              "imagen": "/entregables/obs-imgs/obs_1777059037546.png",
+              "fecha": "2026-04-24T19:30:37.549Z"
+            },
+            {
+              "texto": null,
+              "imagen": "/entregables/obs-imgs/obs_1777059060587.png",
+              "fecha": "2026-04-24T19:31:00.588Z"
+            },
+            {
+              "texto": "HAy problemas con",
+              "imagen": "/entregables/obs-imgs/obs_1777059069626.png",
+              "fecha": "2026-04-24T19:31:09.637Z"
+            },
+            {
+              "texto": "sñld fs",
+              "imagen": null,
+              "fecha": "2026-04-24T20:52:41.732Z"
+            },
+            {
+              "texto": "asda",
+              "imagen": null,
+              "fecha": "2026-04-24T20:53:26.213Z"
+            }
+          ],
+          "fecha": null
+        },
+        "impresion": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_interna": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        },
+        "vobo_final": {
+          "completada": false,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 3,
+      "nombre": "Inventario y Calendario de Unidades Vehiculares Asignadas para Instalación de Equipos",
+      "etapas": {
+        "creacion": {
+          "completada": true,
+          "fecha": "2026-04-24T20:42:37.820Z"
+        },
+        "revision": {
+          "completada": true,
+          "fecha": "2026-04-24T20:42:47.979Z"
+        },
+        "vobo": {
+          "completada": false,
+          "rechazado": true,
+          "observaciones": [
+            {
+              "texto": "es",
+              "imagen": "/entregables/obs-imgs/obs_1777063360910.png",
+              "fecha": "2026-04-24T20:42:40.919Z"
+            }
+          ],
+          "fecha": null
+        },
+        "impresion": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_interna": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        },
+        "vobo_final": {
+          "completada": false,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 4,
+      "nombre": "Reporte de Avance - Marzo del [17/03/2026] al [31/03/2026]",
+      "etapas": {
+        "creacion": {
+          "completada": true,
+          "fecha": "2026-04-24T21:27:37.392Z"
+        },
+        "revision": {
+          "completada": true,
+          "fecha": "2026-04-24T21:27:46.667Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [
+            {
+              "texto": "algo",
+              "imagen": null,
+              "fecha": "2026-04-24T21:06:38.445Z",
+              "estado": "aceptada"
+            },
+            {
+              "texto": null,
+              "imagen": "/entregables/obs-imgs/obs_1777066041899.png",
+              "fecha": "2026-04-24T21:27:21.900Z",
+              "estado": "aceptada"
+            }
+          ],
+          "fecha": "2026-04-24T21:27:48.422Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-24T21:27:48.874Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-24T21:27:49.845Z"
+        },
+        "firma_externa": {
+          "completada": true,
+          "fecha": "2026-04-24T21:27:51.086Z"
+        },
+        "carpeta": {
+          "completada": true,
+          "fecha": "2026-04-24T21:27:51.895Z"
+        },
+        "acuse": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1777066076035.pdf",
+          "fecha": "2026-04-24T21:27:56.043Z"
+        },
+        "vobo_final": {
+          "completada": true,
+          "fecha": "2026-04-24T21:28:07.466Z"
+        }
+      }
+    }
+  ]
+}

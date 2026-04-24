@@ -113,12 +113,57 @@ app.get('/api/test', async (_req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-/* ── Proyectos ─────────────────────────────────── */
+/* ── Proyectos (público) ───────────────────────── */
 app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute('SELECT id, nombre FROM proyectos WHERE activo = 1 ORDER BY nombre');
     res.json({ success: true, proyectos: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Admin: Proyectos CRUD ─────────────────────── */
+app.get('/api/admin/proyectos', async (_req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT id, nombre, activo FROM proyectos ORDER BY nombre');
+    res.json({ success: true, proyectos: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.post('/api/admin/proyectos', async (req, res) => {
+  const nombre = (req.body.nombre || '').trim();
+  if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
+  try {
+    const pool = await getPool();
+    const [result] = await pool.execute('INSERT INTO proyectos (nombre, activo) VALUES (?, 1)', [nombre]);
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.patch('/api/admin/proyectos/:id', async (req, res) => {
+  const nombre = (req.body.nombre || '').trim();
+  if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
+  try {
+    const pool = await getPool();
+    await pool.execute('UPDATE proyectos SET nombre = ? WHERE id = ?', [nombre, parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.patch('/api/admin/proyectos/:id/activo', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute('UPDATE proyectos SET activo = ? WHERE id = ?', [req.body.activo ? 1 : 0, parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.delete('/api/admin/proyectos/:id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute('DELETE FROM proyectos WHERE id = ?', [parseInt(req.params.id)]);
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -526,25 +571,45 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 /* ── Entregables: subir ─────────────────────────── */
-app.post('/api/entregables/upload', entregUpload.single('archivo'), (req, res) => {
+app.post('/api/entregables/upload', entregUpload.single('archivo'), async (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
 
-  const mes = parseInt(req.body.mes);
-  const año = parseInt(req.body.año) || new Date().getFullYear();
+  const mes         = parseInt(req.body.mes);
+  const año         = parseInt(req.body.año) || new Date().getFullYear();
+  const proyecto_id = parseInt(req.body.proyecto_id);
 
   if (!mes || mes < 1 || mes > 12) {
     fs.unlinkSync(req.file.path);
     return res.status(400).json({ success: false, error: 'Selecciona un mes válido.' });
   }
+  if (!proyecto_id) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ success: false, error: 'Selecciona un proyecto.' });
+  }
 
-  const mesNombre = MESES[mes - 1];
+  let proyectoNombre = '';
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT nombre FROM proyectos WHERE id = ?', [proyecto_id]);
+    if (!rows.length) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, error: 'Proyecto no encontrado.' });
+    }
+    proyectoNombre = rows[0].nombre;
+  } catch (err) {
+    fs.unlinkSync(req.file.path);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 
-  // Eliminar carga previa del mismo mes+año si existe
+  const mesNombre  = MESES[mes - 1];
+  const safeNombre = proyectoNombre.replace(/[^a-zA-Z0-9À-ɏ]/g, '_');
+
+  // Eliminar carga previa del mismo proyecto+mes+año si existe
   try {
     fs.readdirSync(entregablesDir).filter(f => f.endsWith('.meta.json')).forEach(f => {
       try {
         const m = JSON.parse(fs.readFileSync(path.join(entregablesDir, f), 'utf8'));
-        if (m.mes === mes && m.año === año) {
+        if (m.mes === mes && m.año === año && m.proyecto_id == proyecto_id) {
           const oldXlsx = path.join(entregablesDir, `${m.id}.xlsx`);
           if (fs.existsSync(oldXlsx)) fs.unlinkSync(oldXlsx);
           fs.unlinkSync(path.join(entregablesDir, f));
@@ -553,7 +618,7 @@ app.post('/api/entregables/upload', entregUpload.single('archivo'), (req, res) =
     });
   } catch {}
 
-  const id        = `${mesNombre}_${año}_${Date.now()}`;
+  const id        = `${safeNombre}_${mesNombre}_${año}_${Date.now()}`;
   const destPath  = path.join(entregablesDir, `${id}.xlsx`);
   const metaPath  = path.join(entregablesDir, `${id}.meta.json`);
 
@@ -586,7 +651,8 @@ app.post('/api/entregables/upload', entregUpload.single('archivo'), (req, res) =
     }
   } catch {}
 
-  const meta = { id, mes, mesNombre, año, ruta: `/entregables/${id}.xlsx`,
+  const meta = { id, mes, mesNombre, año, proyecto_id, proyectoNombre,
+                 ruta: `/entregables/${id}.xlsx`,
                  fecha_carga: new Date().toISOString(), items };
   fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
   res.json({ success: true, meta });
@@ -677,14 +743,17 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     if (!item.etapas[etapa]) return res.status(400).json({ success: false, error: 'Etapa inválida.' });
     item.etapas[etapa].completada = completada;
     item.etapas[etapa].fecha      = completada ? new Date().toISOString() : null;
+    if (etapa === 'vobo' && completada) item.etapas.vobo.rechazado = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 /* ── Entregables: PDF de etapa ─────────────────── */
-const pdfDir = path.join(entregablesDir, 'pdfs');
-if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+const pdfDir    = path.join(entregablesDir, 'pdfs');
+const obsImgDir = path.join(entregablesDir, 'obs-imgs');
+if (!fs.existsSync(pdfDir))    fs.mkdirSync(pdfDir,    { recursive: true });
+if (!fs.existsSync(obsImgDir)) fs.mkdirSync(obsImgDir, { recursive: true });
 
 const pdfStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, pdfDir),
@@ -728,25 +797,72 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
 });
 
 /* ── Entregables: observación VOBO ─────────────── */
-app.post('/api/entregables/:id/items/:num/vobo/observacion', (req, res) => {
+const obsImgStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, obsImgDir),
+  filename:    (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.png';
+    cb(null, `obs_${Date.now()}${ext}`);
+  }
+});
+const obsImgUpload = multer({
+  storage: obsImgStorage,
+  limits:  { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype.startsWith('image/'))
+});
+
+app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single('imagen'), (req, res) => {
   try {
-    const id       = decodeURIComponent(req.params.id);
-    const num      = parseInt(req.params.num);
-    const { texto } = req.body;
-    if (!texto) return res.status(400).json({ success: false, error: 'Texto requerido.' });
+    const id     = decodeURIComponent(req.params.id);
+    const num    = parseInt(req.params.num);
+    const texto  = (req.body.texto || '').trim();
+    const imagen = req.file ? `/entregables/obs-imgs/${req.file.filename}` : null;
+    if (!texto && !imagen) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, error: 'Texto o imagen requeridos.' });
+    }
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const item = meta.items?.find(it => it.num === num);
     if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
-    item.etapas.vobo.observaciones.push({ texto, fecha: new Date().toISOString() });
-    item.etapas.vobo.rechazado    = true;
-    item.etapas.vobo.completada   = false;
-    item.etapas.vobo.fecha        = null;
-    item.etapas.revision.completada = false;
-    item.etapas.revision.fecha      = null;
+    item.etapas.vobo.observaciones.push({ texto: texto || null, imagen, fecha: new Date().toISOString(), estado: 'pendiente' });
+    item.etapas.vobo.rechazado        = true;
+    item.etapas.vobo.completada       = false;
+    item.etapas.vobo.fecha            = null;
+    item.etapas.revision.completada   = false;
+    item.etapas.revision.fecha        = null;
+    item.etapas.creacion.completada   = false;
+    item.etapas.creacion.fecha        = null;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-    res.json({ success: true });
+    res.json({ success: true, imagen });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: aceptar / rechazar observación ── */
+app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res) => {
+  try {
+    const id     = decodeURIComponent(req.params.id);
+    const num    = parseInt(req.params.num);
+    const obsIdx = parseInt(req.params.obsIdx);
+    const { estado } = req.body;
+    if (!['aceptada', 'rechazada'].includes(estado))
+      return res.status(400).json({ success: false, error: 'Estado inválido.' });
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const item = meta.items?.find(it => it.num === num);
+    if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
+    const obs = item.etapas.vobo.observaciones[obsIdx];
+    if (!obs) return res.status(404).json({ success: false, error: 'Observación no encontrada.' });
+    obs.estado = estado;
+    if (estado === 'rechazada') {
+      item.etapas.creacion.completada = false;
+      item.etapas.creacion.fecha      = null;
+    }
+    const todasAceptadas = item.etapas.vobo.observaciones.every(o => o.estado === 'aceptada');
+    item.etapas.vobo.rechazado = !todasAceptadas;
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true, rechazado: item.etapas.vobo.rechazado });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 

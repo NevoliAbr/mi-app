@@ -44,6 +44,15 @@
     .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
     .btn-nav.primary { background:#005D97; border-color:#005D97; }
     .btn-nav.primary:hover { background:#003E66; border-color:#003E66; }
+    .nav-center { display:flex; gap:6px; }
+    .btn-nav-tab {
+      background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
+      padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; text-decoration:none;
+      transition:background .15s, border-color .15s;
+    }
+    .btn-nav-tab:hover  { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.7); }
+    .btn-nav-tab.active { background:rgba(255,255,255,.22); border-color:#fff; }
 
     /* ── PAGE HEADER ──────────────────────────── */
     .page-header {
@@ -322,6 +331,10 @@
         <img src="logo.png" alt="Logo" class="logo-img" />
       </a>
       <span class="nav-title">/ Administración</span>
+    </div>
+    <div class="nav-center">
+      <a href="admin.html" class="btn-nav-tab active">👥 Usuarios</a>
+      <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
     </div>
     <div class="nav-right">
       <span id="admin-nombre"></span>
