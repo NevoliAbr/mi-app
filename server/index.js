@@ -670,7 +670,11 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const item = meta.items?.find(it => it.num === num);
-    if (!item || !item.etapas[etapa]) return res.status(400).json({ success: false, error: 'Inválido.' });
+    if (!item) return res.status(400).json({ success: false, error: 'Inválido.' });
+    // Migrar etapas faltantes en el item
+    if (!item.etapas.creacion)   item.etapas = { creacion: { completada: false, fecha: null }, ...item.etapas };
+    if (!item.etapas.vobo_final) item.etapas.vobo_final = { completada: false, fecha: null };
+    if (!item.etapas[etapa]) return res.status(400).json({ success: false, error: 'Etapa inválida.' });
     item.etapas[etapa].completada = completada;
     item.etapas[etapa].fecha      = completada ? new Date().toISOString() : null;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
@@ -705,7 +709,10 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
     if (!fs.existsSync(metaPath)) { fs.unlinkSync(req.file.path); return res.status(404).json({ success: false, error: 'No encontrado.' }); }
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const item = meta.items?.find(it => it.num === num);
-    if (!item || !item.etapas[etapa]) { fs.unlinkSync(req.file.path); return res.status(400).json({ success: false, error: 'Inválido.' }); }
+    if (!item) { fs.unlinkSync(req.file.path); return res.status(400).json({ success: false, error: 'Inválido.' }); }
+    if (!item.etapas.creacion)   item.etapas = { creacion: { completada: false, fecha: null }, ...item.etapas };
+    if (!item.etapas.vobo_final) item.etapas.vobo_final = { completada: false, fecha: null };
+    if (!item.etapas[etapa]) { fs.unlinkSync(req.file.path); return res.status(400).json({ success: false, error: 'Etapa inválida.' }); }
     if (item.etapas[etapa].pdf) {
       const old = path.join(__dirname, item.etapas[etapa].pdf);
       if (fs.existsSync(old)) fs.unlinkSync(old);
