@@ -8,7 +8,14 @@
       "Bash(findstr -i \"sql\")",
       "Bash(netstat -ano)",
       "Bash(findstr \":1433\")",
-      "Bash(reg query *)"
+      "Bash(reg query *)",
+      "WebFetch(domain:app.ganttpro.com)",
+      "WebFetch(domain:ganttpro.com)",
+      "Read(//c/Users/Desarrollador web/Downloads/**)",
+      "Bash(node -e ' *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Desarrollador web\\Downloads"
     ]
   }
 }

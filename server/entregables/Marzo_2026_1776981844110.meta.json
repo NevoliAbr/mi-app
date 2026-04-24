@@ -1,0 +1,197 @@
+{
+  "id": "Marzo_2026_1776981844110",
+  "mes": 3,
+  "mesNombre": "Marzo",
+  "año": 2026,
+  "ruta": "/entregables/Marzo_2026_1776981844110.xlsx",
+  "fecha_carga": "2026-04-23T22:04:04.111Z",
+  "items": [
+    {
+      "num": 1,
+      "nombre": "Acta de Constitución de Proyecto",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776982231429.pdf",
+          "fecha": "2026-04-23T22:10:31.442Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [
+            {
+              "texto": "FALTA ALGO4",
+              "fecha": "2026-04-23T22:10:04.692Z"
+            }
+          ],
+          "fecha": "2026-04-23T22:27:13.000Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-23T22:27:17.591Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-23T22:27:26.731Z"
+        },
+        "firma_externa": {
+          "completada": true,
+          "fecha": "2026-04-23T22:27:27.222Z"
+        },
+        "carpeta": {
+          "completada": true,
+          "fecha": "2026-04-23T22:27:28.128Z"
+        },
+        "acuse": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776983735473.pdf",
+          "fecha": "2026-04-23T22:35:35.476Z"
+        }
+      }
+    },
+    {
+      "num": 2,
+      "nombre": "Presentación de KickOff",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776982361973.pdf",
+          "fecha": "2026-04-23T22:12:41.975Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [
+            {
+              "texto": "mAL FECHA",
+              "fecha": "2026-04-23T22:11:20.353Z"
+            }
+          ],
+          "fecha": "2026-04-23T22:13:08.821Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-23T22:13:11.824Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-23T22:13:12.754Z"
+        },
+        "firma_externa": {
+          "completada": true,
+          "fecha": "2026-04-23T22:13:13.534Z"
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 3,
+      "nombre": "Inventario y Calendario de Unidades Vehiculares Asignadas para Instalación de Equipos",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776982480221.pdf",
+          "fecha": "2026-04-23T22:14:40.223Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [
+            {
+              "texto": "X",
+              "fecha": "2026-04-23T22:14:04.430Z"
+            },
+            {
+              "texto": "POL",
+              "fecha": "2026-04-23T22:14:08.886Z"
+            },
+            {
+              "texto": "FNLKFNDKV",
+              "fecha": "2026-04-23T22:14:11.348Z"
+            },
+            {
+              "texto": "VJ FV",
+              "fecha": "2026-04-23T22:14:12.844Z"
+            },
+            {
+              "texto": "FEMV LFK VE",
+              "fecha": "2026-04-23T22:14:14.495Z"
+            },
+            {
+              "texto": "NKD.FM VN.KD MFV",
+              "fecha": "2026-04-23T22:14:27.513Z"
+            }
+          ],
+          "fecha": "2026-04-23T22:14:41.528Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-23T22:14:42.365Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-23T22:15:02.218Z"
+        },
+        "firma_externa": {
+          "completada": true,
+          "fecha": "2026-04-23T22:15:03.558Z"
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 4,
+      "nombre": "Reporte de Avance - Marzo del [17/03/2026] al [31/03/2026]",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776982517922.pdf",
+          "fecha": "2026-04-23T22:15:17.924Z"
+        },
+        "vobo": {
+          "completada": false,
+          "rechazado": false,
+          "observaciones": [],
+          "fecha": null
+        },
+        "impresion": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_interna": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        }
+      }
+    }
+  ]
+}

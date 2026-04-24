@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carga de Entregables</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    /* ── NAVBAR ─────────────────────────────── */
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  {
+      height:40px; width:40px; object-fit:contain;
+      border-radius:12px; background:#fff; padding:4px; display:block;
+    }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+
+    /* ── PAGE HEADER ─────────────────────────── */
+    .page-header {
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
+      padding:36px 40px 30px; color:white;
+    }
+    .page-header h1 { font-size:28px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    /* ── MAIN ────────────────────────────────── */
+    main {
+      padding:40px 20px 60px;
+      display:flex; align-items:flex-start; justify-content:center;
+    }
+
+    /* ── FORM CARD ───────────────────────────── */
+    .form-card {
+      background:white; border-radius:20px; width:100%; max-width:540px;
+      box-shadow:0 4px 24px rgba(0,0,0,.10); overflow:hidden;
+    }
+    .form-card-header {
+      background:linear-gradient(135deg, #003E66 0%, #005D97 100%);
+      padding:28px 32px 24px;
+      display:flex; align-items:center; gap:14px;
+    }
+    .form-card-icon {
+      width:48px; height:48px; border-radius:14px;
+      background:rgba(255,255,255,.15);
+      display:flex; align-items:center; justify-content:center;
+      font-size:24px; flex-shrink:0;
+    }
+    .form-card-header h2 { font-size:20px; font-weight:900; color:#fff; letter-spacing:-.3px; }
+    .form-card-header p  { font-size:12px; color:rgba(255,255,255,.65); font-weight:600; margin-top:3px; }
+    .form-card-stripe    { height:3px; background:linear-gradient(90deg,#00AEEF,transparent); }
+
+    .form-body { padding:32px; display:flex; flex-direction:column; gap:24px; }
+
+    /* ── ALERT ───────────────────────────────── */
+    .alert { display:none; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; }
+    .alert.error   { display:block; background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
+    .alert.success { display:block; background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
+
+    /* ── FIELDS ──────────────────────────────── */
+    .form-group { display:flex; flex-direction:column; gap:8px; }
+    .form-group label {
+      font-size:11px; font-weight:800; color:#374151;
+      text-transform:uppercase; letter-spacing:.8px;
+    }
+    .form-group select {
+      padding:13px 16px; border:2px solid #E5E7EB; border-radius:10px;
+      font-family:'Montserrat',sans-serif; font-size:14px; color:#1A1A1A;
+      background:#FAFAFA; outline:none;
+      transition:border-color .15s, background .15s, box-shadow .15s;
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239CA3AF' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 16px center; padding-right:40px; cursor:pointer;
+    }
+    .form-group select:focus { border-color:#005D97; background:#fff; box-shadow:0 0 0 4px rgba(0,93,151,.1); }
+
+    /* ── FILE UPLOAD ─────────────────────────── */
+    .upload-zone {
+      border:2px dashed #D1D5DB; border-radius:12px;
+      padding:32px 20px; text-align:center; cursor:pointer;
+      background:#FAFAFA; transition:border-color .2s, background .2s, box-shadow .2s;
+      position:relative;
+    }
+    .upload-zone:hover { border-color:#005D97; background:#EFF6FF; box-shadow:0 0 0 4px rgba(0,93,151,.08); }
+    .upload-zone.has-file { border-color:#005D97; background:#EFF6FF; }
+    .upload-zone input[type="file"] {
+      position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+    }
+    .upload-icon  { font-size:36px; margin-bottom:10px; display:block; }
+    .upload-label { font-size:14px; font-weight:700; color:#374151; display:block; }
+    .upload-sub   { font-size:11px; color:#9CA3AF; font-weight:600; margin-top:5px; display:block; }
+    .upload-filename {
+      margin-top:10px; font-size:12px; font-weight:700;
+      color:#005D97; display:none;
+    }
+
+    /* ── SESSION INFO ────────────────────────── */
+    .session-badge {
+      display:flex; align-items:center; gap:8px;
+      background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px;
+      padding:10px 14px; font-size:12px; font-weight:700; color:#1D4ED8;
+    }
+
+    /* ── SUBMIT ──────────────────────────────── */
+    .btn-submit {
+      width:100%; padding:15px; background:#005D97; color:#fff; border:none;
+      border-radius:10px; font-family:'Montserrat',sans-serif; font-size:14px;
+      font-weight:800; letter-spacing:1.5px; text-transform:uppercase;
+      cursor:pointer; margin-top:4px;
+      transition:background .15s, transform .1s, box-shadow .15s;
+      box-shadow:0 4px 16px rgba(0,93,151,.35);
+    }
+    .btn-submit:hover    { background:#003E66; box-shadow:0 6px 20px rgba(0,93,151,.45); }
+    .btn-submit:active   { transform:scale(.98); }
+    .btn-submit:disabled { background:#93C5FD; box-shadow:none; cursor:not-allowed; }
+
+    @media(max-width:600px) {
+      nav { padding:0 16px; }
+      .page-header { padding:28px 20px; }
+      .form-body { padding:24px 20px; }
+      .form-card-header { padding:22px 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ──────────────────────────────────────── -->
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">CARGA DE ENTREGABLES</span>
+  </div>
+  <div class="nav-right">
+    <a href="index.html" class="btn-nav">← Inicio</a>
+  </div>
+</nav>
+
+<!-- ── PAGE HEADER ─────────────────────────────────── -->
+<div class="page-header">
+  <h1>📋 Carga de Entregables</h1>
+  <p>Sube el archivo de entregables y selecciona el mes correspondiente.</p>
+</div>
+<div class="header-stripe"></div>
+
+<!-- ── MAIN ───────────────────────────────────────── -->
+<main>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon">📂</div>
+      <div>
+        <h2>Nuevo Entregable</h2>
+        <p>Completa los campos para registrar el entregable</p>
+      </div>
+    </div>
+    <div class="form-card-stripe"></div>
+
+    <div class="form-body">
+
+      <div class="alert" id="alert-msg"></div>
+
+      <!-- Info de sesión -->
+      <div class="session-badge" id="session-badge">
+        📅 Año de trabajo: <strong id="badge-año">—</strong>
+      </div>
+
+      <!-- Archivo -->
+      <div class="form-group">
+        <label>Archivo de entregable (.xlsx)</label>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="file-input" accept=".xlsx" />
+          <span class="upload-icon">📊</span>
+          <span class="upload-label">Haz clic para seleccionar un archivo</span>
+          <span class="upload-sub">.xlsx · Máx. 50 MB</span>
+          <div class="upload-filename" id="upload-filename"></div>
+        </div>
+      </div>
+
+      <!-- Mes -->
+      <div class="form-group">
+        <label for="select-mes">Mes</label>
+        <select id="select-mes">
+          <option value="">— Seleccionar mes —</option>
+          <option value="1">Enero</option>
+          <option value="2">Febrero</option>
+          <option value="3">Marzo</option>
+          <option value="4">Abril</option>
+          <option value="5">Mayo</option>
+          <option value="6">Junio</option>
+          <option value="7">Julio</option>
+          <option value="8">Agosto</option>
+          <option value="9">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <button type="button" class="btn-submit" id="btn-upload">Cargar Entregable</button>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  const API = 'http://localhost:3001';
+
+  /* ── Verificar sesión ── */
+  let sessionAño = new Date().getFullYear();
+  (function () {
+    const saved = localStorage.getItem('session');
+    if (!saved) { window.location.href = 'index.html'; return; }
+    try {
+      const user = JSON.parse(saved);
+      if (user.rol !== 'superusuario') { window.location.href = 'index.html'; return; }
+      sessionAño = user.año || new Date().getFullYear();
+      document.getElementById('badge-año').textContent = sessionAño;
+      /* Preseleccionar el mes actual */
+      document.getElementById('select-mes').value = new Date().getMonth() + 1;
+    } catch {
+      localStorage.removeItem('session');
+      window.location.href = 'index.html';
+    }
+  })();
+
+  /* ── Mostrar nombre de archivo ── */
+  document.getElementById('file-input').addEventListener('change', function () {
+    const label = document.getElementById('upload-filename');
+    const zone  = document.getElementById('upload-zone');
+    if (this.files.length > 0) {
+      label.textContent  = '✅ ' + this.files[0].name;
+      label.style.display = 'block';
+      zone.classList.add('has-file');
+    } else {
+      label.style.display = 'none';
+      zone.classList.remove('has-file');
+    }
+  });
+
+  /* ── Alerta ── */
+  function showAlert(msg, tipo) {
+    const el = document.getElementById('alert-msg');
+    el.textContent = msg;
+    el.className   = `alert ${tipo}`;
+  }
+
+  /* ── Subir ── */
+  document.getElementById('btn-upload').addEventListener('click', async () => {
+    const file = document.getElementById('file-input').files[0];
+    const mes  = document.getElementById('select-mes').value;
+    const btn  = document.getElementById('btn-upload');
+
+    if (!file) return showAlert('Selecciona un archivo .xlsx.', 'error');
+    if (!mes)  return showAlert('Selecciona el mes correspondiente.', 'error');
+
+    const fd = new FormData();
+    fd.append('archivo', file);
+    fd.append('mes',     mes);
+    fd.append('año',     sessionAño);
+
+    btn.disabled    = true;
+    btn.textContent = 'Subiendo…';
+
+    try {
+      const res  = await fetch(`${API}/api/entregables/upload`, { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (data.success) {
+        showAlert('¡Entregable cargado correctamente! Redirigiendo…', 'success');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1400);
+      } else {
+        showAlert(data.error || 'Error al subir el entregable.', 'error');
+        btn.disabled = false; btn.textContent = 'Cargar Entregable';
+      }
+    } catch {
+      showAlert('No se pudo conectar con el servidor.', 'error');
+      btn.disabled = false; btn.textContent = 'Cargar Entregable';
+    }
+  });
+</script>
+</body>
+</html>

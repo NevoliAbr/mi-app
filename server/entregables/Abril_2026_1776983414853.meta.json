@@ -1,0 +1,171 @@
+{
+  "id": "Abril_2026_1776983414853",
+  "mes": 4,
+  "mesNombre": "Abril",
+  "año": 2026,
+  "ruta": "/entregables/Abril_2026_1776983414853.xlsx",
+  "fecha_carga": "2026-04-23T22:30:14.858Z",
+  "items": [
+    {
+      "num": 1,
+      "nombre": "Acta de Constitución de Proyecto",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776983446360.pdf",
+          "fecha": "2026-04-23T22:30:46.384Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [],
+          "fecha": "2026-04-23T22:30:53.775Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-23T22:30:55.081Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-23T22:30:57.648Z"
+        },
+        "firma_externa": {
+          "completada": true,
+          "fecha": "2026-04-23T23:29:48.684Z"
+        },
+        "carpeta": {
+          "completada": true,
+          "fecha": "2026-04-23T23:29:49.335Z"
+        },
+        "acuse": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776987078297.pdf",
+          "fecha": "2026-04-23T23:31:18.312Z"
+        }
+      }
+    },
+    {
+      "num": 2,
+      "nombre": "Presentación de KickOff",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776986705073.pdf",
+          "fecha": "2026-04-23T23:25:05.095Z"
+        },
+        "vobo": {
+          "completada": true,
+          "rechazado": false,
+          "observaciones": [
+            {
+              "texto": "Falta fecha x",
+              "fecha": "2026-04-23T23:24:23.011Z"
+            },
+            {
+              "texto": "Mariana esta mal escrito",
+              "fecha": "2026-04-23T23:24:38.953Z"
+            }
+          ],
+          "fecha": "2026-04-23T23:26:39.780Z"
+        },
+        "impresion": {
+          "completada": true,
+          "fecha": "2026-04-23T23:27:08.320Z"
+        },
+        "firma_interna": {
+          "completada": true,
+          "fecha": "2026-04-23T23:28:24.394Z"
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 3,
+      "nombre": "Inventario y Calendario de Unidades Vehiculares Asignadas para Instalación de Equipos",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776983453042.pdf",
+          "fecha": "2026-04-23T22:30:53.043Z"
+        },
+        "vobo": {
+          "completada": false,
+          "rechazado": false,
+          "observaciones": [],
+          "fecha": null
+        },
+        "impresion": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_interna": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        }
+      }
+    },
+    {
+      "num": 4,
+      "nombre": "Reporte de Avance - Marzo del [17/03/2026] al [31/03/2026]",
+      "etapas": {
+        "revision": {
+          "completada": true,
+          "pdf": "/entregables/pdfs/pdf_1776983462762.pdf",
+          "fecha": "2026-04-23T22:31:02.764Z"
+        },
+        "vobo": {
+          "completada": false,
+          "rechazado": false,
+          "observaciones": [],
+          "fecha": null
+        },
+        "impresion": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_interna": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "pdf": null,
+          "fecha": null
+        }
+      }
+    }
+  ]
+}

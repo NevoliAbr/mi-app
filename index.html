@@ -19,7 +19,7 @@
     ─────────────────────────────────────────── */
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family:'Montserrat',sans-serif; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#001829; }
 
     /* ── NAVBAR ─────────────────────────────── */
     nav {
@@ -54,21 +54,34 @@
     }
 
     /* ── CAROUSEL PRINCIPAL ─────────────────── */
+    .avisos-page-wrap {
+      padding: 36px 0 52px;
+      display: flex;
+      justify-content: center;
+    }
     .avisos-hero {
-      width:100%; background:#002A44;
-      min-height: calc(100vh - 70px);
-      display:flex; flex-direction:column;
+      width: 75%;
+      background: linear-gradient(180deg, #002f4e 0%, #001f36 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,.65),
+        0 0 0 1px rgba(0,174,239,.14),
+        inset 0 1px 0 rgba(255,255,255,.05);
     }
     .avisos-hero-header {
       display:flex; align-items:center; justify-content:center;
-      gap:12px; padding:28px 24px 0;
+      gap:12px; padding:28px 28px 0;
     }
     .avisos-hero-title {
-      font-size:clamp(22px,3vw,36px); font-weight:900; color:#fff;
-      letter-spacing:4px; text-transform:uppercase;
+      font-size:clamp(18px,2.2vw,28px); font-weight:900; color:#fff;
+      letter-spacing:5px; text-transform:uppercase;
+      text-shadow: 0 0 24px rgba(0,174,239,.35);
     }
     .avisos-hero-line {
-      flex:1; max-width:120px; height:2px;
+      flex:1; max-width:100px; height:1px;
       background:linear-gradient(90deg,#00AEEF,transparent);
     }
     .avisos-hero-line.right {
@@ -98,12 +111,14 @@
       width:100%;
       height: clamp(260px, 58vh, 560px);
       position:relative; overflow:hidden;
+      background:#001525;
+      display:flex; align-items:center; justify-content:center;
     }
     .reel-slide-bg img {
-      width:100%; height:100%; object-fit:cover; display:block;
-      transition:transform 6s ease;
+      max-width:100%; max-height:100%;
+      width:auto; height:auto;
+      object-fit:contain; display:block;
     }
-    .reel-slide:hover .reel-slide-bg img { transform:scale(1.04); }
     .reel-slide-overlay {
       position:absolute; inset:0;
       background:linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.1) 55%, transparent 100%);
@@ -152,10 +167,11 @@
     /* Multiple images strip */
     .reel-imgs-strip {
       width:100%; height:clamp(260px,58vh,560px); display:flex;
+      background:#001525;
     }
     .reel-imgs-strip img {
-      flex:1; object-fit:cover; min-width:0;
-      border-right:3px solid #0D0D0F;
+      flex:1; object-fit:contain; min-width:0;
+      border-right:2px solid rgba(0,0,0,.4);
     }
     .reel-imgs-strip img:last-child { border-right:none; }
 
@@ -524,7 +540,482 @@
     .reel-slide { cursor:pointer; }
     .reel-slide:hover .reel-slide-titulo { text-decoration:underline; text-decoration-color:rgba(255,255,255,.5); }
 
+    /* ── DASHBOARD ──────────────────────────── */
+    .dash-page-wrap {
+      padding: 0 0 56px;
+      display: flex;
+      justify-content: center;
+    }
+    .dash-card {
+      width: 75%;
+      background: linear-gradient(180deg, #0a1f35 0%, #071524 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,.65),
+        0 0 0 1px rgba(0,174,239,.1),
+        inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .dash-header {
+      display:flex; align-items:center; justify-content:center;
+      gap:12px; padding:28px 28px 0;
+    }
+    .dash-title {
+      font-size:clamp(18px,2.2vw,28px); font-weight:900; color:#fff;
+      letter-spacing:5px; text-transform:uppercase;
+      text-shadow: 0 0 24px rgba(0,174,239,.3);
+    }
+    .dash-line {
+      flex:1; max-width:100px; height:1px;
+      background:linear-gradient(90deg,#00AEEF,transparent);
+    }
+    .dash-line.right { background:linear-gradient(270deg,#00AEEF,transparent); }
+
+
+    /* Project cards grid */
+    .dash-projects {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      gap:16px; padding:20px 24px 28px;
+    }
+    .dash-proj-card {
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+      border-radius:14px; padding:20px; cursor:pointer;
+      transition:background .15s, border-color .15s, transform .15s;
+    }
+    .dash-proj-card:hover {
+      background:rgba(0,93,151,.25); border-color:rgba(0,174,239,.35);
+      transform:translateY(-2px);
+    }
+    .dash-proj-name {
+      font-size:13px; font-weight:800; color:#fff; line-height:1.4;
+      margin-bottom:10px;
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .dash-proj-dates {
+      font-size:11px; color:rgba(255,255,255,.45); font-weight:600;
+      margin-bottom:12px;
+    }
+    .dash-progress-wrap { margin-bottom:6px; }
+    .dash-progress-bar {
+      height:5px; background:rgba(255,255,255,.1); border-radius:3px; overflow:hidden;
+    }
+    .dash-progress-fill {
+      height:100%; background:linear-gradient(90deg,#00AEEF,#005D97);
+      border-radius:3px; transition:width .6s ease;
+    }
+    .dash-progress-label {
+      font-size:10px; color:rgba(255,255,255,.4); font-weight:700;
+      margin-top:4px;
+    }
+    .dash-empty {
+      grid-column:1/-1; padding:48px 24px; text-align:center;
+      color:rgba(255,255,255,.25); font-size:13px; font-weight:700;
+    }
+    .dash-proj-card { position:relative; }
+    .dash-proj-del {
+      position:absolute; top:10px; right:10px;
+      background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.25);
+      color:rgba(239,68,68,.6); border-radius:6px;
+      width:26px; height:26px; font-size:13px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; opacity:0; transition:opacity .15s, background .15s, color .15s;
+    }
+    .dash-proj-card:hover .dash-proj-del { opacity:1; }
+    .dash-proj-del:hover { background:rgba(239,68,68,.3); color:#f87171; border-color:rgba(239,68,68,.5); }
+
+    /* ── PROJECT DETAIL MODAL ───────────────── */
+    .proj-overlay {
+      display:none; position:fixed; inset:0; z-index:3000;
+      background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+      align-items:flex-start; justify-content:center;
+      padding:20px; overflow-y:auto;
+    }
+    .proj-overlay.active { display:flex; }
+    .proj-modal {
+      background:#0d1e2e; border-radius:20px; width:100%; max-width:1180px;
+      margin:auto; overflow:hidden;
+      box-shadow:0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,174,239,.15);
+      animation:projIn .28s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes projIn {
+      from { opacity:0; transform:scale(.9) translateY(20px); }
+      to   { opacity:1; transform:scale(1)  translateY(0); }
+    }
+    .proj-modal-header {
+      background:linear-gradient(135deg,#003E66,#005D97);
+      padding:24px 28px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .proj-modal-title { font-size:16px; font-weight:900; color:#fff; line-height:1.35; flex:1; }
+    .proj-modal-close {
+      background:none; border:none; color:rgba(255,255,255,.7); font-size:22px;
+      cursor:pointer; line-height:1; padding:2px; flex-shrink:0;
+      transition:color .15s;
+    }
+    .proj-modal-close:hover { color:#fff; }
+    .proj-modal-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,transparent); }
+
+    /* Summary bar */
+    .proj-summary {
+      display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .proj-stat {
+      flex:1; padding:16px 20px; border-right:1px solid rgba(255,255,255,.07);
+      text-align:center;
+    }
+    .proj-stat:last-child { border-right:none; }
+    .proj-stat-val { font-size:22px; font-weight:900; color:#fff; }
+    .proj-stat-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.4);
+                     letter-spacing:.6px; text-transform:uppercase; margin-top:2px; }
+
+    /* Task list */
+    .task-list { padding:0 0 24px; max-height:70vh; overflow-y:auto; }
+    .task-list::-webkit-scrollbar { width:5px; }
+    .task-list::-webkit-scrollbar-track { background:transparent; }
+    .task-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:3px; }
+
+    .task-row {
+      display:grid;
+      grid-template-columns: 62px 1fr 215px 62px 190px;
+      align-items:center; column-gap:10px;
+      padding:9px 20px; border-bottom:1px solid rgba(255,255,255,.04);
+      cursor:default; transition:background .1s;
+    }
+    .task-row:hover { background:rgba(255,255,255,.03); }
+    .task-row.is-group { cursor:pointer; }
+    .task-row.nivel-1 { background:rgba(0,93,151,.15); }
+    .task-row.nivel-2 .task-name { padding-left:16px; }
+    .task-row.nivel-3 .task-name { padding-left:32px; }
+    .task-row.nivel-4 .task-name { padding-left:48px; }
+    .task-row.nivel-5 .task-name { padding-left:64px; }
+
+    .task-toggle {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:9px; color:rgba(255,255,255,.4);
+      width:16px; height:16px; flex-shrink:0;
+      transition:transform .15s; cursor:pointer; vertical-align:middle; margin-right:4px;
+    }
+    .task-toggle.open { transform:rotate(90deg); color:#00AEEF; }
+    .task-toggle-space { display:inline-block; width:20px; }
+
+    .task-edt {
+      font-size:10px; font-weight:800; color:rgba(255,255,255,.3); white-space:nowrap;
+    }
+    .task-name {
+      font-size:12px; font-weight:700; color:rgba(255,255,255,.85);
+      line-height:1.35; display:flex; align-items:center; min-width:0;
+    }
+    .task-name-text { flex:1; min-width:0; }
+    .task-row.nivel-1 .task-name { font-size:13px; color:#fff; font-weight:900; }
+
+    .task-dates {
+      font-size:10px; color:rgba(255,255,255,.3); font-weight:600;
+      white-space:nowrap; text-align:center;
+    }
+    .task-dur {
+      font-size:10px; color:rgba(255,255,255,.25); font-weight:600;
+      white-space:nowrap; text-align:right;
+    }
+
+    /* ── Progress control ── */
+    .prog-ctrl { position:relative; }
+    .prog-btn {
+      width:100%; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+      border-radius:7px; color:white; padding:5px 8px; cursor:pointer;
+      font-family:'Montserrat',sans-serif;
+      display:flex; align-items:center; gap:6px; transition:background .15s;
+    }
+    .prog-btn:hover  { background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.2); }
+    .prog-btn.open   { border-color:rgba(0,174,239,.5); background:rgba(0,174,239,.1); }
+    .prog-barmini    { width:32px; height:4px; background:rgba(255,255,255,.1); border-radius:2px; overflow:hidden; flex-shrink:0; }
+    .prog-barmini-fill { height:100%; border-radius:2px; transition:width .3s, background .3s; }
+    .prog-label      { flex:1; font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .prog-arrow      { font-size:8px; color:rgba(255,255,255,.35); flex-shrink:0; transition:transform .15s; }
+    .prog-btn.open .prog-arrow { transform:rotate(180deg); }
+
+    .prog-drop {
+      position:fixed; min-width:205px; z-index:9999;
+      background:#0e2030; border:1px solid rgba(0,174,239,.35);
+      border-radius:10px; box-shadow:0 10px 32px rgba(0,0,0,.65);
+      display:none; overflow:hidden;
+    }
+    .prog-drop.open { display:block; }
+
+    .prog-drop-item {
+      display:flex; align-items:center; gap:8px;
+      padding:9px 14px; cursor:pointer;
+      font-size:11px; font-weight:700; color:rgba(255,255,255,.65);
+      border:none; background:none; width:100%;
+      font-family:'Montserrat',sans-serif; transition:background .1s;
+    }
+    .prog-drop-item:hover { background:rgba(255,255,255,.07); color:#fff; }
+    .prog-drop-item.sel   { color:#00AEEF; }
+    .pdi-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.15); flex-shrink:0; transition:background .15s; }
+    .prog-drop-item.sel .pdi-dot { background:#00AEEF; }
+    .pdi-pct { margin-left:auto; font-size:10px; opacity:.5; }
+
+    .prog-en-proceso-row {
+      padding:3px 14px 10px; display:none; align-items:center; gap:6px;
+    }
+    .prog-en-proceso-row.show { display:flex; }
+    .prog-pct-input {
+      width:48px; padding:4px 6px; border:1px solid rgba(0,174,239,.45);
+      border-radius:5px; background:rgba(0,0,0,.4); color:#00AEEF;
+      font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800;
+      text-align:center; outline:none;
+    }
+    .prog-pct-ok {
+      padding:4px 10px; background:#00AEEF; border:none; border-radius:5px;
+      color:#001829; font-size:11px; font-weight:800; cursor:pointer;
+      font-family:'Montserrat',sans-serif;
+    }
+    .prog-pct-ok:hover { background:#00c4ff; }
+    .prog-pct-symbol   { font-size:11px; color:rgba(255,255,255,.4); font-weight:700; }
+    .group-prog-display { display:flex; align-items:center; gap:8px; padding:4px 0; }
+    .group-prog-label   { font-size:11px; font-weight:800; color:rgba(255,255,255,.55); }
+
+    /* ── MÓDULO ENTREGABLES ─────────────────── */
+    .entreg-toolbar {
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:12px; padding:16px 24px 0;
+    }
+    .entreg-months { display:flex; gap:8px; padding:12px 24px 0; flex-wrap:wrap; }
+    .epm-item { display:inline-flex; align-items:center; gap:0; }
+    .epm-btn {
+      padding:5px 12px 5px 16px; border-radius:20px 0 0 20px; border:none; cursor:pointer;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700;
+      background:rgba(255,255,255,.07); color:rgba(255,255,255,.5);
+      transition:background .15s, color .15s;
+    }
+    .epm-btn:hover  { background:rgba(255,255,255,.14); color:#fff; }
+    .epm-btn.active { background:#005D97; color:#fff; }
+    .epm-btn.active + .epm-del { background:#004a7a; }
+    .epm-del {
+      padding:5px 8px 5px 6px; border-radius:0 20px 20px 0; border:none; cursor:pointer;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:800;
+      background:rgba(255,255,255,.07); color:rgba(255,255,255,.25);
+      transition:background .15s, color .15s; line-height:1;
+    }
+    .epm-del:hover { background:rgba(248,113,113,.25); color:#f87171; }
+    .epm-item.solo .epm-btn { border-radius:20px; }
+    .epm-item.solo .epm-del { display:none; }
+    .entreg-table-wrap { padding:12px 20px 28px; overflow-x:auto; }
+    .entreg-table { width:100%; border-collapse:collapse; font-family:'Montserrat',sans-serif; }
+    .entreg-table thead tr { border-bottom:2px solid rgba(0,174,239,.2); }
+    .entreg-table thead th {
+      padding:8px 6px; font-size:9px; font-weight:800;
+      color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.5px;
+      text-align:center; white-space:nowrap;
+    }
+    .entreg-table thead th.col-nombre { text-align:left; min-width:160px; }
+    .entreg-table tbody tr { border-bottom:1px solid rgba(255,255,255,.04); }
+    .entreg-table tbody tr:hover { background:rgba(255,255,255,.02); }
+    .entreg-table tbody td {
+      padding:8px 6px; font-size:11px; font-weight:600;
+      color:rgba(255,255,255,.8); vertical-align:middle; text-align:center;
+    }
+    .entreg-table tbody td.col-nombre { text-align:left; }
+    .entreg-table tbody td.col-num { color:rgba(255,255,255,.35); font-size:10px; }
+    .ep-btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:28px; height:28px; border-radius:50%; border:2px solid transparent;
+      font-size:12px; font-family:'Montserrat',sans-serif; font-weight:800;
+      transition:background .15s, border-color .15s, color .15s; flex-shrink:0;
+    }
+    .ep-btn.done  { background:#065F46; border-color:#047857; color:#6EE7B7; cursor:pointer; }
+    .ep-btn.done:hover  { background:#047857; }
+    .ep-btn.avail { background:transparent; border-color:#2563EB; color:#60A5FA; cursor:pointer; }
+    .ep-btn.avail:hover { background:rgba(37,99,235,.25); }
+    .ep-btn.lock  { background:transparent; border-color:rgba(255,255,255,.1); color:rgba(255,255,255,.18); cursor:not-allowed; }
+    .ep-btn.reject { background:rgba(217,119,6,.18); border-color:#D97706; color:#FCD34D; cursor:default; }
+    .vobo-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
+    .vobo-obs-btn {
+      font-size:9px; font-weight:800; padding:2px 7px; border-radius:10px; border:none; cursor:pointer;
+      background:rgba(217,119,6,.25); color:#FCD34D;
+      font-family:'Montserrat',sans-serif; transition:background .15s; white-space:nowrap;
+    }
+    .vobo-obs-btn:hover { background:rgba(217,119,6,.45); }
+    .ep-avance { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:52px; }
+    .ep-avance-pct { font-size:11px; font-weight:800; color:#fff; }
+    .ep-avance-bar  { width:46px; height:5px; background:rgba(255,255,255,.1); border-radius:3px; }
+    .ep-avance-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#005D97,#00AEEF); transition:width .3s; }
+    /* VOBO modal */
+    .vobo-overlay {
+      display:none; position:fixed; inset:0; z-index:400;
+      background:rgba(0,0,0,.72); align-items:center; justify-content:center;
+    }
+    .vobo-overlay.open { display:flex; }
+    .vobo-modal {
+      background:#0f2233; border:1px solid rgba(0,174,239,.2);
+      border-radius:16px; width:100%; max-width:460px; padding:28px 28px 24px;
+      box-shadow:0 24px 64px rgba(0,0,0,.6); position:relative;
+    }
+    .vobo-modal-title { font-size:15px; font-weight:900; color:#fff; margin-bottom:4px; }
+    .vobo-modal-sub   { font-size:11px; color:rgba(255,255,255,.35); font-weight:600; margin-bottom:16px; line-height:1.4; }
+    .vobo-obs-list { max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+    .vobo-obs-item { background:rgba(255,255,255,.06); border-radius:8px; padding:10px 12px; }
+    .vobo-obs-texto { font-size:12px; color:rgba(255,255,255,.82); font-weight:600; line-height:1.4; }
+    .vobo-obs-fecha { font-size:10px; color:rgba(255,255,255,.3); font-weight:700; margin-top:5px; }
+    .vobo-obs-empty { font-size:12px; color:rgba(255,255,255,.2); text-align:center; padding:24px 0; }
+    .vobo-input-row { display:flex; gap:8px; }
+    .vobo-input {
+      flex:1; padding:10px 14px; border:1px solid rgba(255,255,255,.15); border-radius:8px;
+      background:rgba(255,255,255,.06); color:#fff;
+      font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; outline:none;
+    }
+    .vobo-input::placeholder { color:rgba(255,255,255,.28); }
+    .vobo-input:focus { border-color:rgba(217,119,6,.6); }
+    .vobo-send-btn {
+      padding:10px 16px; background:#D97706; border:none; border-radius:8px;
+      color:#fff; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800; cursor:pointer;
+    }
+    .vobo-send-btn:hover { background:#B45309; }
+    .vobo-close-btn {
+      position:absolute; top:14px; right:14px; background:none; border:none;
+      color:rgba(255,255,255,.4); font-size:20px; cursor:pointer; line-height:1;
+    }
+    .vobo-close-btn:hover { color:#fff; }
+    .entreg-empty-state {
+      padding:56px 24px; text-align:center;
+      color:rgba(255,255,255,.2); font-size:13px; font-weight:700; letter-spacing:.3px;
+    }
+    .entreg-empty-state .ei { font-size:48px; display:block; margin-bottom:12px; }
+    .entreg-year-badge {
+      font-size:12px; font-weight:800; color:#00AEEF;
+      background:rgba(0,174,239,.1); border:1px solid rgba(0,174,239,.25);
+      padding:5px 14px; border-radius:30px; letter-spacing:.4px;
+    }
+    .entreg-total {
+      display:flex; align-items:center; gap:10px;
+    }
+    .entreg-total-label {
+      font-size:11px; font-weight:700; color:rgba(255,255,255,.4);
+      text-transform:uppercase; letter-spacing:.6px;
+    }
+    .entreg-total-pct {
+      font-size:22px; font-weight:900; color:#fff; min-width:52px; text-align:right;
+    }
+    .entreg-total-bar  {
+      width:120px; height:8px; background:rgba(255,255,255,.08);
+      border-radius:4px; overflow:hidden;
+    }
+    .entreg-total-fill {
+      height:100%; border-radius:4px;
+      background:linear-gradient(90deg,#005D97,#00AEEF);
+      transition:width .4s;
+    }
+    /* ── Vista toggle ── */
+    .entreg-view-toggle { display:flex; gap:4px; }
+    .evt-btn {
+      padding:6px 14px; border-radius:8px; border:none; cursor:pointer;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700;
+      background:rgba(255,255,255,.07); color:rgba(255,255,255,.45);
+      transition:background .15s, color .15s;
+    }
+    .evt-btn.active { background:#005D97; color:#fff; }
+    .evt-btn:hover:not(.active) { background:rgba(255,255,255,.12); color:#fff; }
+    /* ── Informe ejecutivo ── */
+    .informe-wrap {
+      padding:20px 24px 32px; display:flex; flex-direction:column; gap:20px;
+    }
+    .informe-resumen {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;
+    }
+    .informe-stat {
+      background:rgba(0,93,151,.15); border:1px solid rgba(0,93,151,.3);
+      border-radius:12px; padding:16px 18px;
+    }
+    .informe-stat-val  { font-size:28px; font-weight:900; color:#fff; line-height:1; }
+    .informe-stat-lbl  { font-size:10px; font-weight:800; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.7px; margin-top:6px; }
+    .informe-mes-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+    .informe-mes-card  {
+      background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+      border-radius:14px; padding:20px 22px; display:flex; flex-direction:column; gap:14px;
+    }
+    .imc-header { display:flex; align-items:center; justify-content:space-between; }
+    .imc-mes    { font-size:16px; font-weight:900; color:#fff; }
+    .imc-pct    { font-size:24px; font-weight:900; color:#00AEEF; }
+    .imc-bar-wrap { height:6px; background:rgba(255,255,255,.08); border-radius:3px; }
+    .imc-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#005D97,#00AEEF); transition:width .4s; }
+    .imc-stats  { display:flex; gap:16px; }
+    .imc-stat   { font-size:11px; font-weight:700; color:rgba(255,255,255,.5); }
+    .imc-stat strong { color:#fff; font-size:13px; }
+    .imc-etapas { display:flex; flex-direction:column; gap:7px; }
+    .imc-etapa-row { display:grid; grid-template-columns:110px 1fr 30px; align-items:center; gap:8px; }
+    .imc-etapa-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.4px; }
+    .imc-etapa-bar { height:4px; background:rgba(255,255,255,.08); border-radius:2px; }
+    .imc-etapa-fill{ height:100%; border-radius:2px; background:#005D97; transition:width .3s; }
+    .imc-etapa-val { font-size:10px; font-weight:800; color:rgba(255,255,255,.5); text-align:right; }
+    .informe-footer{ font-size:10px; color:rgba(255,255,255,.2); font-weight:600; text-align:right; padding:0 2px; }
+
+    /* ── Vista presentación ── */
+    .pres-wrap {
+      padding:28px 28px 40px; display:flex; flex-direction:column; gap:28px;
+    }
+    .pres-header {
+      display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px;
+      border-bottom:1px solid rgba(0,174,239,.15); padding-bottom:20px;
+    }
+    .pres-header-title { font-size:11px; font-weight:800; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:1.5px; }
+    .pres-header-año   { font-size:38px; font-weight:900; color:#fff; letter-spacing:-1px; line-height:1; margin-top:4px; }
+    .pres-header-sub   { font-size:11px; color:rgba(255,255,255,.3); font-weight:600; margin-top:6px; }
+    .pres-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
+    .pres-kpi {
+      border-radius:16px; padding:18px 20px; position:relative; overflow:hidden;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .pres-kpi-val  { font-size:36px; font-weight:900; color:#fff; line-height:1; }
+    .pres-kpi-lbl  { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; opacity:.7; }
+    .pres-kpi-glow { position:absolute; inset:0; opacity:.12; border-radius:16px; }
+    .pres-kpi.k-blue   { background:linear-gradient(135deg,#0c2a45,#0a3a60); border:1px solid rgba(0,93,151,.5); color:#60A5FA; }
+    .pres-kpi.k-cyan   { background:linear-gradient(135deg,#0a2e3a,#083548); border:1px solid rgba(0,174,239,.4); color:#67E8F9; }
+    .pres-kpi.k-green  { background:linear-gradient(135deg,#052e1c,#064023); border:1px solid rgba(16,185,129,.4); color:#6EE7B7; }
+    .pres-kpi.k-amber  { background:linear-gradient(135deg,#2d1f06,#3d2b08); border:1px solid rgba(245,158,11,.35); color:#FCD34D; }
+    .pres-months-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+    .pres-month-card {
+      border-radius:20px; padding:24px; display:flex; flex-direction:column; gap:16px;
+      position:relative; overflow:hidden;
+    }
+    .pres-month-card::before {
+      content:''; position:absolute; inset:0; opacity:.06;
+      background:radial-gradient(circle at 80% 20%,#fff,transparent 60%);
+    }
+    .pmc-top    { display:flex; align-items:center; gap:18px; }
+    .pmc-donut  { flex-shrink:0; }
+    .pmc-info   { flex:1; }
+    .pmc-mes    { font-size:20px; font-weight:900; color:#fff; line-height:1; }
+    .pmc-total  { font-size:11px; color:rgba(255,255,255,.5); font-weight:700; margin-top:5px; }
+    .pmc-mini   { display:flex; gap:10px; margin-top:8px; }
+    .pmc-pill   { font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; }
+    .pmc-pill.done { background:rgba(16,185,129,.2); color:#6EE7B7; }
+    .pmc-pill.prog { background:rgba(0,93,151,.3);   color:#93C5FD; }
+    .pmc-stages { display:flex; flex-direction:column; gap:6px; }
+    .pmc-stage-row { display:grid; grid-template-columns:1fr 40px; align-items:center; gap:8px; }
+    .pmc-stage-info { display:flex; align-items:center; gap:6px; }
+    .pmc-stage-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .pmc-stage-lbl  { font-size:10px; font-weight:700; color:rgba(255,255,255,.55); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pmc-stage-bar-wrap { position:relative; height:5px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; }
+    .pmc-stage-bar-fill { height:100%; border-radius:3px; transition:width .4s; }
+    .pmc-stage-pct { font-size:10px; font-weight:800; color:rgba(255,255,255,.45); text-align:right; }
+    .pmc-divider { height:1px; background:rgba(255,255,255,.07); }
+    .pres-footer { font-size:10px; color:rgba(255,255,255,.18); font-weight:700; text-align:center; letter-spacing:.5px; }
+
+    @media (max-width:1100px) { .dash-card { width: 88%; } }
+    @media (max-width:700px)  {
+      .dash-card { width: 96%; border-radius:16px; }
+      .dash-page-wrap { padding:0 0 32px; }
+      .proj-summary { flex-wrap:wrap; }
+      .proj-stat { flex:1 1 45%; }
+    }
+
     /* ── RESPONSIVE ─────────────────────────── */
+    @media (max-width:1100px) {
+      .avisos-hero { width: 88%; }
+    }
+    @media (max-width:700px) {
+      .avisos-hero { width: 96%; border-radius:16px; }
+      .avisos-page-wrap { padding: 20px 0 32px; }
+    }
     @media (max-width:640px) {
       nav { padding:12px 20px; height:auto; flex-wrap:wrap; gap:10px; }
       .nav-menu { gap:14px; flex-wrap:wrap; justify-content:flex-end; }
@@ -546,8 +1037,9 @@
       <img src="logo.png" alt="Logo" class="logo-img" />
     </a>
     <ul class="nav-menu">
-      <li><a href="#" id="btn1">Premium</a></li>
+      <li id="nav-btn1" style="display:none"><a href="projects.html" id="btn1">Cargar projects</a></li>
       <li id="nav-btn2" style="display:none"><a href="avisos.html" id="btn2">Crear Avisos</a></li>
+      <li id="nav-btn-entregables" style="display:none"><a href="entregables.html" id="btn-entregables">Carga de entregables</a></li>
       <li id="nav-btn3" style="display:none"><a href="#" id="btn3">Descargar</a></li>
       <li id="auth-sep"><span id="btn4">|</span></li>
       <li id="auth-reg"><a href="#" id="btn5">Regístrate</a></li>
@@ -560,6 +1052,7 @@
   </nav>
 
   <!-- ══ CAROUSEL DE AVISOS ══════════════════════════ -->
+  <div class="avisos-page-wrap">
   <section class="avisos-hero" id="avisos-section">
     <div class="avisos-hero-header">
       <div class="avisos-hero-line"></div>
@@ -575,6 +1068,116 @@
     </div>
     <div class="reel-dots" id="reel-dots"></div>
   </section>
+  </div>
+
+  <!-- ══ DASHBOARD ════════════════════════════════════ -->
+  <div class="dash-page-wrap" id="modulo-seguimiento" style="display:none">
+    <div class="dash-card">
+      <div class="dash-header">
+        <div class="dash-line"></div>
+        <span class="dash-title">&#128202; Módulo de Seguimiento</span>
+        <div class="dash-line right"></div>
+      </div>
+      <div class="dash-projects" id="dash-projects">
+        <div class="dash-empty">Cargando proyectos…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MÓDULO ENTREGABLES ══════════════════════════ -->
+  <div class="dash-page-wrap" id="modulo-entregables" style="display:none; padding-top:0; padding-bottom:60px;">
+    <div class="dash-card">
+      <div class="dash-header">
+        <div class="dash-line"></div>
+        <span class="dash-title">&#128203; Módulo Entregables</span>
+        <div class="dash-line right"></div>
+      </div>
+      <div class="entreg-toolbar">
+        <span class="entreg-year-badge" id="entreg-year-badge">Año: —</span>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="entreg-total" id="entreg-total" style="display:none">
+            <span class="entreg-total-label">Avance total</span>
+            <span class="entreg-total-pct" id="entreg-total-pct">0%</span>
+            <div class="entreg-total-bar">
+              <div class="entreg-total-fill" id="entreg-total-fill"></div>
+            </div>
+          </div>
+          <div class="entreg-view-toggle">
+            <button class="evt-btn active" id="evt-detalle" title="Vista detalle">&#9776; Detalle</button>
+            <button class="evt-btn"        id="evt-informe" title="Informe ejecutivo">&#9783; Informe</button>
+            <button class="evt-btn"        id="evt-pres"    title="Vista presentación">&#9670; Visual</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista detalle -->
+      <div id="entreg-vista-detalle">
+        <div class="entreg-months" id="entreg-months"></div>
+        <div class="entreg-table-wrap">
+          <table class="entreg-table">
+            <thead>
+              <tr>
+                <th style="width:36px">#</th>
+                <th class="col-nombre">Nombre del Entregable</th>
+                <th>Revisión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">10%</span></th>
+                <th>VOBO<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">30%</span></th>
+                <th>Impresión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">40%</span></th>
+                <th>Firma<br>Interna<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">50%</span></th>
+                <th>Firma<br>Externa<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">80%</span></th>
+                <th>Carpeta<br>y Dig.<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">90%</span></th>
+                <th>Acuse<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">100%</span></th>
+                <th>Avance</th>
+              </tr>
+            </thead>
+            <tbody id="entreg-tbody">
+              <tr><td colspan="10">
+                <div class="entreg-empty-state"><span class="ei">📂</span>No hay entregables cargados aún.</div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Vista informe ejecutivo -->
+      <div id="entreg-vista-informe" style="display:none">
+        <div class="informe-wrap" id="informe-wrap"></div>
+      </div>
+
+      <!-- Vista presentación -->
+      <div id="entreg-vista-pres" style="display:none">
+        <div class="pres-wrap" id="pres-wrap"></div>
+      </div>
+
+      <input type="file" id="ep-pdf-input" accept=".pdf" style="display:none" />
+    </div>
+  </div>
+
+  <!-- ══ MODAL: VOBO OBSERVACIONES ════════════════════ -->
+  <div class="vobo-overlay" id="vobo-overlay">
+    <div class="vobo-modal">
+      <button class="vobo-close-btn" id="vobo-close">✕</button>
+      <div class="vobo-modal-title">Observaciones VOBO</div>
+      <div class="vobo-modal-sub" id="vobo-modal-sub"></div>
+      <div class="vobo-obs-list"  id="vobo-obs-list"></div>
+      <div class="vobo-input-row">
+        <input class="vobo-input" id="vobo-input" type="text" placeholder="Escribir observación…" maxlength="400" />
+        <button class="vobo-send-btn" id="vobo-send">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: DETALLE PROYECTO ══════════════════════ -->
+  <div class="proj-overlay" id="proj-overlay">
+    <div class="proj-modal" id="proj-modal">
+      <div class="proj-modal-header">
+        <div class="proj-modal-title" id="proj-modal-title"></div>
+        <button class="proj-modal-close" id="proj-modal-close">&#10005;</button>
+      </div>
+      <div class="proj-modal-stripe"></div>
+      <div class="proj-summary" id="proj-summary"></div>
+      <div class="task-list" id="task-list"></div>
+    </div>
+  </div>
 
   <!-- ══ MODAL: DETALLE DE AVISO ════════════════════ -->
   <div class="aviso-detail-overlay" id="modal-aviso" role="dialog" aria-modal="true">
@@ -618,6 +1221,10 @@
               <input type="password" id="login-password" placeholder="Tu contraseña" autocomplete="current-password" required />
               <button type="button" class="pw-toggle" data-target="login-password" aria-label="Ver contraseña">👁</button>
             </div>
+          </div>
+          <div class="form-group">
+            <label for="login-year">Año de trabajo</label>
+            <select id="login-year"></select>
           </div>
           <button type="submit" class="submit-btn">INICIAR SESIÓN</button>
         </form>
@@ -726,9 +1333,11 @@
   <!-- ══ JAVASCRIPT ══════════════════════════════════ -->
   <script>
     const API = 'http://localhost:3001';
+    let currentUserRol = null;
 
     /* ── Sesión ──────────────────────────────────── */
     function updateAuthUI(user) {
+      currentUserRol = user?.rol || null;
       const loggedIn = !!user;
       document.getElementById('auth-sep').style.display     = loggedIn ? 'none' : '';
       document.getElementById('auth-reg').style.display     = loggedIn ? 'none' : '';
@@ -736,9 +1345,11 @@
       document.getElementById('auth-user').style.display    = loggedIn ? 'flex' : 'none';
       if (user) document.getElementById('user-greeting').textContent = `Hola, ${user.nombre}`;
 
-      // btn2: solo superusuario ve "Crear Avisos"
-      document.getElementById('nav-btn2').style.display =
-        (loggedIn && user.rol === 'superusuario') ? '' : 'none';
+      // btn1, btn2 y btn-entregables: solo superusuario
+      const esSuperusuario = loggedIn && user.rol === 'superusuario';
+      document.getElementById('nav-btn1').style.display            = esSuperusuario ? '' : 'none';
+      document.getElementById('nav-btn2').style.display            = esSuperusuario ? '' : 'none';
+      document.getElementById('nav-btn-entregables').style.display = esSuperusuario ? '' : 'none';
 
       // btn3: oculto sin sesión, "Descargar" para usuarios, "Usuarios" para superusuario
       const navBtn3 = document.getElementById('nav-btn3');
@@ -751,6 +1362,12 @@
         btn3.textContent = 'Descargar';
         btn3.href = '#';
       }
+
+      // Mostrar/ocultar módulos según sesión
+      document.getElementById('modulo-seguimiento').style.display = loggedIn ? '' : 'none';
+      document.getElementById('modulo-entregables').style.display = loggedIn ? '' : 'none';
+
+      if (loggedIn) { loadDashboard(); loadEntregables(); }
     }
 
     function setSession(user) {
@@ -762,12 +1379,6 @@
       localStorage.removeItem('session');
       updateAuthUI(null);
     }
-
-    // Restaurar sesión al cargar la página
-    (function () {
-      const saved = localStorage.getItem('session');
-      if (saved) try { updateAuthUI(JSON.parse(saved)); } catch { clearSession(); }
-    })();
 
     document.getElementById('btn-logout').addEventListener('click', clearSession);
 
@@ -832,6 +1443,18 @@
       });
     });
 
+    /* ── Poblar selector de año (login) ─────────── */
+    (function () {
+      const sel = document.getElementById('login-year');
+      const cur = new Date().getFullYear();
+      for (let y = cur + 1; y >= 2018; y--) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        if (y === cur) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    })();
+
     /* ── Login ───────────────────────────────────── */
     document.getElementById('form-login').addEventListener('submit', async e => {
       e.preventDefault();
@@ -841,6 +1464,7 @@
 
       const email    = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
+      const año      = parseInt(document.getElementById('login-year').value);
 
       try {
         const res  = await fetch(`${API}/api/auth/login`, {
@@ -852,7 +1476,7 @@
 
         if (data.success) {
           showAlert('alert-login', `¡Bienvenido, ${data.user.nombre}! 🎉`, 'success');
-          setSession(data.user);
+          setSession({ ...data.user, año });
           setTimeout(() => closeModal('modal-login'), 1800);
         } else {
           showAlert('alert-login', data.error || 'Error al iniciar sesión.', 'error');
@@ -1220,6 +1844,908 @@
     // ESC ya está manejado globalmente abajo, agrego modal-aviso al handler existente
 
     loadReel();
+
+    /* ══ DASHBOARD ════════════════════════════════ */
+    let allProjects = [];
+    let activeYear  = null;
+    const collapsedGroups = new Set();
+
+    function fmtShort(iso) {
+      if (!iso) return '—';
+      const [y,m,d] = iso.split('-');
+      const mes = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1];
+      return `${+d} ${mes} ${y}`;
+    }
+
+    function estadoBadge(estado) {
+      if (!estado) return '';
+      const e = estado.toLowerCase();
+      if (e === 'terminado')   return `<span class="task-badge badge-terminado">Terminado</span>`;
+      if (e === 'en progreso') return `<span class="task-badge badge-progreso">En progreso</span>`;
+      return `<span class="task-badge badge-abierto">${estado || 'Abierto'}</span>`;
+    }
+
+    async function loadDashboard() {
+      try {
+        const res  = await fetch(`${API}/api/projects`);
+        const data = await res.json();
+        if (!data.success) return;
+        allProjects = data.projects;
+
+        const sessionYear = parseInt((JSON.parse(localStorage.getItem('session') || '{}')).año) || new Date().getFullYear();
+        activeYear = sessionYear;
+        renderProjectCards();
+      } catch {
+        document.getElementById('dash-projects').innerHTML =
+          '<div class="dash-empty">No se pudo conectar con el servidor.</div>';
+      }
+    }
+
+    function renderProjectCards() {
+      const container  = document.getElementById('dash-projects');
+      const filtered   = allProjects.filter(p => p.year === activeYear);
+      const esSuperusr = currentUserRol === 'superusuario';
+
+      if (!filtered.length) {
+        container.innerHTML = '<div class="dash-empty">Sin proyectos para este año.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="dash-proj-card" onclick="openProject('${p.id}')">
+          ${esSuperusr ? `<button class="dash-proj-del" onclick="deleteProject(event,'${p.id}',\`${escH(p.nombre)}\`)" title="Eliminar proyecto">✕</button>` : ''}
+          <div class="dash-proj-name">${escH(p.nombre)}</div>
+          <div class="dash-proj-dates">
+            ${fmtShort(p.inicio)} &rarr; ${fmtShort(p.fin)}
+          </div>
+          <div class="dash-progress-wrap">
+            <div class="dash-progress-bar">
+              <div class="dash-progress-fill" style="width:${p.progreso}%"></div>
+            </div>
+            <div class="dash-progress-label">${p.progreso}% completado</div>
+          </div>
+        </div>`
+      ).join('');
+    }
+
+    async function deleteProject(e, id, nombre) {
+      e.stopPropagation();
+      if (!confirm(`¿Eliminar el proyecto "${nombre}"?\nEsta acción no se puede deshacer.`)) return;
+      try {
+        const res  = await fetch(`${API}/api/projects/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          allProjects = allProjects.filter(p => p.id !== id);
+          renderProjectCards();
+        } else {
+          alert('Error al eliminar: ' + (data.error || 'desconocido'));
+        }
+      } catch {
+        alert('No se pudo conectar con el servidor.');
+      }
+    }
+
+    async function openProject(id) {
+      const overlay = document.getElementById('proj-overlay');
+      document.getElementById('task-list').innerHTML =
+        '<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-weight:700">Cargando tareas…</div>';
+      document.getElementById('proj-summary').innerHTML = '';
+      document.getElementById('proj-modal-title').textContent = '';
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      collapsedGroups.clear();
+      loadProgOverrides(id);
+
+      try {
+        const res  = await fetch(`${API}/api/projects/${id}/tasks`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const { projectRow, tasks } = data;
+
+        document.getElementById('proj-modal-title').textContent =
+          projectRow?.nombre || decodeURIComponent(id);
+
+        // Summary stats
+        const tareas   = tasks.filter(t => t.tipo === 'tarea');
+        const terminas = tareas.filter(t => t.estado?.toLowerCase() === 'terminado').length;
+        const total    = tareas.length;
+        const horas    = tasks.reduce((s, t) => s + (t.duracion || 0), 0);
+
+        document.getElementById('proj-summary').innerHTML = `
+          <div class="proj-stat">
+            <div class="proj-stat-val">${total}</div>
+            <div class="proj-stat-lbl">Tareas</div>
+          </div>
+          <div class="proj-stat">
+            <div class="proj-stat-val">${terminas}</div>
+            <div class="proj-stat-lbl">Terminadas</div>
+          </div>
+          <div class="proj-stat">
+            <div class="proj-stat-val">${total - terminas}</div>
+            <div class="proj-stat-lbl">Pendientes</div>
+          </div>
+          <div class="proj-stat">
+            <div class="proj-stat-val">${horas.toLocaleString()}</div>
+            <div class="proj-stat-lbl">Horas totales</div>
+          </div>`;
+
+        renderTaskList(tasks);
+      } catch (err) {
+        document.getElementById('task-list').innerHTML =
+          `<div style="padding:32px;text-align:center;color:#f87171;font-weight:700">Error: ${err.message}</div>`;
+      }
+    }
+
+    /* ── Progress override management ─────────────── */
+    let currentProjectId = null;
+    let progOverrides    = {};
+    let currentTasks     = [];
+
+    const PROG_COLORS = {
+      'por-iniciar': 'rgba(255,255,255,.18)',
+      'iniciado':    '#f59e0b',
+      'en-proceso':  '#00AEEF',
+      'culminado':   '#16a34a',
+    };
+    const PROG_LABELS = {
+      'por-iniciar': 'Por iniciar',
+      'iniciado':    'Iniciado',
+      'en-proceso':  'En proceso',
+      'culminado':   'Culminado',
+    };
+
+    function loadProgOverrides(pid) {
+      currentProjectId = pid;
+      try { progOverrides = JSON.parse(localStorage.getItem(`prog_${pid}`) || '{}'); }
+      catch { progOverrides = {}; }
+    }
+    function saveProgOverrides() {
+      if (currentProjectId)
+        localStorage.setItem(`prog_${currentProjectId}`, JSON.stringify(progOverrides));
+    }
+    function getEffectiveProg(edt, xlsPct) {
+      if (progOverrides[edt]) return progOverrides[edt];
+      const p = xlsPct || 0;
+      if (p <= 0)  return { statusKey: 'por-iniciar', pct: 0 };
+      if (p <= 15) return { statusKey: 'iniciado',    pct: 15 };
+      if (p < 100) return { statusKey: 'en-proceso',  pct: Math.max(16, Math.min(80, p)) };
+      return { statusKey: 'culminado', pct: 100 };
+    }
+
+    function buildProgCtrl(edt, xlsPct) {
+      const { statusKey, pct } = getEffectiveProg(edt, xlsPct);
+      const color = PROG_COLORS[statusKey];
+
+      const opts = ['por-iniciar','iniciado','en-proceso','culminado'].map(sk => {
+        const pctLbl = { 'por-iniciar':'0%', 'iniciado':'15%', 'en-proceso':'16–80%', 'culminado':'100%' }[sk];
+        const enRow  = sk === 'en-proceso'
+          ? `<div class="prog-en-proceso-row${statusKey === 'en-proceso' ? ' show' : ''}">
+               <input class="prog-pct-input" type="number" min="16" max="80"
+                      value="${statusKey === 'en-proceso' ? pct : 50}" />
+               <span class="prog-pct-symbol">%</span>
+               <button class="prog-pct-ok" type="button">✓</button>
+             </div>` : '';
+        return `<button class="prog-drop-item${sk === statusKey ? ' sel' : ''}" type="button" data-sk="${sk}">
+          <span class="pdi-dot"></span>${PROG_LABELS[sk]}<span class="pdi-pct">${pctLbl}</span>
+        </button>${enRow}`;
+      }).join('');
+
+      return `<button class="prog-btn" type="button">
+        <div class="prog-barmini"><div class="prog-barmini-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="prog-label">${PROG_LABELS[statusKey]} ${pct}%</span>
+        <span class="prog-arrow">▾</span>
+      </button>
+      <div class="prog-drop">${opts}</div>`;
+    }
+
+    function buildGroupProg(edt) {
+      const stored = progOverrides[edt];
+      let pct;
+      if (stored) {
+        pct = stored.pct;
+      } else {
+        const depth    = edt.split('.').length;
+        const prefix   = edt + '.';
+        const children = currentTasks.filter(t =>
+          t.edt.startsWith(prefix) && t.edt.split('.').length === depth + 1
+        );
+        if (!children.length) return '';
+        pct = Math.round(
+          children.reduce((s, c) => s + getEffectiveProg(c.edt, c.progreso).pct, 0) / children.length
+        );
+      }
+      const sk    = pct <= 0 ? 'por-iniciar' : pct <= 15 ? 'iniciado' : pct < 100 ? 'en-proceso' : 'culminado';
+      const color = PROG_COLORS[sk];
+      return `<div class="group-prog-display">
+        <div class="prog-barmini" style="width:56px">
+          <div class="prog-barmini-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <span class="group-prog-label">${pct}%</span>
+      </div>`;
+    }
+
+    function computeGroupProgress(edt) {
+      const depth    = edt.split('.').length;
+      const prefix   = edt + '.';
+      const children = currentTasks.filter(t =>
+        t.edt.startsWith(prefix) && t.edt.split('.').length === depth + 1
+      );
+      if (!children.length) return null;
+      return Math.round(
+        children.reduce((s, c) => s + getEffectiveProg(c.edt, c.progreso).pct, 0) / children.length
+      );
+    }
+
+    function rollupProgress(changedEdt) {
+      const parts = changedEdt.split('.');
+      for (let len = parts.length - 1; len >= 1; len--) {
+        const parentEdt = parts.slice(0, len).join('.');
+        const pct = computeGroupProgress(parentEdt);
+        if (pct === null) continue;
+        const sk = pct <= 0 ? 'por-iniciar' : pct <= 15 ? 'iniciado' : pct < 100 ? 'en-proceso' : 'culminado';
+        progOverrides[parentEdt] = { statusKey: sk, pct };
+        const row = document.querySelector(`.task-row[data-edt="${parentEdt}"]`);
+        if (row) {
+          const fill  = row.querySelector('.prog-barmini-fill');
+          const label = row.querySelector('.group-prog-label');
+          if (fill)  { fill.style.width = `${pct}%`; fill.style.background = PROG_COLORS[sk]; }
+          if (label) label.textContent  = `${pct}%`;
+        }
+      }
+      saveProgOverrides();
+    }
+
+    function closeAllProgDrops() {
+      document.querySelectorAll('.prog-drop.open').forEach(d => {
+        d.classList.remove('open');
+        const b = d.previousElementSibling;
+        if (b?.classList.contains('prog-btn')) b.classList.remove('open');
+      });
+    }
+    function toggleProgDrop(btn) {
+      const ctrl  = btn.closest('.prog-ctrl');
+      const drop  = ctrl.querySelector('.prog-drop');
+      const isOpen = drop.classList.contains('open');
+      closeAllProgDrops();
+      if (isOpen) return;
+      const rect = btn.getBoundingClientRect();
+      drop.style.right  = (window.innerWidth - rect.right) + 'px';
+      drop.style.left   = 'auto';
+      if (window.innerHeight - rect.bottom < 210) {
+        drop.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        drop.style.top    = 'auto';
+      } else {
+        drop.style.top    = (rect.bottom + 4) + 'px';
+        drop.style.bottom = 'auto';
+      }
+      drop.classList.add('open');
+      btn.classList.add('open');
+    }
+    function applyProgStatus(ctrl, sk, pct) {
+      const edt = ctrl.closest('.task-row').dataset.edt;
+      progOverrides[edt] = { statusKey: sk, pct };
+      saveProgOverrides();
+      const btn   = ctrl.querySelector('.prog-btn');
+      btn.querySelector('.prog-barmini-fill').style.width      = `${pct}%`;
+      btn.querySelector('.prog-barmini-fill').style.background = PROG_COLORS[sk];
+      btn.querySelector('.prog-label').textContent             = `${PROG_LABELS[sk]} ${pct}%`;
+      ctrl.querySelectorAll('.prog-drop-item').forEach(i => i.classList.remove('sel'));
+      ctrl.querySelector(`[data-sk="${sk}"]`)?.classList.add('sel');
+      const enRow = ctrl.querySelector('.prog-en-proceso-row');
+      if (enRow) enRow.classList.toggle('show', sk === 'en-proceso');
+      rollupProgress(edt);
+      closeAllProgDrops();
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.prog-ctrl')) closeAllProgDrops();
+    });
+
+    function renderTaskList(tasks) {
+      currentTasks = tasks;
+      const list = document.getElementById('task-list');
+
+      function isVisible(task) {
+        const parts = task.edt.split('.');
+        for (let len = 1; len < parts.length; len++) {
+          if (collapsedGroups.has(parts.slice(0, len).join('.'))) return false;
+        }
+        return true;
+      }
+
+      function build() {
+        list.innerHTML = tasks.filter(isVisible).map(t => {
+          const isGroup = t.tipo !== 'tarea';
+          const isOpen  = !collapsedGroups.has(t.edt);
+          const toggleEl = isGroup
+            ? `<span class="task-toggle ${isOpen ? 'open' : ''}" data-edt="${t.edt}">&#9658;</span>`
+            : `<span class="task-toggle-space"></span>`;
+          const dates = (t.inicio || t.fin)
+            ? `${fmtShort(t.inicio)} – ${fmtShort(t.fin)}` : '—';
+          const dur   = t.duracion ? `${t.duracion}h` : '—';
+          const prog  = isGroup ? buildGroupProg(t.edt) : buildProgCtrl(t.edt, t.progreso);
+
+          return `<div class="task-row nivel-${t.nivel} ${isGroup ? 'is-group' : ''}" data-edt="${t.edt}">
+            <span class="task-edt">${t.edt}</span>
+            <span class="task-name">${toggleEl}<span class="task-name-text">${escH(t.nombre)}</span></span>
+            <span class="task-dates">${dates}</span>
+            <span class="task-dur">${dur}</span>
+            <div class="prog-ctrl">${prog}</div>
+          </div>`;
+        }).join('');
+
+        list.querySelectorAll('.task-toggle[data-edt]').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const edt = btn.dataset.edt;
+            if (collapsedGroups.has(edt)) collapsedGroups.delete(edt);
+            else collapsedGroups.add(edt);
+            build();
+          });
+        });
+
+        list.querySelectorAll('.task-row.is-group').forEach(row => {
+          row.addEventListener('click', () => {
+            const edt = row.dataset.edt;
+            if (!row.querySelector('.task-toggle[data-edt]')) return;
+            if (collapsedGroups.has(edt)) collapsedGroups.delete(edt);
+            else collapsedGroups.add(edt);
+            build();
+          });
+        });
+
+        list.querySelectorAll('.prog-btn').forEach(btn => {
+          btn.addEventListener('click', e => { e.stopPropagation(); toggleProgDrop(btn); });
+        });
+
+        list.querySelectorAll('.prog-drop-item').forEach(item => {
+          item.addEventListener('click', e => {
+            e.stopPropagation();
+            const sk   = item.dataset.sk;
+            const ctrl = item.closest('.prog-ctrl');
+            if (sk === 'en-proceso') {
+              ctrl.querySelectorAll('.prog-drop-item').forEach(i => i.classList.remove('sel'));
+              item.classList.add('sel');
+              ctrl.querySelector('.prog-en-proceso-row')?.classList.add('show');
+              ctrl.querySelector('.prog-pct-input')?.focus();
+            } else {
+              const pct = { 'por-iniciar': 0, 'iniciado': 15, 'culminado': 100 }[sk];
+              applyProgStatus(ctrl, sk, pct);
+            }
+          });
+        });
+
+        list.querySelectorAll('.prog-pct-ok').forEach(ok => {
+          ok.addEventListener('click', e => {
+            e.stopPropagation();
+            const ctrl  = ok.closest('.prog-ctrl');
+            const input = ctrl.querySelector('.prog-pct-input');
+            let v = Math.max(16, Math.min(80, parseInt(input.value) || 50));
+            input.value = v;
+            applyProgStatus(ctrl, 'en-proceso', v);
+          });
+        });
+
+        list.querySelectorAll('.prog-pct-input').forEach(inp => {
+          inp.addEventListener('click', e => e.stopPropagation());
+          inp.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            e.stopPropagation();
+            const ctrl = inp.closest('.prog-ctrl');
+            let v = Math.max(16, Math.min(80, parseInt(inp.value) || 50));
+            inp.value = v;
+            applyProgStatus(ctrl, 'en-proceso', v);
+          });
+        });
+      }
+
+      build();
+    }
+
+    function closeProject() {
+      document.getElementById('proj-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('proj-modal-close').addEventListener('click', closeProject);
+    document.getElementById('proj-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('proj-overlay')) closeProject();
+    });
+
+    loadDashboard();
+
+    /* ══ MÓDULO ENTREGABLES ══════════════════════════ */
+    const ETAPAS = [
+      { key: 'revision',      pdf: true  },
+      { key: 'vobo',          vobo: true },
+      { key: 'impresion'                 },
+      { key: 'firma_interna'             },
+      { key: 'firma_externa'             },
+      { key: 'carpeta'                   },
+      { key: 'acuse',         pdf: true  },
+    ];
+
+    let entregablesData = [];
+    let activeMes       = null;
+    let voboCurrent     = null;
+
+    function etapaProgress(etapas) {
+      const pcts = [10, 30, 40, 50, 80, 90, 100];
+      let last = 0;
+      for (let i = 0; i < ETAPAS.length; i++) {
+        if (etapas[ETAPAS[i].key].completada) last = pcts[i]; else break;
+      }
+      return last;
+    }
+
+    function prevDone(etapas, idx) {
+      return idx === 0 || etapas[ETAPAS[idx - 1].key].completada;
+    }
+
+    function renderEntregables() {
+      const tbody    = document.getElementById('entreg-tbody');
+      const totalEl  = document.getElementById('entreg-total');
+      const totalPct = document.getElementById('entreg-total-pct');
+      const totalFil = document.getElementById('entreg-total-fill');
+      const acta  = entregablesData.find(e => e.mes === activeMes);
+      if (!acta || !acta.items || !acta.items.length) {
+        tbody.innerHTML = `<tr><td colspan="10"><div class="entreg-empty-state"><span class="ei">📂</span>No hay entregables para este mes.</div></td></tr>`;
+        totalEl.style.display = 'none';
+        return;
+      }
+      // Calcular avance total promedio
+      const avg = Math.round(acta.items.reduce((s, it) => s + etapaProgress(it.etapas), 0) / acta.items.length);
+      totalEl.style.display  = '';
+      totalPct.textContent   = avg + '%';
+      totalFil.style.width   = avg + '%';
+      tbody.innerHTML = acta.items.map(item => {
+        const pct   = etapaProgress(item.etapas);
+        const cells = ETAPAS.map((et, idx) => {
+          const e    = item.etapas[et.key];
+          const prev = prevDone(item.etapas, idx);
+          if (et.vobo) {
+            let cls, icon;
+            if (e.rechazado)    { cls = 'reject'; icon = '!'; }
+            else if (e.completada) { cls = 'done';   icon = '✓'; }
+            else if (prev)        { cls = 'avail';   icon = '✓'; }
+            else                  { cls = 'lock';    icon = '—'; }
+            const nObs = e.observaciones.length;
+            return `<td><div class="vobo-cell">
+              <button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="vobo">${icon}</button>
+              ${(prev || nObs) ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs${nObs ? ' ('+nObs+')' : ''}</button>` : ''}
+            </div></td>`;
+          }
+          const done  = e.completada;
+          const cls   = done ? 'done' : prev ? 'avail' : 'lock';
+          const icon  = done ? '✓' : et.pdf ? '↑' : '·';
+          const attrs = et.pdf ? `data-pdf="true"` : '';
+          return `<td><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${attrs}>${icon}</button></td>`;
+        }).join('');
+        return `<tr>
+          <td class="col-num">${item.num}</td>
+          <td class="col-nombre">${escH(item.nombre)}</td>
+          ${cells}
+          <td><div class="ep-avance">
+            <span class="ep-avance-pct">${pct}%</span>
+            <div class="ep-avance-bar"><div class="ep-avance-fill" style="width:${pct}%"></div></div>
+          </div></td>
+        </tr>`;
+      }).join('');
+      if (entregVista === 'informe') renderInforme();
+      if (entregVista === 'pres')    renderPresentacion();
+    }
+
+    async function loadEntregables() {
+      try {
+        const res  = await fetch(`${API}/api/entregables`);
+        const data = await res.json();
+        if (!data.success) return;
+        let año = new Date().getFullYear();
+        try { año = parseInt(JSON.parse(localStorage.getItem('session') || '{}').año) || año; } catch {}
+        document.getElementById('entreg-year-badge').textContent = `Año: ${año}`;
+        entregablesData = (data.entregables || []).filter(e => e.año == año);
+        const monthsEl  = document.getElementById('entreg-months');
+        if (!entregablesData.length) {
+          monthsEl.innerHTML = '';
+          activeMes = null;
+          renderEntregables();
+          return;
+        }
+        const sorted = [...entregablesData].sort((a, b) => a.mes - b.mes);
+        if (!activeMes || !entregablesData.find(e => e.mes === activeMes))
+          activeMes = sorted[0].mes;
+        const esSu = currentUserRol === 'superusuario';
+        monthsEl.innerHTML = sorted.map(e =>
+          `<span class="epm-item">
+            <button class="epm-btn${activeMes === e.mes ? ' active' : ''}" data-mes="${e.mes}">${e.mesNombre}</button>
+            ${esSu ? `<button class="epm-del" data-id="${escH(e.id)}" data-mes="${e.mes}" title="Eliminar mes">✕</button>` : ''}
+          </span>`
+        ).join('');
+        renderEntregables();
+      } catch {}
+    }
+
+    /* ── Toggle de vista ── */
+    let entregVista = 'detalle';
+    function setEntregVista(v) {
+      entregVista = v;
+      document.getElementById('entreg-vista-detalle').style.display = v === 'detalle' ? '' : 'none';
+      document.getElementById('entreg-vista-informe').style.display = v === 'informe' ? '' : 'none';
+      document.getElementById('entreg-vista-pres').style.display    = v === 'pres'    ? '' : 'none';
+      document.getElementById('evt-detalle').classList.toggle('active', v === 'detalle');
+      document.getElementById('evt-informe').classList.toggle('active', v === 'informe');
+      document.getElementById('evt-pres').classList.toggle('active',    v === 'pres');
+      document.getElementById('entreg-total').style.display =
+        (v === 'detalle' && entregablesData.find(e => e.mes === activeMes)?.items?.length) ? '' : 'none';
+      if (v === 'informe') renderInforme();
+      if (v === 'pres')    renderPresentacion();
+    }
+    document.getElementById('evt-detalle').addEventListener('click', () => setEntregVista('detalle'));
+    document.getElementById('evt-informe').addEventListener('click', () => setEntregVista('informe'));
+    document.getElementById('evt-pres').addEventListener('click',    () => setEntregVista('pres'));
+
+    /* ── Vista presentación ── */
+    function pctColor(p) {
+      return p >= 100 ? '#34D399' : p >= 80 ? '#10B981' : p >= 50 ? '#00AEEF' : p >= 20 ? '#F59E0B' : '#6B7280';
+    }
+    function svgDonut(pct, size = 100, sw = 10) {
+      const r    = (size - sw) / 2;
+      const circ = 2 * Math.PI * r;
+      const off  = circ * (1 - pct / 100);
+      const col  = pctColor(pct);
+      return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="${sw}"/>
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}"
+          stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
+          stroke-linecap="round" transform="rotate(-90 ${size/2} ${size/2})"/>
+        <text x="${size/2}" y="${size/2 - 4}" text-anchor="middle" dominant-baseline="middle"
+          fill="#fff" font-family="Montserrat,sans-serif" font-size="${Math.round(size*.18)}" font-weight="900">${pct}%</text>
+      </svg>`;
+    }
+    const CARD_PALETTES = [
+      { bg:'linear-gradient(145deg,#0b2545,#0d3b6e)', border:'rgba(0,93,151,.55)' },
+      { bg:'linear-gradient(145deg,#0c2e2a,#0e4038)', border:'rgba(16,185,129,.45)' },
+      { bg:'linear-gradient(145deg,#1e1a0e,#2d2710)', border:'rgba(245,158,11,.4)'  },
+      { bg:'linear-gradient(145deg,#1a0e2a,#261040)', border:'rgba(139,92,246,.45)' },
+      { bg:'linear-gradient(145deg,#0f1e30,#0a2c44)', border:'rgba(0,174,239,.45)'  },
+      { bg:'linear-gradient(145deg,#1e0e0e,#2d1010)', border:'rgba(239,68,68,.4)'   },
+    ];
+    const STAGE_COLORS = ['#60A5FA','#FCD34D','#A78BFA','#34D399','#F97316','#F472B6','#38BDF8'];
+
+    function renderPresentacion() {
+      const wrap = document.getElementById('pres-wrap');
+      if (!entregablesData.length) {
+        wrap.innerHTML = `<div class="entreg-empty-state"><span class="ei">📊</span>No hay datos para mostrar.</div>`;
+        return;
+      }
+      const sorted     = [...entregablesData].sort((a, b) => a.mes - b.mes);
+      const totalItems = sorted.reduce((s, a) => s + (a.items?.length || 0), 0);
+      const totalComp  = sorted.reduce((s, a) => s + (a.items || []).filter(it => etapaProgress(it.etapas) === 100).length, 0);
+      const totalProg  = sorted.reduce((s, a) => s + (a.items || []).filter(it => { const p = etapaProgress(it.etapas); return p > 0 && p < 100; }).length, 0);
+      const globalAvg  = totalItems
+        ? Math.round(sorted.reduce((s, a) => s + (a.items || []).reduce((ss, it) => ss + etapaProgress(it.etapas), 0), 0) / totalItems)
+        : 0;
+      const año = document.getElementById('entreg-year-badge').textContent.replace('Año: ', '');
+      const fecha = new Date().toLocaleDateString('es-MX', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+
+      const monthCards = sorted.map((acta, ci) => {
+        const items = acta.items || [];
+        const n     = items.length; if (!n) return '';
+        const avg   = Math.round(items.reduce((s, it) => s + etapaProgress(it.etapas), 0) / n);
+        const comp  = items.filter(it => etapaProgress(it.etapas) === 100).length;
+        const prog  = items.filter(it => { const p = etapaProgress(it.etapas); return p > 0 && p < 100; }).length;
+        const pal   = CARD_PALETTES[ci % CARD_PALETTES.length];
+        const stageRows = ETAPAS.map((et, idx) => {
+          const done = items.filter(it => it.etapas[et.key].completada).length;
+          const pct  = Math.round(done / n * 100);
+          const col  = STAGE_COLORS[idx];
+          return `<div class="pmc-stage-row">
+            <div class="pmc-stage-info">
+              <div class="pmc-stage-dot" style="background:${col}"></div>
+              <span class="pmc-stage-lbl">${ETAPA_LABELS[idx]}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 36px;gap:6px;align-items:center">
+              <div class="pmc-stage-bar-wrap">
+                <div class="pmc-stage-bar-fill" style="width:${pct}%;background:${col}"></div>
+              </div>
+              <span class="pmc-stage-pct">${done}/${n}</span>
+            </div>
+          </div>`;
+        }).join('');
+        return `<div class="pres-month-card" style="background:${pal.bg};border:1px solid ${pal.border}">
+          <div class="pmc-top">
+            <div class="pmc-donut">${svgDonut(avg, 90, 9)}</div>
+            <div class="pmc-info">
+              <div class="pmc-mes">${acta.mesNombre}</div>
+              <div class="pmc-total">${n} entregable${n !== 1 ? 's' : ''}</div>
+              <div class="pmc-mini">
+                <span class="pmc-pill done">✓ ${comp} completados</span>
+                ${prog ? `<span class="pmc-pill prog">↗ ${prog} en proceso</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="pmc-divider"></div>
+          <div class="pmc-stages">${stageRows}</div>
+        </div>`;
+      }).join('');
+
+      wrap.innerHTML = `
+        <div class="pres-header">
+          <div>
+            <div class="pres-header-title">Informe de Avance de Entregables</div>
+            <div class="pres-header-año">${año}</div>
+            <div class="pres-header-sub">${fecha}</div>
+          </div>
+          <div style="text-align:right">
+            ${svgDonut(globalAvg, 120, 12)}
+            <div style="font-size:10px;color:rgba(255,255,255,.3);font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:.6px">Avance global</div>
+          </div>
+        </div>
+        <div class="pres-kpis">
+          <div class="pres-kpi k-blue">
+            <div class="pres-kpi-val">${totalItems}</div>
+            <div class="pres-kpi-lbl">Total Entregables</div>
+          </div>
+          <div class="pres-kpi k-green">
+            <div class="pres-kpi-val">${totalComp}</div>
+            <div class="pres-kpi-lbl">Completados</div>
+          </div>
+          <div class="pres-kpi k-cyan">
+            <div class="pres-kpi-val">${totalProg}</div>
+            <div class="pres-kpi-lbl">En Proceso</div>
+          </div>
+          <div class="pres-kpi k-amber">
+            <div class="pres-kpi-val">${sorted.length}</div>
+            <div class="pres-kpi-lbl">Meses Cargados</div>
+          </div>
+        </div>
+        <div class="pres-months-grid">${monthCards}</div>
+        <div class="pres-footer">CONFIDENCIAL · Generado automáticamente · ${fecha}</div>`;
+    }
+
+    /* ── Informe ejecutivo ── */
+    const ETAPA_LABELS = ['Revisión','VOBO','Impresión','Firma Interna','Firma Externa','Carpeta y Dig.','Acuse'];
+    function renderInforme() {
+      const wrap = document.getElementById('informe-wrap');
+      if (!entregablesData.length) {
+        wrap.innerHTML = `<div class="entreg-empty-state"><span class="ei">📊</span>No hay datos para generar el informe.</div>`;
+        return;
+      }
+      const sorted = [...entregablesData].sort((a,b) => a.mes - b.mes);
+      // Totales globales
+      const totalItems = sorted.reduce((s,a) => s + (a.items?.length||0), 0);
+      const totalComp  = sorted.reduce((s,a) => s + (a.items||[]).filter(it => etapaProgress(it.etapas)===100).length, 0);
+      const globalAvg  = totalItems
+        ? Math.round(sorted.reduce((s,a) => s + (a.items||[]).reduce((ss,it) => ss + etapaProgress(it.etapas), 0), 0) / totalItems)
+        : 0;
+      const fecha = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+
+      const mesCards = sorted.map(acta => {
+        const items = acta.items || [];
+        const n     = items.length;
+        if (!n) return '';
+        const avg  = Math.round(items.reduce((s,it) => s + etapaProgress(it.etapas), 0) / n);
+        const comp = items.filter(it => etapaProgress(it.etapas) === 100).length;
+        const etapaRows = ETAPAS.map((et, idx) => {
+          const done = items.filter(it => it.etapas[et.key].completada).length;
+          const pct  = Math.round(done / n * 100);
+          return `<div class="imc-etapa-row">
+            <span class="imc-etapa-lbl">${ETAPA_LABELS[idx]}</span>
+            <div class="imc-etapa-bar"><div class="imc-etapa-fill" style="width:${pct}%"></div></div>
+            <span class="imc-etapa-val">${done}/${n}</span>
+          </div>`;
+        }).join('');
+        return `<div class="informe-mes-card">
+          <div class="imc-header">
+            <span class="imc-mes">${acta.mesNombre}</span>
+            <span class="imc-pct">${avg}%</span>
+          </div>
+          <div class="imc-bar-wrap"><div class="imc-bar-fill" style="width:${avg}%"></div></div>
+          <div class="imc-stats">
+            <span class="imc-stat"><strong>${n}</strong> entregables</span>
+            <span class="imc-stat"><strong>${comp}</strong> completados</span>
+            <span class="imc-stat"><strong>${n - comp}</strong> en proceso</span>
+          </div>
+          <div class="imc-etapas">${etapaRows}</div>
+        </div>`;
+      }).join('');
+
+      wrap.innerHTML = `
+        <div class="informe-resumen">
+          <div class="informe-stat">
+            <div class="informe-stat-val">${globalAvg}%</div>
+            <div class="informe-stat-lbl">Avance global</div>
+          </div>
+          <div class="informe-stat">
+            <div class="informe-stat-val">${totalItems}</div>
+            <div class="informe-stat-lbl">Total entregables</div>
+          </div>
+          <div class="informe-stat">
+            <div class="informe-stat-val">${totalComp}</div>
+            <div class="informe-stat-lbl">Completados</div>
+          </div>
+          <div class="informe-stat">
+            <div class="informe-stat-val">${sorted.length}</div>
+            <div class="informe-stat-lbl">Meses cargados</div>
+          </div>
+        </div>
+        <div class="informe-mes-grid">${mesCards}</div>
+        <div class="informe-footer">Generado el ${fecha}</div>`;
+    }
+
+    /* Filtro y eliminar mes */
+    document.getElementById('entreg-months').addEventListener('click', async e => {
+      const del = e.target.closest('.epm-del');
+      if (del) {
+        const id  = del.dataset.id;
+        const mes = parseInt(del.dataset.mes);
+        const acta = entregablesData.find(a => a.id === id);
+        if (!confirm(`¿Eliminar los entregables de ${acta?.mesNombre || 'este mes'}?`)) return;
+        try {
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if ((await r.json()).success) {
+            entregablesData = entregablesData.filter(a => a.id !== id);
+            if (activeMes === mes) activeMes = entregablesData[0]?.mes || null;
+            await loadEntregables();
+          }
+        } catch {}
+        return;
+      }
+      const btn = e.target.closest('.epm-btn');
+      if (!btn) return;
+      activeMes = parseInt(btn.dataset.mes);
+      document.querySelectorAll('.epm-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderEntregables();
+    });
+
+    /* Clicks en etapas */
+    document.getElementById('entreg-tbody').addEventListener('click', async e => {
+      const obsBtn = e.target.closest('.vobo-obs-btn');
+      if (obsBtn) { openVoboModal(obsBtn.dataset.id, parseInt(obsBtn.dataset.num), obsBtn.dataset.nombre); return; }
+
+      const btn = e.target.closest('.ep-btn');
+      if (!btn || btn.classList.contains('lock') || btn.classList.contains('reject')) return;
+
+      const id    = btn.dataset.id;
+      const num   = parseInt(btn.dataset.num);
+      const etapa = btn.dataset.etapa;
+      const acta  = entregablesData.find(a => a.id === id);
+      const item  = acta?.items.find(it => it.num === num);
+      if (!item) return;
+
+      if (btn.dataset.pdf === 'true') {
+        // Acuse completado → ofrecer revertir
+        if (etapa === 'acuse' && item.etapas.acuse.completada) {
+          if (!confirm('¿Revertir el acuse? Se marcará como pendiente.')) return;
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ etapa: 'acuse', completada: false }) });
+          if ((await r.json()).success) {
+            item.etapas.acuse.completada = false;
+            item.etapas.acuse.fecha      = null;
+            renderEntregables();
+          }
+          return;
+        }
+        const inp = document.getElementById('ep-pdf-input');
+        inp.dataset.id = id; inp.dataset.num = num; inp.dataset.etapa = etapa;
+        inp.value = ''; inp.click(); return;
+      }
+
+      /* toggle etapa simple o VOBO */
+      const nowDone = !item.etapas[etapa].completada;
+      const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ etapa, completada: nowDone }) });
+      if ((await r.json()).success) {
+        item.etapas[etapa].completada = nowDone;
+        item.etapas[etapa].fecha      = nowDone ? new Date().toISOString() : null;
+        renderEntregables();
+      }
+    });
+
+    /* Subida de PDF */
+    document.getElementById('ep-pdf-input').addEventListener('change', async function () {
+      const file = this.files[0]; if (!file) return;
+      const { id, num, etapa } = this.dataset;
+      const fd = new FormData(); fd.append('pdf', file);
+      try {
+        const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/pdf/${etapa}`,
+          { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.success) {
+          const acta = entregablesData.find(a => a.id === id);
+          const item = acta?.items.find(it => it.num === parseInt(num));
+          if (item) {
+            item.etapas[etapa].completada = true;
+            item.etapas[etapa].pdf        = d.pdf;
+            if (etapa === 'revision') item.etapas.vobo.rechazado = false;
+            renderEntregables();
+          }
+        }
+      } catch {}
+    });
+
+    /* Modal VOBO */
+    function openVoboModal(id, num, nombre) {
+      voboCurrent = { id, num };
+      document.getElementById('vobo-modal-sub').textContent = nombre;
+      renderVoboObs();
+      document.getElementById('vobo-overlay').classList.add('open');
+    }
+    function closeVoboModal() {
+      document.getElementById('vobo-overlay').classList.remove('open');
+      voboCurrent = null;
+    }
+    function renderVoboObs() {
+      const acta     = entregablesData.find(a => a.id === voboCurrent.id);
+      const item     = acta?.items.find(it => it.num === voboCurrent.num);
+      const obs      = item?.etapas.vobo.observaciones || [];
+      const aprobado = item?.etapas.vobo.completada === true;
+      const el       = document.getElementById('vobo-obs-list');
+      el.innerHTML = obs.length
+        ? obs.map(o => `<div class="vobo-obs-item">
+            <div class="vobo-obs-texto">${escH(o.texto)}</div>
+            <div class="vobo-obs-fecha">${new Date(o.fecha).toLocaleString('es-MX')}</div>
+          </div>`).join('')
+        : '<div class="vobo-obs-empty">Sin observaciones aún.</div>';
+      el.scrollTop = el.scrollHeight;
+      const row   = document.getElementById('vobo-input').closest('.vobo-input-row');
+      const input = document.getElementById('vobo-input');
+      const send  = document.getElementById('vobo-send');
+      if (aprobado) {
+        row.style.opacity        = '0.35';
+        input.disabled           = true;
+        input.placeholder        = 'VOBO aprobado — no se pueden agregar observaciones';
+        send.disabled            = true;
+        send.style.cursor        = 'not-allowed';
+      } else {
+        row.style.opacity        = '1';
+        input.disabled           = false;
+        input.placeholder        = 'Escribir observación…';
+        send.disabled            = false;
+        send.style.cursor        = '';
+      }
+    }
+    document.getElementById('vobo-close').addEventListener('click', closeVoboModal);
+    document.getElementById('vobo-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('vobo-overlay')) closeVoboModal();
+    });
+    async function sendVoboObs() {
+      if (!voboCurrent) return;
+      const input = document.getElementById('vobo-input');
+      if (input.disabled) return;
+      const texto = input.value.trim(); if (!texto) return;
+      try {
+        const r = await fetch(
+          `${API}/api/entregables/${encodeURIComponent(voboCurrent.id)}/items/${voboCurrent.num}/vobo/observacion`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto }) });
+        if ((await r.json()).success) {
+          const acta = entregablesData.find(a => a.id === voboCurrent.id);
+          const item = acta?.items.find(it => it.num === voboCurrent.num);
+          if (item) {
+            item.etapas.vobo.observaciones.push({ texto, fecha: new Date().toISOString() });
+            item.etapas.vobo.rechazado      = true;
+            item.etapas.vobo.completada     = false;
+            item.etapas.revision.completada = false;
+            item.etapas.revision.fecha      = null;
+          }
+          input.value = '';
+          renderVoboObs();
+          renderEntregables();
+        }
+      } catch {}
+    }
+    document.getElementById('vobo-send').addEventListener('click', sendVoboObs);
+    document.getElementById('vobo-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendVoboObs(); });
+
+    // Restaurar sesión al cargar — dispara updateAuthUI que carga los módulos
+    (function () {
+      const saved = localStorage.getItem('session');
+      if (saved) try { updateAuthUI(JSON.parse(saved)); } catch { clearSession(); }
+    })();
   </script>
 </body>
 </html>

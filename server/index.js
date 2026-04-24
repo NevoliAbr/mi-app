@@ -4,6 +4,7 @@ const bcrypt  = require('bcrypt');
 const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
+const XLSX    = require('xlsx');
 const { sql, getPool } = require('./db');
 
 const app  = express();
@@ -16,9 +17,13 @@ app.use(express.json());
 const publicDir = path.join(__dirname, '..');
 app.use(express.static(publicDir));
 
-/* ── Upload config ──────────────────────────────── */
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+/* ── Directorios ────────────────────────────────── */
+const uploadsDir     = path.join(__dirname, 'uploads');
+const projectsDir    = path.join(__dirname, '..', 'projects');
+const entregablesDir = path.join(__dirname, 'entregables');
+if (!fs.existsSync(uploadsDir))     fs.mkdirSync(uploadsDir,     { recursive: true });
+if (!fs.existsSync(projectsDir))    fs.mkdirSync(projectsDir,    { recursive: true });
+if (!fs.existsSync(entregablesDir)) fs.mkdirSync(entregablesDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
@@ -36,7 +41,67 @@ const upload = multer({
       : cb(new Error('Solo se permiten imágenes.'))
 });
 
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads',     express.static(uploadsDir));
+app.use('/entregables', express.static(entregablesDir));
+
+/* ── Multer: xlsx projects ──────────────────────── */
+const xlsxStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, projectsDir),
+  filename:    (_req, _file, cb) => cb(null, `_tmp_${Date.now()}.xlsx`)
+});
+const xlsxUpload = multer({
+  storage: xlsxStorage,
+  limits:  { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = file.originalname.toLowerCase().endsWith('.xlsx');
+    cb(ok ? null : new Error('Solo se permiten archivos .xlsx'), ok);
+  }
+});
+
+/* ── Helpers xlsx ───────────────────────────────── */
+function excelSerial(s) {
+  if (!s || typeof s !== 'number') return null;
+  return new Date(Math.round((s - 25569) * 864e5)).toISOString().split('T')[0];
+}
+
+function parseProjectXLSX(filepath) {
+  const wb   = XLSX.readFile(filepath);
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+  const tasks = [];
+  let projectRow = null;
+
+  for (let i = 5; i < rows.length; i++) {
+    const r   = rows[i];
+    const edt = String(r[1] || '').trim();
+    if (!edt) continue;
+
+    const nombre = [r[2],r[3],r[4],r[5],r[6],r[7]]
+      .map(v => String(v || '').trim()).find(v => v) || '';
+    if (!nombre) continue;
+
+    const tipo  = String(r[27] || '').trim();
+    const nivel = typeof r[29] === 'number' ? r[29] : 1;
+
+    const t = {
+      edt, nombre, tipo, nivel,
+      inicio:     excelSerial(r[10]),
+      fin:        excelSerial(r[11]),
+      progreso:   typeof r[13] === 'number' ? Math.round(r[13]) : 0,
+      duracion:   typeof r[14] === 'number' ? r[14] : 0,
+      estado:     String(r[17] || '').trim(),
+      prioridad:  String(r[18] || '').trim(),
+      asignadoA:  String(r[9]  || '').trim(),
+      predecesor: String(r[20] || '').trim(),
+    };
+
+    if (tipo === 'proyecto') projectRow = t;
+    tasks.push(t);
+  }
+
+  return { projectRow, tasks };
+}
 
 /* ── Utilidades ─────────────────────────────────── */
 app.get('/api/test', async (_req, res) => {
@@ -373,6 +438,311 @@ app.patch('/api/avisos/:id/activo', async (req, res) => {
       .input('id',     sql.Int, parseInt(req.params.id))
       .input('activo', sql.Bit, req.body.activo ? 1 : 0)
       .query('UPDATE avisos SET activo = @activo WHERE id = @id');
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Projects: listar ───────────────────────────── */
+app.get('/api/projects', (_req, res) => {
+  try {
+    const files    = fs.existsSync(projectsDir)
+      ? fs.readdirSync(projectsDir).filter(f => f.toLowerCase().endsWith('.xlsx'))
+      : [];
+    const projects = [];
+
+    for (const file of files) {
+      try {
+        const baseName  = file.replace(/\.xlsx$/i, '');
+        const metaFile  = path.join(projectsDir, `${baseName}.meta.json`);
+        let   metaYear  = null;
+        try { metaYear = JSON.parse(fs.readFileSync(metaFile, 'utf8')).year || null; } catch {}
+
+        const { projectRow } = parseProjectXLSX(path.join(projectsDir, file));
+        const year = metaYear || new Date().getFullYear();
+
+        projects.push({
+          id:       encodeURIComponent(baseName),
+          nombre:   projectRow?.nombre || baseName,
+          year,
+          inicio:   projectRow?.inicio   || null,
+          fin:      projectRow?.fin      || null,
+          progreso: projectRow?.progreso || 0,
+        });
+      } catch { /* skip archivos corruptos */ }
+    }
+
+    res.json({ success: true, projects });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Projects: tareas ───────────────────────────── */
+app.get('/api/projects/:id/tasks', (req, res) => {
+  try {
+    const filename = decodeURIComponent(req.params.id) + '.xlsx';
+    const filepath = path.join(projectsDir, filename);
+    if (!fs.existsSync(filepath))
+      return res.status(404).json({ success: false, error: 'Proyecto no encontrado.' });
+
+    const { projectRow, tasks } = parseProjectXLSX(filepath);
+    res.json({ success: true, projectRow, tasks });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Projects: subir xlsx ───────────────────────── */
+app.post('/api/projects/upload', xlsxUpload.single('archivo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
+
+  const nombre = (req.body.nombre || '').trim().replace(/[\\/:*?"<>|]/g, '_');
+  if (!nombre) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ success: false, error: 'El nombre del proyecto es requerido.' });
+  }
+
+  const destPath  = path.join(projectsDir, `${nombre}.xlsx`);
+  const metaPath  = path.join(projectsDir, `${nombre}.meta.json`);
+  if (fs.existsSync(destPath)) {
+    fs.unlinkSync(req.file.path);
+    return res.status(409).json({ success: false, error: 'Ya existe un proyecto con ese nombre.' });
+  }
+
+  const año = parseInt(req.body.año) || new Date().getFullYear();
+  fs.renameSync(req.file.path, destPath);
+  fs.writeFileSync(metaPath, JSON.stringify({ year: año }));
+  res.json({ success: true, filename: `${nombre}.xlsx` });
+});
+
+/* ── Projects: eliminar ─────────────────────────── */
+app.delete('/api/projects/:id', (req, res) => {
+  try {
+    const baseName = decodeURIComponent(req.params.id);
+    const filepath = path.join(projectsDir, baseName + '.xlsx');
+    if (!fs.existsSync(filepath))
+      return res.status(404).json({ success: false, error: 'Proyecto no encontrado.' });
+    fs.unlinkSync(filepath);
+    const metaPath = path.join(projectsDir, baseName + '.meta.json');
+    if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: multer ────────────────────────── */
+const entregStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, entregablesDir),
+  filename:    (_req, _file, cb) => cb(null, `_tmp_${Date.now()}.xlsx`)
+});
+const entregUpload = multer({
+  storage: entregStorage,
+  limits:  { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = file.originalname.toLowerCase().endsWith('.xlsx');
+    cb(ok ? null : new Error('Solo se permiten archivos .xlsx'), ok);
+  }
+});
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+/* ── Entregables: subir ─────────────────────────── */
+app.post('/api/entregables/upload', entregUpload.single('archivo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
+
+  const mes = parseInt(req.body.mes);
+  const año = parseInt(req.body.año) || new Date().getFullYear();
+
+  if (!mes || mes < 1 || mes > 12) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ success: false, error: 'Selecciona un mes válido.' });
+  }
+
+  const mesNombre = MESES[mes - 1];
+
+  // Eliminar carga previa del mismo mes+año si existe
+  try {
+    fs.readdirSync(entregablesDir).filter(f => f.endsWith('.meta.json')).forEach(f => {
+      try {
+        const m = JSON.parse(fs.readFileSync(path.join(entregablesDir, f), 'utf8'));
+        if (m.mes === mes && m.año === año) {
+          const oldXlsx = path.join(entregablesDir, `${m.id}.xlsx`);
+          if (fs.existsSync(oldXlsx)) fs.unlinkSync(oldXlsx);
+          fs.unlinkSync(path.join(entregablesDir, f));
+        }
+      } catch {}
+    });
+  } catch {}
+
+  const id        = `${mesNombre}_${año}_${Date.now()}`;
+  const destPath  = path.join(entregablesDir, `${id}.xlsx`);
+  const metaPath  = path.join(entregablesDir, `${id}.meta.json`);
+
+  fs.renameSync(req.file.path, destPath);
+
+  // Leer xlsx y extraer items (Num + Nombre del entregable)
+  let items = [];
+  try {
+    const wb   = XLSX.readFile(destPath);
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    for (let i = 1; i < rows.length; i++) {
+      const nombre = String(rows[i][1] || '').trim();
+      if (!nombre) continue;
+      items.push({
+        num: parseInt(rows[i][0]) || i,
+        nombre,
+        etapas: {
+          revision:      { completada: false, pdf: null,  fecha: null },
+          vobo:          { completada: false, rechazado: false, observaciones: [], fecha: null },
+          impresion:     { completada: false, fecha: null },
+          firma_interna: { completada: false, fecha: null },
+          firma_externa: { completada: false, fecha: null },
+          carpeta:       { completada: false, fecha: null },
+          acuse:         { completada: false, pdf: null,  fecha: null }
+        }
+      });
+    }
+  } catch {}
+
+  const meta = { id, mes, mesNombre, año, ruta: `/entregables/${id}.xlsx`,
+                 fecha_carga: new Date().toISOString(), items };
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+  res.json({ success: true, meta });
+});
+
+/* ── Entregables: listar ────────────────────────── */
+app.get('/api/entregables', (_req, res) => {
+  try {
+    const files = fs.existsSync(entregablesDir)
+      ? fs.readdirSync(entregablesDir).filter(f => f.endsWith('.meta.json'))
+      : [];
+    const ETAPA_INIT = () => ({
+      revision:      { completada: false, pdf: null,  fecha: null },
+      vobo:          { completada: false, rechazado: false, observaciones: [], fecha: null },
+      impresion:     { completada: false, fecha: null },
+      firma_interna: { completada: false, fecha: null },
+      firma_externa: { completada: false, fecha: null },
+      carpeta:       { completada: false, fecha: null },
+      acuse:         { completada: false, pdf: null,  fecha: null }
+    });
+    const entregables = files
+      .map(f => {
+        try {
+          const metaPath = path.join(entregablesDir, f);
+          const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+          // Migrar archivos sin items: re-parsear el xlsx
+          if (!meta.items || !meta.items.length) {
+            const xlsxPath = path.join(entregablesDir, `${meta.id}.xlsx`);
+            if (fs.existsSync(xlsxPath)) {
+              const wb   = XLSX.readFile(xlsxPath);
+              const ws   = wb.Sheets[wb.SheetNames[0]];
+              const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+              meta.items = [];
+              for (let i = 1; i < rows.length; i++) {
+                const nombre = String(rows[i][1] || '').trim();
+                if (!nombre) continue;
+                meta.items.push({ num: parseInt(rows[i][0]) || i, nombre, etapas: ETAPA_INIT() });
+              }
+              fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            }
+          }
+          return meta;
+        } catch { return null; }
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.fecha_carga) - new Date(a.fecha_carga));
+    res.json({ success: true, entregables });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: eliminar ──────────────────────── */
+app.delete('/api/entregables/:id', (req, res) => {
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const xlsxPath = path.join(entregablesDir, `${id}.xlsx`);
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (fs.existsSync(xlsxPath)) fs.unlinkSync(xlsxPath);
+    if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: actualizar etapa ─────────────── */
+app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const num      = parseInt(req.params.num);
+    const { etapa, completada } = req.body;
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const item = meta.items?.find(it => it.num === num);
+    if (!item || !item.etapas[etapa]) return res.status(400).json({ success: false, error: 'Inválido.' });
+    item.etapas[etapa].completada = completada;
+    item.etapas[etapa].fecha      = completada ? new Date().toISOString() : null;
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: PDF de etapa ─────────────────── */
+const pdfDir = path.join(entregablesDir, 'pdfs');
+if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+
+const pdfStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, pdfDir),
+  filename:    (_req, _file, cb) => cb(null, `pdf_${Date.now()}.pdf`)
+});
+const pdfUpload = multer({
+  storage: pdfStorage,
+  limits:  { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = file.originalname.toLowerCase().endsWith('.pdf');
+    cb(ok ? null : new Error('Solo se permiten archivos PDF'), ok);
+  }
+});
+
+app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const num      = parseInt(req.params.num);
+    const etapa    = req.params.etapa;
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) { fs.unlinkSync(req.file.path); return res.status(404).json({ success: false, error: 'No encontrado.' }); }
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const item = meta.items?.find(it => it.num === num);
+    if (!item || !item.etapas[etapa]) { fs.unlinkSync(req.file.path); return res.status(400).json({ success: false, error: 'Inválido.' }); }
+    if (item.etapas[etapa].pdf) {
+      const old = path.join(__dirname, item.etapas[etapa].pdf);
+      if (fs.existsSync(old)) fs.unlinkSync(old);
+    }
+    const ruta = `/entregables/pdfs/${req.file.filename}`;
+    item.etapas[etapa].pdf        = ruta;
+    item.etapas[etapa].completada = true;
+    item.etapas[etapa].fecha      = new Date().toISOString();
+    if (etapa === 'revision') item.etapas.vobo.rechazado = false;
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true, pdf: ruta });
+  } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: observación VOBO ─────────────── */
+app.post('/api/entregables/:id/items/:num/vobo/observacion', (req, res) => {
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const num      = parseInt(req.params.num);
+    const { texto } = req.body;
+    if (!texto) return res.status(400).json({ success: false, error: 'Texto requerido.' });
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const item = meta.items?.find(it => it.num === num);
+    if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
+    item.etapas.vobo.observaciones.push({ texto, fecha: new Date().toISOString() });
+    item.etapas.vobo.rechazado    = true;
+    item.etapas.vobo.completada   = false;
+    item.etapas.vobo.fecha        = null;
+    item.etapas.revision.completada = false;
+    item.etapas.revision.fecha      = null;
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
