@@ -926,6 +926,16 @@
       background:rgba(0,174,239,.1); border:1px solid rgba(0,174,239,.25);
       padding:5px 14px; border-radius:30px; letter-spacing:.4px;
     }
+    .proyecto-info-panel {
+      display:none; margin:0 24px 0; padding:14px 18px;
+      background:rgba(0,174,239,.07); border:1px solid rgba(0,174,239,.2);
+      border-radius:10px; gap:24px; flex-wrap:wrap;
+    }
+    .proyecto-info-panel.visible { display:flex; }
+    .pinfo-field { display:flex; flex-direction:column; gap:3px; min-width:160px; flex:1; }
+    .pinfo-label { font-size:10px; font-weight:800; color:rgba(0,174,239,.7); letter-spacing:.7px; text-transform:uppercase; }
+    .pinfo-value { font-size:13px; font-weight:600; color:rgba(255,255,255,.85); line-height:1.4; white-space:pre-wrap; }
+
     .entreg-proyecto-select {
       font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700;
       color:#1A1A1A; background:#fff; border:1px solid rgba(255,255,255,.5);
@@ -1163,6 +1173,18 @@
             <button class="evt-btn"        id="evt-informe" title="Informe ejecutivo">&#9783; Informe</button>
             <button class="evt-btn"        id="evt-pres"    title="Vista presentación">&#9670; Visual</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Info del proyecto seleccionado -->
+      <div class="proyecto-info-panel" id="proyecto-info-panel">
+        <div class="pinfo-field">
+          <span class="pinfo-label">Nombre Proyecto</span>
+          <span class="pinfo-value" id="pinfo-nombre-proyecto">—</span>
+        </div>
+        <div class="pinfo-field">
+          <span class="pinfo-label">Procedimiento</span>
+          <span class="pinfo-value" id="pinfo-procedimiento">—</span>
         </div>
       </div>
 
@@ -2334,6 +2356,7 @@
 
     let entregablesData    = [];
     let allEntregablesData = [];
+    let allProyectosData   = [];
     let activeId           = null;
     let voboCurrent        = null;
 
@@ -2435,10 +2458,12 @@
         // Poblar selector de proyectos
         const sel      = document.getElementById('entreg-select-proyecto');
         const proyects = dataP.success ? dataP.proyectos : [];
+        allProyectosData = proyects;
         const prevSel  = sel.value;
         sel.innerHTML  = '<option value="">— Todos los proyectos —</option>' +
           proyects.map(p => `<option value="${p.id}">${escH(p.nombre)}</option>`).join('');
         if (prevSel && proyects.find(p => String(p.id) === prevSel)) sel.value = prevSel;
+        updateProyectoInfoPanel();
 
         if (!dataE.success) return;
         let año = new Date().getFullYear();
@@ -2477,8 +2502,19 @@
       } catch {}
     }
 
+    function updateProyectoInfoPanel() {
+      const val    = document.getElementById('entreg-select-proyecto').value;
+      const panel  = document.getElementById('proyecto-info-panel');
+      const proy   = allProyectosData.find(p => String(p.id) === val);
+      if (!proy) { panel.classList.remove('visible'); return; }
+      document.getElementById('pinfo-nombre-proyecto').textContent = proy.NombreProyecto || '—';
+      document.getElementById('pinfo-procedimiento').textContent   = proy.procedimiento  || '—';
+      panel.classList.add('visible');
+    }
+
     document.getElementById('entreg-select-proyecto').addEventListener('change', () => {
       activeId = null;
+      updateProyectoInfoPanel();
       loadEntregables();
     });
 

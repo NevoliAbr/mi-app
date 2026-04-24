@@ -117,7 +117,9 @@ app.get('/api/test', async (_req, res) => {
 app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const [rows] = await pool.execute('SELECT id, nombre FROM proyectos WHERE activo = 1 ORDER BY nombre');
+    const [rows] = await pool.execute(
+      'SELECT id, nombre, NombreProyecto, procedimiento FROM proyectos WHERE activo = 1 ORDER BY nombre'
+    );
     res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
