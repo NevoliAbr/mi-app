@@ -121,6 +121,18 @@
       padding:10px 14px; font-size:12px; font-weight:700; color:#1D4ED8;
     }
 
+    /* ── DOWNLOAD TEMPLATE ──────────────────── */
+    .btn-template {
+      width:100%; padding:12px; background:transparent; color:#005D97;
+      border:2px solid #005D97; border-radius:10px;
+      font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; letter-spacing:1px; text-transform:uppercase;
+      cursor:pointer; text-decoration:none; display:flex;
+      align-items:center; justify-content:center; gap:8px;
+      transition:background .15s, color .15s;
+    }
+    .btn-template:hover { background:#005D97; color:#fff; }
+
     /* ── SUBMIT ──────────────────────────────── */
     .btn-submit {
       width:100%; padding:15px; background:#005D97; color:#fff; border:none;
@@ -224,6 +236,9 @@
           <option value="12">Diciembre</option>
         </select>
       </div>
+
+      <!-- Descargar modelo -->
+      <a href="/Carga.xlsx" download="Carga.xlsx" class="btn-template">⬇ Descargar archivo modelo</a>
 
       <!-- Submit -->
       <button type="button" class="btn-submit" id="btn-upload">Cargar Entregable</button>
