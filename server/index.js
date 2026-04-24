@@ -572,13 +572,15 @@ app.post('/api/entregables/upload', entregUpload.single('archivo'), (req, res) =
         num: parseInt(rows[i][0]) || i,
         nombre,
         etapas: {
-          revision:      { completada: false, pdf: null,  fecha: null },
+          creacion:      { completada: false, fecha: null },
+          revision:      { completada: false, fecha: null },
           vobo:          { completada: false, rechazado: false, observaciones: [], fecha: null },
           impresion:     { completada: false, fecha: null },
           firma_interna: { completada: false, fecha: null },
           firma_externa: { completada: false, fecha: null },
           carpeta:       { completada: false, fecha: null },
-          acuse:         { completada: false, pdf: null,  fecha: null }
+          acuse:         { completada: false, pdf: null,  fecha: null },
+          vobo_final:    { completada: false, fecha: null }
         }
       });
     }
@@ -597,13 +599,15 @@ app.get('/api/entregables', (_req, res) => {
       ? fs.readdirSync(entregablesDir).filter(f => f.endsWith('.meta.json'))
       : [];
     const ETAPA_INIT = () => ({
-      revision:      { completada: false, pdf: null,  fecha: null },
+      creacion:      { completada: false, fecha: null },
+      revision:      { completada: false, fecha: null },
       vobo:          { completada: false, rechazado: false, observaciones: [], fecha: null },
       impresion:     { completada: false, fecha: null },
       firma_interna: { completada: false, fecha: null },
       firma_externa: { completada: false, fecha: null },
       carpeta:       { completada: false, fecha: null },
-      acuse:         { completada: false, pdf: null,  fecha: null }
+      acuse:         { completada: false, pdf: null,  fecha: null },
+      vobo_final:    { completada: false, fecha: null }
     });
     const entregables = files
       .map(f => {
@@ -626,6 +630,15 @@ app.get('/api/entregables', (_req, res) => {
               fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
             }
           }
+          // Migrar etapas faltantes en items existentes
+          let migrated = false;
+          (meta.items || []).forEach(it => {
+            if (!it.etapas) return;
+            if (!it.etapas.creacion)   { it.etapas = { creacion: { completada: false, fecha: null }, ...it.etapas }; migrated = true; }
+            if (!it.etapas.vobo_final) { it.etapas.vobo_final = { completada: false, fecha: null }; migrated = true; }
+            if (it.etapas.revision?.pdf !== undefined) { delete it.etapas.revision.pdf; migrated = true; }
+          });
+          if (migrated) fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
           return meta;
         } catch { return null; }
       })

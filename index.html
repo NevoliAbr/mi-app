@@ -1119,18 +1119,20 @@
               <tr>
                 <th style="width:36px">#</th>
                 <th class="col-nombre">Nombre del Entregable</th>
-                <th>Revisión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">10%</span></th>
+                <th>Creación<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">10%</span></th>
+                <th>Revisión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">20%</span></th>
                 <th>VOBO<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">30%</span></th>
                 <th>Impresión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">40%</span></th>
                 <th>Firma<br>Interna<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">50%</span></th>
                 <th>Firma<br>Externa<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">80%</span></th>
                 <th>Carpeta<br>y Dig.<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">90%</span></th>
-                <th>Acuse<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">100%</span></th>
+                <th>Acuse<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">95%</span></th>
+                <th>VOBO<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">100%</span></th>
                 <th>Avance</th>
               </tr>
             </thead>
             <tbody id="entreg-tbody">
-              <tr><td colspan="10">
+              <tr><td colspan="12">
                 <div class="entreg-empty-state"><span class="ei">📂</span>No hay entregables cargados aún.</div>
               </td></tr>
             </tbody>
@@ -2257,21 +2259,30 @@
 
     /* ══ MÓDULO ENTREGABLES ══════════════════════════ */
     const ETAPAS = [
-      { key: 'revision',      pdf: true  },
+      { key: 'creacion'                  },
+      { key: 'revision'                  },
       { key: 'vobo',          vobo: true },
       { key: 'impresion'                 },
       { key: 'firma_interna'             },
       { key: 'firma_externa'             },
       { key: 'carpeta'                   },
       { key: 'acuse',         pdf: true  },
+      { key: 'vobo_final'                },
     ];
 
     let entregablesData = [];
     let activeMes       = null;
     let voboCurrent     = null;
 
+    function normEtapas(etapas) {
+      if (!etapas.creacion)   etapas.creacion   = { completada: false, fecha: null };
+      if (!etapas.vobo_final) etapas.vobo_final = { completada: false, fecha: null };
+      return etapas;
+    }
+
     function etapaProgress(etapas) {
-      const pcts = [10, 30, 40, 50, 80, 90, 100];
+      normEtapas(etapas);
+      const pcts = [10, 20, 30, 40, 50, 80, 90, 95, 100];
       let last = 0;
       for (let i = 0; i < ETAPAS.length; i++) {
         if (etapas[ETAPAS[i].key].completada) last = pcts[i]; else break;
@@ -2280,6 +2291,7 @@
     }
 
     function prevDone(etapas, idx) {
+      normEtapas(etapas);
       return idx === 0 || etapas[ETAPAS[idx - 1].key].completada;
     }
 
@@ -2345,6 +2357,7 @@
         try { año = parseInt(JSON.parse(localStorage.getItem('session') || '{}').año) || año; } catch {}
         document.getElementById('entreg-year-badge').textContent = `Año: ${año}`;
         entregablesData = (data.entregables || []).filter(e => e.año == año);
+        entregablesData.forEach(e => (e.items || []).forEach(it => normEtapas(it.etapas)));
         const monthsEl  = document.getElementById('entreg-months');
         if (!entregablesData.length) {
           monthsEl.innerHTML = '';
@@ -2505,7 +2518,7 @@
     }
 
     /* ── Informe ejecutivo ── */
-    const ETAPA_LABELS = ['Revisión','VOBO','Impresión','Firma Interna','Firma Externa','Carpeta y Dig.','Acuse'];
+    const ETAPA_LABELS = ['Creación','Revisión','VOBO','Impresión','Firma Interna','Firma Externa','Carpeta y Dig.','Acuse','VOBO Final'];
     function renderInforme() {
       const wrap = document.getElementById('informe-wrap');
       if (!entregablesData.length) {

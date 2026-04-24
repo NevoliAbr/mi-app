@@ -75,6 +75,7 @@
     .alert { display:none; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; }
     .alert.error   { display:block; background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
     .alert.success { display:block; background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
+    .alert.warning { display:block; background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; }
 
     /* ── FIELDS ──────────────────────────────── */
     .form-group { display:flex; flex-direction:column; gap:8px; }
@@ -243,6 +244,33 @@
       window.location.href = 'index.html';
     }
   })();
+
+  /* ── Cargar meses existentes y detectar duplicado ── */
+  let mesesCargados = [];
+  (async () => {
+    try {
+      const res  = await fetch(`${API}/api/entregables`);
+      const data = await res.json();
+      if (data.success) {
+        mesesCargados = data.entregables
+          .filter(e => e.año == sessionAño)
+          .map(e => e.mes);
+      }
+    } catch {}
+    checkMesDuplicado();
+  })();
+
+  function checkMesDuplicado() {
+    const mes = parseInt(document.getElementById('select-mes').value);
+    if (mes && mesesCargados.includes(mes)) {
+      showAlert('⚠ Ya hay entregables cargados para este mes. Si subes un nuevo archivo, se borrarán todos los avances registrados.', 'warning');
+    } else {
+      const el = document.getElementById('alert-msg');
+      if (el.classList.contains('warning')) el.className = 'alert';
+    }
+  }
+
+  document.getElementById('select-mes').addEventListener('change', checkMesDuplicado);
 
   /* ── Mostrar nombre de archivo ── */
   document.getElementById('file-input').addEventListener('change', function () {
