@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');
 const bcrypt  = require('bcrypt');
@@ -5,10 +6,10 @@ const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
 const XLSX    = require('xlsx');
-const { sql, getPool } = require('./db');
+const { getPool } = require('./db');
 
 const app  = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -103,23 +104,21 @@ function parseProjectXLSX(filepath) {
   return { projectRow, tasks };
 }
 
-/* ── Utilidades ─────────────────────────────────── */
+/* ── Test conexión ──────────────────────────────── */
 app.get('/api/test', async (_req, res) => {
   try {
-    const pool   = await getPool();
-    const result = await pool.request().query('SELECT 1 AS connected, DB_NAME() AS database_name');
-    res.json({ success: true, data: result.recordset[0] });
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT 1 AS connected, DATABASE() AS database_name');
+    res.json({ success: true, data: rows[0] });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 /* ── Proyectos ─────────────────────────────────── */
 app.get('/api/proyectos', async (_req, res) => {
   try {
-    const pool   = await getPool();
-    const result = await pool.request().query(
-      'SELECT id, nombre FROM proyectos WHERE activo = 1 ORDER BY nombre'
-    );
-    res.json({ success: true, proyectos: result.recordset });
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT id, nombre FROM proyectos WHERE activo = 1 ORDER BY nombre');
+    res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -133,22 +132,22 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 6 caracteres.' });
 
   try {
-    const pool     = await getPool();
-    const existing = await pool.request()
-      .input('email', sql.NVarChar(150), email.toLowerCase().trim())
-      .query('SELECT id FROM usuarios WHERE email = @email');
+    const pool = await getPool();
+    const [existing] = await pool.execute(
+      'SELECT id FROM usuarios WHERE email = ?',
+      [email.toLowerCase().trim()]
+    );
 
-    if (existing.recordset.length > 0)
+    if (existing.length > 0)
       return res.status(409).json({ success: false, error: 'Este correo ya está registrado.' });
 
-    const hash   = await bcrypt.hash(password, 10);
-    const result = await pool.request()
-      .input('nombre',        sql.NVarChar(100), nombre.trim())
-      .input('email',         sql.NVarChar(150), email.toLowerCase().trim())
-      .input('password_hash', sql.NVarChar(255), hash)
-      .query('INSERT INTO usuarios (nombre, email, password_hash) OUTPUT INSERTED.id VALUES (@nombre, @email, @password_hash)');
+    const hash = await bcrypt.hash(password, 10);
+    const [result] = await pool.execute(
+      'INSERT INTO usuarios (nombre, email, password_hash) VALUES (?, ?, ?)',
+      [nombre.trim(), email.toLowerCase().trim(), hash]
+    );
 
-    res.status(201).json({ success: true, message: 'Cuenta creada correctamente.', userId: result.recordset[0].id });
+    res.status(201).json({ success: true, message: 'Cuenta creada correctamente.', userId: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -160,15 +159,16 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Correo y contraseña son requeridos.' });
 
   try {
-    const pool   = await getPool();
-    const result = await pool.request()
-      .input('email', sql.NVarChar(150), email.toLowerCase().trim())
-      .query('SELECT id, nombre, email, password_hash, rol FROM usuarios WHERE email = @email AND activo = 1');
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      'SELECT id, nombre, email, password_hash, rol FROM usuarios WHERE email = ? AND activo = 1',
+      [email.toLowerCase().trim()]
+    );
 
-    if (result.recordset.length === 0)
+    if (rows.length === 0)
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas.' });
 
-    const user  = result.recordset[0];
+    const user  = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
 
     if (!valid)
@@ -184,20 +184,22 @@ app.get('/api/usuarios/:id/info', async (req, res) => {
     const pool      = await getPool();
     const usuarioId = parseInt(req.params.id);
 
-    const infoRes = await pool.request()
-      .input('usuario_id', sql.Int, usuarioId)
-      .query('SELECT * FROM usuario_info WHERE usuario_id = @usuario_id');
+    const [infoRows] = await pool.execute(
+      'SELECT * FROM usuario_info WHERE usuario_id = ?',
+      [usuarioId]
+    );
 
-    const minsRes = await pool.request()
-      .input('usuario_id', sql.Int, usuarioId)
-      .query(`SELECT m.id, m.nombre FROM proyectos m
-              INNER JOIN usuario_proyectos um ON um.proyecto_id = m.id
-              WHERE um.usuario_id = @usuario_id ORDER BY m.nombre`);
+    const [minsRows] = await pool.execute(
+      `SELECT m.id, m.nombre FROM proyectos m
+       INNER JOIN usuario_proyectos um ON um.proyecto_id = m.id
+       WHERE um.usuario_id = ? ORDER BY m.nombre`,
+      [usuarioId]
+    );
 
     res.json({
       success: true,
-      info: infoRes.recordset[0] || null,
-      proyectos: minsRes.recordset
+      info: infoRows[0] || null,
+      proyectos: minsRows
     });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -208,57 +210,48 @@ app.post('/api/usuarios/:id/info', upload.single('foto'), async (req, res) => {
   const { fecha_nacimiento, direccion, estado_civil, proyecto_ids } = req.body;
   const fotoNueva = req.file ? `/uploads/${req.file.filename}` : null;
 
-  // Parsear IDs de proyectos (vienen como JSON string o array)
   let mids = [];
   try { mids = JSON.parse(proyecto_ids || '[]'); } catch { mids = []; }
   mids = mids.map(Number).filter(Boolean);
 
   try {
-    const pool     = await getPool();
-    const existing = await pool.request()
-      .input('usuario_id', sql.Int, usuarioId)
-      .query('SELECT id, foto FROM usuario_info WHERE usuario_id = @usuario_id');
+    const pool = await getPool();
+    const [existing] = await pool.execute(
+      'SELECT id, foto FROM usuario_info WHERE usuario_id = ?',
+      [usuarioId]
+    );
 
-    if (existing.recordset.length > 0) {
-      if (fotoNueva && existing.recordset[0].foto) {
-        const oldPath = path.join(__dirname, existing.recordset[0].foto);
+    if (existing.length > 0) {
+      if (fotoNueva && existing[0].foto) {
+        const oldPath = path.join(__dirname, existing[0].foto);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
-      const fotoFinal = fotoNueva || existing.recordset[0].foto;
-      await pool.request()
-        .input('usuario_id',       sql.Int,          usuarioId)
-        .input('fecha_nacimiento', sql.Date,          fecha_nacimiento || null)
-        .input('direccion',        sql.NVarChar(500), direccion        || null)
-        .input('estado_civil',     sql.NVarChar(50),  estado_civil     || null)
-        .input('foto',             sql.NVarChar(500), fotoFinal)
-        .query(`UPDATE usuario_info SET
-          fecha_nacimiento = @fecha_nacimiento,
-          direccion        = @direccion,
-          estado_civil     = @estado_civil,
-          foto             = @foto,
-          actualizado_en   = SYSDATETIME()
-          WHERE usuario_id = @usuario_id`);
+      const fotoFinal = fotoNueva || existing[0].foto;
+      await pool.execute(
+        `UPDATE usuario_info SET
+          fecha_nacimiento = ?,
+          direccion        = ?,
+          estado_civil     = ?,
+          foto             = ?,
+          actualizado_en   = NOW()
+         WHERE usuario_id = ?`,
+        [fecha_nacimiento || null, direccion || null, estado_civil || null, fotoFinal, usuarioId]
+      );
     } else {
-      await pool.request()
-        .input('usuario_id',       sql.Int,          usuarioId)
-        .input('fecha_nacimiento', sql.Date,          fecha_nacimiento || null)
-        .input('direccion',        sql.NVarChar(500), direccion        || null)
-        .input('estado_civil',     sql.NVarChar(50),  estado_civil     || null)
-        .input('foto',             sql.NVarChar(500), fotoNueva)
-        .query(`INSERT INTO usuario_info (usuario_id, fecha_nacimiento, direccion, estado_civil, foto)
-          VALUES (@usuario_id, @fecha_nacimiento, @direccion, @estado_civil, @foto)`);
+      await pool.execute(
+        `INSERT INTO usuario_info (usuario_id, fecha_nacimiento, direccion, estado_civil, foto)
+         VALUES (?, ?, ?, ?, ?)`,
+        [usuarioId, fecha_nacimiento || null, direccion || null, estado_civil || null, fotoNueva]
+      );
     }
 
-    // Reemplazar proyectos (delete + insert)
-    await pool.request()
-      .input('usuario_id', sql.Int, usuarioId)
-      .query('DELETE FROM usuario_proyectos WHERE usuario_id = @usuario_id');
+    await pool.execute('DELETE FROM usuario_proyectos WHERE usuario_id = ?', [usuarioId]);
 
     for (const mid of mids) {
-      await pool.request()
-        .input('usuario_id', sql.Int, usuarioId)
-        .input('proyecto_id', sql.Int, mid)
-        .query('INSERT INTO usuario_proyectos (usuario_id, proyecto_id) VALUES (@usuario_id, @proyecto_id)');
+      await pool.execute(
+        'INSERT INTO usuario_proyectos (usuario_id, proyecto_id) VALUES (?, ?)',
+        [usuarioId, mid]
+      );
     }
 
     res.json({ success: true });
@@ -271,11 +264,11 @@ app.post('/api/usuarios/:id/info', upload.single('foto'), async (req, res) => {
 /* ── Admin: Listar usuarios ─────────────────────── */
 app.get('/api/admin/usuarios', async (_req, res) => {
   try {
-    const pool   = await getPool();
-    const result = await pool.request().query(
+    const pool = await getPool();
+    const [rows] = await pool.execute(
       'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY creado_en DESC'
     );
-    res.json({ success: true, usuarios: result.recordset });
+    res.json({ success: true, usuarios: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -286,16 +279,16 @@ app.patch('/api/admin/usuarios/:id/rol', async (req, res) => {
     return res.status(403).json({ success: false, error: 'Solo se puede promover a superusuario.' });
   try {
     const pool = await getPool();
-    // Verificar que el usuario actual NO sea ya superusuario (no degradar)
-    const current = await pool.request()
-      .input('id', sql.Int, parseInt(req.params.id))
-      .query('SELECT rol FROM usuarios WHERE id = @id');
-    if (current.recordset[0]?.rol === 'superusuario')
+    const [current] = await pool.execute(
+      'SELECT rol FROM usuarios WHERE id = ?',
+      [parseInt(req.params.id)]
+    );
+    if (current[0]?.rol === 'superusuario')
       return res.status(409).json({ success: false, error: 'El usuario ya es superusuario.' });
-    await pool.request()
-      .input('id',  sql.Int,          parseInt(req.params.id))
-      .input('rol', sql.NVarChar(20), 'superusuario')
-      .query('UPDATE usuarios SET rol = @rol WHERE id = @id');
+    await pool.execute(
+      'UPDATE usuarios SET rol = ? WHERE id = ?',
+      ['superusuario', parseInt(req.params.id)]
+    );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -304,10 +297,10 @@ app.patch('/api/admin/usuarios/:id/rol', async (req, res) => {
 app.patch('/api/admin/usuarios/:id/activo', async (req, res) => {
   try {
     const pool = await getPool();
-    await pool.request()
-      .input('id',     sql.Int, parseInt(req.params.id))
-      .input('activo', sql.Bit, req.body.activo ? 1 : 0)
-      .query('UPDATE usuarios SET activo = @activo WHERE id = @id');
+    await pool.execute(
+      'UPDATE usuarios SET activo = ? WHERE id = ?',
+      [req.body.activo ? 1 : 0, parseInt(req.params.id)]
+    );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -316,9 +309,7 @@ app.patch('/api/admin/usuarios/:id/activo', async (req, res) => {
 app.delete('/api/admin/usuarios/:id', async (req, res) => {
   try {
     const pool = await getPool();
-    await pool.request()
-      .input('id', sql.Int, parseInt(req.params.id))
-      .query('DELETE FROM usuarios WHERE id = @id');
+    await pool.execute('DELETE FROM usuarios WHERE id = ?', [parseInt(req.params.id)]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -327,19 +318,19 @@ app.delete('/api/admin/usuarios/:id', async (req, res) => {
 app.get('/api/avisos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const avisosRes = await pool.request().query(
+    const [avisos] = await pool.execute(
       `SELECT id, titulo, texto, fecha_fin, link
        FROM avisos
-       WHERE activo = 1 AND fecha_fin >= CAST(GETDATE() AS DATE)
+       WHERE activo = 1 AND fecha_fin >= CURDATE()
        ORDER BY creado_en DESC`
     );
-    const avisos = avisosRes.recordset;
 
     for (const a of avisos) {
-      const imgsRes = await pool.request()
-        .input('aviso_id', sql.Int, a.id)
-        .query('SELECT ruta FROM aviso_imagenes WHERE aviso_id = @aviso_id ORDER BY id');
-      a.imagenes = imgsRes.recordset.map(r => r.ruta);
+      const [imgs] = await pool.execute(
+        'SELECT ruta FROM aviso_imagenes WHERE aviso_id = ? ORDER BY id',
+        [a.id]
+      );
+      a.imagenes = imgs.map(r => r.ruta);
     }
 
     res.json({ success: true, avisos });
@@ -350,16 +341,16 @@ app.get('/api/avisos', async (_req, res) => {
 app.get('/api/admin/avisos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const avisosRes = await pool.request().query(
+    const [avisos] = await pool.execute(
       'SELECT id, titulo, texto, fecha_fin, link, activo, creado_en FROM avisos ORDER BY creado_en DESC'
     );
-    const avisos = avisosRes.recordset;
 
     for (const a of avisos) {
-      const imgsRes = await pool.request()
-        .input('aviso_id', sql.Int, a.id)
-        .query('SELECT ruta FROM aviso_imagenes WHERE aviso_id = @aviso_id ORDER BY id');
-      a.imagenes = imgsRes.recordset.map(r => r.ruta);
+      const [imgs] = await pool.execute(
+        'SELECT ruta FROM aviso_imagenes WHERE aviso_id = ? ORDER BY id',
+        [a.id]
+      );
+      a.imagenes = imgs.map(r => r.ruta);
     }
 
     res.json({ success: true, avisos });
@@ -375,23 +366,19 @@ app.post('/api/avisos', upload.array('imagenes', 10), async (req, res) => {
 
   try {
     const pool = await getPool();
-    const result = await pool.request()
-      .input('titulo',    sql.NVarChar(200), titulo.trim())
-      .input('texto',     sql.NVarChar(sql.MAX), texto || null)
-      .input('fecha_fin', sql.Date,          fecha_fin)
-      .input('link',      sql.NVarChar(500), link || null)
-      .query(`INSERT INTO avisos (titulo, texto, fecha_fin, link)
-              OUTPUT INSERTED.id
-              VALUES (@titulo, @texto, @fecha_fin, @link)`);
+    const [result] = await pool.execute(
+      'INSERT INTO avisos (titulo, texto, fecha_fin, link) VALUES (?, ?, ?, ?)',
+      [titulo.trim(), texto || null, fecha_fin, link || null]
+    );
 
-    const avisoId = result.recordset[0].id;
+    const avisoId = result.insertId;
 
     for (const file of (req.files || [])) {
       const ruta = `/uploads/${file.filename}`;
-      await pool.request()
-        .input('aviso_id', sql.Int, avisoId)
-        .input('ruta',     sql.NVarChar(500), ruta)
-        .query('INSERT INTO aviso_imagenes (aviso_id, ruta) VALUES (@aviso_id, @ruta)');
+      await pool.execute(
+        'INSERT INTO aviso_imagenes (aviso_id, ruta) VALUES (?, ?)',
+        [avisoId, ruta]
+      );
     }
 
     res.status(201).json({ success: true, avisoId });
@@ -409,22 +396,18 @@ app.delete('/api/avisos/:id', async (req, res) => {
     const pool    = await getPool();
     const avisoId = parseInt(req.params.id);
 
-    const imgsRes = await pool.request()
-      .input('aviso_id', sql.Int, avisoId)
-      .query('SELECT ruta FROM aviso_imagenes WHERE aviso_id = @aviso_id');
+    const [imgs] = await pool.execute(
+      'SELECT ruta FROM aviso_imagenes WHERE aviso_id = ?',
+      [avisoId]
+    );
 
-    for (const img of imgsRes.recordset) {
+    for (const img of imgs) {
       const filePath = path.join(__dirname, img.ruta);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
 
-    await pool.request()
-      .input('aviso_id', sql.Int, avisoId)
-      .query('DELETE FROM aviso_imagenes WHERE aviso_id = @aviso_id');
-
-    await pool.request()
-      .input('id', sql.Int, avisoId)
-      .query('DELETE FROM avisos WHERE id = @id');
+    await pool.execute('DELETE FROM aviso_imagenes WHERE aviso_id = ?', [avisoId]);
+    await pool.execute('DELETE FROM avisos WHERE id = ?', [avisoId]);
 
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -434,10 +417,10 @@ app.delete('/api/avisos/:id', async (req, res) => {
 app.patch('/api/avisos/:id/activo', async (req, res) => {
   try {
     const pool = await getPool();
-    await pool.request()
-      .input('id',     sql.Int, parseInt(req.params.id))
-      .input('activo', sql.Bit, req.body.activo ? 1 : 0)
-      .query('UPDATE avisos SET activo = @activo WHERE id = @id');
+    await pool.execute(
+      'UPDATE avisos SET activo = ? WHERE id = ?',
+      [req.body.activo ? 1 : 0, parseInt(req.params.id)]
+    );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });

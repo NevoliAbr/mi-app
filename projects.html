@@ -229,7 +229,7 @@
 </main>
 
 <script>
-  const API = 'http://localhost:3001';
+  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
   /* Mostrar nombre del archivo seleccionado */
   document.getElementById('file-input').addEventListener('change', function () {

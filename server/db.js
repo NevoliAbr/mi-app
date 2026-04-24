@@ -1,54 +1,43 @@
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 
 const config = {
-  user: 'sa',
-  password: 'nevoli123',
-  server: 'localhost',
-  port: 1433,
-  database: 'mibase',
-  options: {
-    trustServerCertificate: true,
-    enableArithAbort: true,
-  },
-  pool: {
-    max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000,
-  },
+  host:             process.env.DB_SERVER   || 'localhost',
+  port:             parseInt(process.env.DB_PORT || '3306'),
+  user:             process.env.DB_USER     || 'Nevoli',
+  password:         process.env.DB_PASSWORD || 'm@i0~cvRbT7H6vyx',
+  database:         process.env.DB_NAME     || 'mibase',
+  waitForConnections: true,
+  connectionLimit:  10,
+  queueLimit:       0,
+  timezone:         '+00:00',
 };
 
 let pool = null;
 
-async function connect(intentos = 5, espera = 3000) {
-  for (let i = 1; i <= intentos; i++) {
-    try {
-      pool = await sql.connect(config);
-      console.log('✔ Conectado a SQL Server -', config.database);
-      pool.on('error', async err => {
-        console.error('⚠ Error en el pool, reconectando...', err.message);
-        pool = null;
-        setTimeout(() => connect(), 5000);
-      });
-      return pool;
-    } catch (err) {
-      console.error(`✘ Intento ${i}/${intentos} fallido: ${err.message}`);
-      if (i < intentos) {
-        console.log(`  Reintentando en ${espera / 1000}s...`);
-        await new Promise(r => setTimeout(r, espera));
-      } else {
-        console.error('  No se pudo conectar a SQL Server. Verifica que el servicio esté activo.');
-      }
-    }
-  }
-}
-
-async function getPool() {
-  if (!pool) await connect(3, 2000);
-  if (!pool) throw new Error('No se pudo conectar a la base de datos. Verifica que SQL Server esté activo.');
+function createPool() {
+  pool = mysql.createPool(config);
+  pool.on('error', err => {
+    console.error('⚠ Error en el pool MySQL:', err.message);
+  });
   return pool;
 }
 
-// Conectar al iniciar
-connect();
+async function getPool() {
+  if (!pool) createPool();
+  return pool;
+}
 
-module.exports = { sql, getPool };
+// Conectar al iniciar y verificar
+(async () => {
+  try {
+    const p    = createPool();
+    const conn = await p.getConnection();
+    conn.release();
+    console.log('✔ Conectado a MySQL -', config.database);
+  } catch (err) {
+    console.error('✘ No se pudo conectar a MySQL:', err.message);
+    console.error('  Verifica que el servicio MySQL esté activo y las credenciales sean correctas.');
+  }
+})();
+
+module.exports = { getPool };
