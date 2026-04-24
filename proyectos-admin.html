@@ -95,6 +95,7 @@
     td { padding:13px 16px; font-size:13px; color:#374151; vertical-align:middle; }
     .td-id   { font-weight:800; color:#9CA3AF; width:60px; }
     .td-name { font-weight:700; color:#1A1A1A; }
+    .td-long { max-width:220px; white-space:pre-wrap; word-break:break-word; font-size:12px; color:#4B5563; }
     .td-center { text-align:center; padding:40px 16px; color:#9CA3AF; font-size:14px; }
 
     .badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:800; }
@@ -134,7 +135,7 @@
     }
     .modal-overlay.active { display:flex; }
     .modal-card {
-      background:white; border-radius:16px; width:100%; max-width:440px;
+      background:white; border-radius:16px; width:100%; max-width:560px;
       overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.4);
       animation:modalIn .2s ease;
     }
@@ -156,12 +157,13 @@
     .modal-alert.success { display:block; background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
     .form-group { display:flex; flex-direction:column; gap:6px; margin-bottom:20px; }
     .form-group label { font-size:11px; font-weight:800; color:#374151; letter-spacing:.6px; text-transform:uppercase; }
-    .form-group input {
+    .form-group input, .form-group textarea {
       padding:11px 14px; border:2px solid #E5E7EB; border-radius:8px;
       font-family:'Montserrat',sans-serif; font-size:14px; color:#1A1A1A;
       background:#FAFAFA; outline:none; transition:border-color .15s;
     }
-    .form-group input:focus { border-color:#005D97; background:#fff; box-shadow:0 0 0 4px rgba(0,93,151,.08); }
+    .form-group input:focus, .form-group textarea:focus { border-color:#005D97; background:#fff; box-shadow:0 0 0 4px rgba(0,93,151,.08); }
+    .form-group textarea { resize:vertical; min-height:90px; line-height:1.5; }
     .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
     .btn-cancel { padding:10px 22px; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
     .btn-cancel:hover { background:#E5E7EB; }
@@ -250,12 +252,14 @@
             <tr>
               <th>#</th>
               <th>Nombre</th>
+              <th>Nombre Proyecto</th>
+              <th>Procedimiento</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="proj-tbody">
-            <tr><td colspan="4" class="td-center">Cargando…</td></tr>
+            <tr><td colspan="6" class="td-center">Cargando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -275,6 +279,14 @@
         <div class="form-group">
           <label for="input-nombre">Nombre del proyecto</label>
           <input type="text" id="input-nombre" placeholder="Ej: Proyecto 2025" maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label for="input-nombre-proyecto">Nombre Proyecto</label>
+          <textarea id="input-nombre-proyecto" placeholder="Nombre completo del proyecto…"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="input-procedimiento">Procedimiento</label>
+          <textarea id="input-procedimiento" placeholder="Descripción del procedimiento…"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -331,13 +343,15 @@
     function renderTable(list) {
       const tbody = document.getElementById('proj-tbody');
       if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="td-center">No se encontraron proyectos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="td-center">No se encontraron proyectos.</td></tr>';
         return;
       }
       tbody.innerHTML = list.map(p => `
         <tr>
           <td class="td-id">${p.id}</td>
           <td class="td-name">${esc(p.nombre)}</td>
+          <td class="td-long">${esc(p.NombreProyecto || '—')}</td>
+          <td class="td-long">${esc(p.procedimiento || '—')}</td>
           <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? '● Activo' : '○ Inactivo'}</span></td>
           <td>
             <div class="td-actions">
@@ -373,12 +387,14 @@
     });
 
     /* ── Modal helpers ── */
-    function openModal(titulo, nombre = '', id = null) {
+    function openModal(titulo, nombre = '', id = null, nombreProyecto = '', procedimiento = '') {
       editingId = id;
-      document.getElementById('modal-title').textContent  = titulo;
-      document.getElementById('input-nombre').value       = nombre;
-      document.getElementById('modal-alert').className    = 'modal-alert';
-      document.getElementById('modal-alert').textContent  = '';
+      document.getElementById('modal-title').textContent          = titulo;
+      document.getElementById('input-nombre').value               = nombre;
+      document.getElementById('input-nombre-proyecto').value      = nombreProyecto;
+      document.getElementById('input-procedimiento').value        = procedimiento;
+      document.getElementById('modal-alert').className            = 'modal-alert';
+      document.getElementById('modal-alert').textContent          = '';
       document.getElementById('modal-overlay').classList.add('active');
       setTimeout(() => document.getElementById('input-nombre').focus(), 50);
     }
@@ -392,16 +408,19 @@
 
     /* ── Guardar ── */
     document.getElementById('modal-save').addEventListener('click', async () => {
-      const nombre = document.getElementById('input-nombre').value.trim();
-      const alert  = document.getElementById('modal-alert');
-      const btn    = document.getElementById('modal-save');
+      const nombre          = document.getElementById('input-nombre').value.trim();
+      const NombreProyecto  = document.getElementById('input-nombre-proyecto').value.trim();
+      const procedimiento   = document.getElementById('input-procedimiento').value.trim();
+      const alert           = document.getElementById('modal-alert');
+      const btn             = document.getElementById('modal-save');
       if (!nombre) { alert.textContent = 'El nombre es requerido.'; alert.className = 'modal-alert error'; return; }
 
       btn.disabled = true; btn.textContent = 'Guardando…';
       try {
         const url    = editingId ? `${API}/api/admin/proyectos/${editingId}` : `${API}/api/admin/proyectos`;
         const method = editingId ? 'PATCH' : 'POST';
-        const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre }) });
+        const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, NombreProyecto, procedimiento }) });
         const data   = await res.json();
         if (!data.success) throw new Error(data.error);
         showToast(editingId ? 'Proyecto actualizado.' : 'Proyecto creado.');
@@ -439,7 +458,7 @@
       const proy   = allProyectos.find(p => p.id === id);
 
       if (action === 'edit') {
-        openModal('Editar Proyecto', proy.nombre, id);
+        openModal('Editar Proyecto', proy.nombre, id, proy.NombreProyecto || '', proy.procedimiento || '');
         return;
       }
 

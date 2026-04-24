@@ -126,27 +126,37 @@ app.get('/api/proyectos', async (_req, res) => {
 app.get('/api/admin/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const [rows] = await pool.execute('SELECT id, nombre, activo FROM proyectos ORDER BY nombre');
+    const [rows] = await pool.execute('SELECT id, nombre, procedimiento, NombreProyecto, activo FROM proyectos ORDER BY nombre');
     res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/proyectos', async (req, res) => {
-  const nombre = (req.body.nombre || '').trim();
+  const nombre          = (req.body.nombre          || '').trim();
+  const procedimiento   = (req.body.procedimiento   || '').trim() || null;
+  const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
-    const [result] = await pool.execute('INSERT INTO proyectos (nombre, activo) VALUES (?, 1)', [nombre]);
+    const [result] = await pool.execute(
+      'INSERT INTO proyectos (nombre, procedimiento, NombreProyecto, activo) VALUES (?, ?, ?, 1)',
+      [nombre, procedimiento, NombreProyecto]
+    );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.patch('/api/admin/proyectos/:id', async (req, res) => {
-  const nombre = (req.body.nombre || '').trim();
+  const nombre          = (req.body.nombre          || '').trim();
+  const procedimiento   = (req.body.procedimiento   || '').trim() || null;
+  const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
-    await pool.execute('UPDATE proyectos SET nombre = ? WHERE id = ?', [nombre, parseInt(req.params.id)]);
+    await pool.execute(
+      'UPDATE proyectos SET nombre = ?, procedimiento = ?, NombreProyecto = ? WHERE id = ?',
+      [nombre, procedimiento, NombreProyecto, parseInt(req.params.id)]
+    );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -317,22 +327,17 @@ app.get('/api/admin/usuarios', async (_req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-/* ── Admin: Promover a superusuario (solo ascenso) ── */
+/* ── Admin: Cambiar rol (solo superusuarios) ── */
 app.patch('/api/admin/usuarios/:id/rol', async (req, res) => {
+  const ROLES_VALIDOS = ['superusuario', 'usuario', 'pmo', 'administracion'];
   const { rol } = req.body;
-  if (rol !== 'superusuario')
-    return res.status(403).json({ success: false, error: 'Solo se puede promover a superusuario.' });
+  if (!ROLES_VALIDOS.includes(rol))
+    return res.status(400).json({ success: false, error: 'Rol no válido.' });
   try {
     const pool = await getPool();
-    const [current] = await pool.execute(
-      'SELECT rol FROM usuarios WHERE id = ?',
-      [parseInt(req.params.id)]
-    );
-    if (current[0]?.rol === 'superusuario')
-      return res.status(409).json({ success: false, error: 'El usuario ya es superusuario.' });
     await pool.execute(
       'UPDATE usuarios SET rol = ? WHERE id = ?',
-      ['superusuario', parseInt(req.params.id)]
+      [rol, parseInt(req.params.id)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }

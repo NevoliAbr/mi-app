@@ -136,8 +136,45 @@
     }
     .badge-super   { background:#E0F0FF; color:#003E66; }
     .badge-usuario { background:#EFF6FF; color:#005D97; }
+    .badge-pmo     { background:#F5F3FF; color:#6D28D9; }
+    .badge-admin-r { background:#FFF7ED; color:#C2410C; }
     .badge-activo  { background:#D1FAE5; color:#065F46; }
     .badge-inactivo{ background:#F3F4F6; color:#6B7280; }
+
+    /* ── ROLE MODAL ───────────────────────────── */
+    .role-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+      z-index:300; align-items:center; justify-content:center;
+      backdrop-filter:blur(4px);
+    }
+    .role-overlay.active { display:flex; }
+    .role-card {
+      background:white; border-radius:14px; width:100%; max-width:360px;
+      overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.4);
+      animation:modalIn .2s ease;
+    }
+    .role-header {
+      background:linear-gradient(135deg, #003E66 0%, #005D97 100%);
+      padding:18px 22px; display:flex; align-items:center; justify-content:space-between; color:white;
+    }
+    .role-header h2 { font-size:16px; font-weight:800; }
+    .role-header-close { background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity:.65; transition:opacity .15s; }
+    .role-header-close:hover { opacity:1; }
+    .role-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+    .role-body { padding:22px; }
+    .role-body label { font-size:11px; font-weight:800; color:#374151; letter-spacing:.6px; text-transform:uppercase; display:block; margin-bottom:8px; }
+    .role-body select {
+      width:100%; padding:11px 14px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:14px; color:#1A1A1A;
+      background:#FAFAFA; outline:none; transition:border-color .15s; cursor:pointer;
+    }
+    .role-body select:focus { border-color:#005D97; background:#fff; }
+    .role-footer { padding:14px 22px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
+    .btn-role-cancel { padding:9px 20px; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
+    .btn-role-cancel:hover { background:#E5E7EB; }
+    .btn-role-save { padding:9px 24px; background:#005D97; color:white; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer; transition:background .15s; }
+    .btn-role-save:hover { background:#003E66; }
+    .btn-role-save:disabled { background:#93C5FD; cursor:not-allowed; }
 
     /* ── ACTION BUTTONS ───────────────────────── */
     .td-actions { display:flex; gap:6px; align-items:center; }
@@ -464,6 +501,30 @@
     </div>
   </div>
 
+  <!-- ══ ROL MODAL ════════════════════════════════════ -->
+  <div class="role-overlay" id="role-overlay">
+    <div class="role-card">
+      <div class="role-header">
+        <h2 id="role-modal-title">Cambiar rol</h2>
+        <button class="role-header-close" id="role-close">✕</button>
+      </div>
+      <div class="role-stripe"></div>
+      <div class="role-body">
+        <label for="role-select">Nuevo rol</label>
+        <select id="role-select">
+          <option value="usuario">👤 Usuario</option>
+          <option value="pmo">📊 PMO</option>
+          <option value="administracion">🏢 Administración</option>
+          <option value="superusuario">⭐ Superusuario</option>
+        </select>
+      </div>
+      <div class="role-footer">
+        <button class="btn-role-cancel" id="role-cancel">Cancelar</button>
+        <button class="btn-role-save"   id="role-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ TOAST ══════════════════════════════════════════ -->
   <div id="toast"></div>
 
@@ -575,16 +636,23 @@
         return;
       }
 
+      const rolBadge = rol => {
+        const map = {
+          superusuario:  ['badge-super',   '⭐ Superusuario'],
+          pmo:           ['badge-pmo',     '📊 PMO'],
+          administracion:['badge-admin-r', '🏢 Administración'],
+          usuario:       ['badge-usuario', '👤 Usuario'],
+        };
+        const [cls, lbl] = map[rol] || ['badge-usuario', `👤 ${rol}`];
+        return `<span class="badge ${cls}">${lbl}</span>`;
+      };
+
       document.getElementById('users-tbody').innerHTML = users.map(u => `
         <tr>
           <td class="td-id">${u.id}</td>
           <td class="td-name">${esc(u.nombre)}</td>
           <td class="td-email">${esc(u.email)}</td>
-          <td>
-            <span class="badge ${u.rol === 'superusuario' ? 'badge-super' : 'badge-usuario'}">
-              ${u.rol === 'superusuario' ? '&#11088; Super' : '&#128100; Usuario'}
-            </span>
-          </td>
+          <td>${rolBadge(u.rol)}</td>
           <td>
             <span class="badge ${u.activo ? 'badge-activo' : 'badge-inactivo'}">
               ${u.activo ? '&#10003; Activo' : '&#8212; Inactivo'}
@@ -593,11 +661,11 @@
           <td class="td-date">${fmtDate(u.creado_en)}</td>
           <td>
             <div class="td-actions">
-              ${u.rol !== 'superusuario' ? `
+              ${session.rol === 'superusuario' && u.id !== session.id ? `
               <button class="btn-action btn-role"
-                title="Hacer superusuario"
-                onclick="changeRole(${u.id}, 'superusuario')">
-                &#11088;
+                title="Cambiar rol"
+                onclick="openRoleModal(${u.id}, '${esc(u.nombre)}', '${esc(u.rol)}')">
+                🔄
               </button>` : ''}
               <button class="btn-action btn-toggle"
                 title="${u.activo ? 'Bloquear usuario' : 'Desbloquear usuario'}"
@@ -630,6 +698,35 @@
           u.rol.toLowerCase().includes(q)
         )
       );
+    });
+
+    /* ── Modal cambio de rol ────────────────── */
+    let roleTargetId = null;
+
+    function openRoleModal(id, nombre, rolActual) {
+      roleTargetId = id;
+      document.getElementById('role-modal-title').textContent = `Cambiar rol — ${nombre}`;
+      document.getElementById('role-select').value = rolActual;
+      document.getElementById('role-overlay').classList.add('active');
+    }
+    function closeRoleModal() {
+      document.getElementById('role-overlay').classList.remove('active');
+      roleTargetId = null;
+    }
+    document.getElementById('role-close').addEventListener('click',  closeRoleModal);
+    document.getElementById('role-cancel').addEventListener('click', closeRoleModal);
+    document.getElementById('role-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('role-overlay')) closeRoleModal();
+    });
+
+    document.getElementById('role-save').addEventListener('click', async () => {
+      if (!roleTargetId) return;
+      const newRol = document.getElementById('role-select').value;
+      const btn    = document.getElementById('role-save');
+      btn.disabled = true; btn.textContent = 'Guardando…';
+      await changeRole(roleTargetId, newRol);
+      btn.disabled = false; btn.textContent = 'Guardar';
+      closeRoleModal();
     });
 
     /* ── Acciones ────────────────────────────── */
