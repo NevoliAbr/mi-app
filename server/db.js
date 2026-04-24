@@ -35,8 +35,11 @@ async function getPool() {
     conn.release();
     console.log('✔ Conectado a MySQL -', config.database);
   } catch (err) {
-    console.error('✘ No se pudo conectar a MySQL:', err.message);
-    console.error('  Verifica que el servicio MySQL esté activo y las credenciales sean correctas.');
+    console.error('✘ No se pudo conectar a MySQL:');
+    console.error('  code:   ', err.code);
+    console.error('  message:', err.message);
+    console.error('  host:   ', config.host, '| port:', config.port);
+    console.error('  user:   ', config.user, '| database:', config.database);
   }
 })();
 

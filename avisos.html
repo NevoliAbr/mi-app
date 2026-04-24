@@ -333,7 +333,7 @@ if (!session || session.rol !== 'superusuario') {
 document.getElementById('admin-nombre').textContent = session ? session.nombre : '';
 
 /* ── Utilidades ───────────────────────────────── */
-const API = 'http://localhost:3001';
+const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
 function isFB(url) {
   return url && (url.includes('facebook.com') || url.includes('fb.com') || url.includes('fb.watch'));
