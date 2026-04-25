@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    /* ── NAVBAR ── */
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; cursor:pointer; text-decoration:none;
+      display:inline-flex; align-items:center; gap:6px; transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+
+    /* ── PAGE HEADER ── */
+    .page-header { background:linear-gradient(135deg,#003E66 0%,#003E66 45%,#005D97 100%); padding:32px 40px 28px; color:white; }
+    .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    /* ── MAIN ── */
+    main { padding:32px 40px 60px; max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:28px; }
+
+    /* ── CARD BASE ── */
+    .card { background:white; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.08); overflow:hidden; }
+    .card-header {
+      background:linear-gradient(135deg,#003E66 0%,#005D97 100%);
+      padding:18px 24px; display:flex; align-items:center; gap:12px; color:white;
+    }
+    .card-header-icon { font-size:20px; }
+    .card-header h2  { font-size:16px; font-weight:800; }
+    .card-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,transparent); }
+    .card-body  { padding:28px 24px; }
+
+    /* ── INFO BÁSICA ── */
+    .info-layout { display:flex; align-items:center; gap:28px; }
+    .info-photo  {
+      width:96px; height:96px; border-radius:50%; flex-shrink:0;
+      background:#E5E7EB; border:4px solid #E5E7EB;
+      display:flex; align-items:center; justify-content:center;
+      font-size:40px; overflow:hidden;
+    }
+    .info-photo img { width:100%; height:100%; object-fit:cover; }
+    .info-fields { display:flex; flex-direction:column; gap:10px; }
+    .info-row { display:flex; flex-direction:column; gap:2px; }
+    .info-label { font-size:10px; font-weight:800; color:#9CA3AF; letter-spacing:.7px; text-transform:uppercase; }
+    .info-value { font-size:15px; font-weight:700; color:#1A1A1A; }
+    .info-badge {
+      display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px;
+      font-size:11px; font-weight:800; margin-top:2px;
+    }
+    .badge-super    { background:#E0F0FF; color:#003E66; }
+    .badge-usuario  { background:#EFF6FF; color:#005D97; }
+    .badge-pmo      { background:#F5F3FF; color:#6D28D9; }
+    .badge-admin-r  { background:#FFF7ED; color:#C2410C; }
+
+    /* ── TAREAS ── */
+    .tareas-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
+    .btn-nueva-tarea {
+      padding:9px 20px; background:#005D97; color:white; border:none; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer;
+      transition:background .15s; display:flex; align-items:center; gap:7px;
+    }
+    .btn-nueva-tarea:hover { background:#003E66; }
+
+    .tareas-table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    th { padding:10px 14px; text-align:left; font-size:10px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid #F3F4F6; transition:background .1s; }
+    tbody tr:hover { background:#F9FAFB; }
+    tbody tr:last-child { border-bottom:none; }
+    td { padding:12px 14px; font-size:13px; color:#374151; vertical-align:middle; }
+    .td-tarea { font-weight:700; color:#1A1A1A; max-width:220px; }
+    .td-obs   { font-size:12px; color:#6B7280; max-width:180px; white-space:pre-wrap; word-break:break-word; }
+    .td-date  { font-size:12px; color:#9CA3AF; white-space:nowrap; }
+    .td-center { text-align:center; padding:36px; color:#9CA3AF; font-size:13px; }
+
+    /* Estatus badge */
+    .est-badge {
+      display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px;
+      font-size:10px; font-weight:800; letter-spacing:.3px; white-space:nowrap;
+    }
+    .est-iniciada      { background:#EFF6FF; color:#005D97; }
+    .est-en-desarrollo { background:#FEF3C7; color:#92400E; }
+    .est-en-pruebas    { background:#F5F3FF; color:#6D28D9; }
+    .est-terminada     { background:#D1FAE5; color:#065F46; }
+    .est-liberado      { background:#ECFDF5; color:#047857; border:1px solid #6EE7B7; }
+
+    /* Estatus select inline */
+    .est-select {
+      padding:4px 8px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:#1A1A1A;
+      background:#FAFAFA; outline:none; cursor:pointer; transition:border-color .15s;
+    }
+    .est-select:focus { border-color:#005D97; background:#fff; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+      z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    }
+    .modal-overlay.active { display:flex; }
+    .modal-card {
+      background:white; border-radius:16px; width:100%; max-width:520px;
+      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.4); animation:modalIn .2s ease;
+    }
+    @keyframes modalIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
+    .modal-header {
+      background:linear-gradient(135deg,#003E66 0%,#005D97 100%);
+      padding:20px 24px; display:flex; align-items:center; justify-content:space-between; color:white;
+    }
+    .modal-header h2 { font-size:16px; font-weight:800; }
+    .modal-close { background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity:.65; transition:opacity .15s; }
+    .modal-close:hover { opacity:1; }
+    .modal-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+    .modal-body { padding:24px; display:flex; flex-direction:column; gap:16px; }
+    .modal-alert { padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; display:none; }
+    .modal-alert.error { display:block; background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:10px; font-weight:800; color:#374151; letter-spacing:.7px; text-transform:uppercase; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding:10px 13px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
+      background:#FAFAFA; outline:none; transition:border-color .15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#005D97; background:#fff; }
+    .form-group textarea { resize:vertical; min-height:80px; line-height:1.5; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
+    .btn-cancel { padding:9px 20px; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
+    .btn-cancel:hover { background:#E5E7EB; }
+    .btn-save { padding:9px 24px; background:#005D97; color:white; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer; transition:background .15s; }
+    .btn-save:hover { background:#003E66; }
+    .btn-save:disabled { background:#93C5FD; cursor:not-allowed; }
+
+    /* ── TOAST ── */
+    #toast { position:fixed; bottom:24px; right:24px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:700; color:white; box-shadow:0 6px 24px rgba(0,0,0,.2); display:none; animation:fadeUp .2s ease; }
+    #toast.success { background:#16A34A; }
+    #toast.error   { background:#C41010; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    @media(max-width:640px) {
+      nav { padding:0 16px; }
+      .page-header { padding:24px 16px 20px; }
+      main { padding:20px 16px 40px; }
+      .info-layout { flex-direction:column; align-items:flex-start; }
+      .form-row { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">PERFIL</span>
+  </div>
+  <div class="nav-right">
+    <a href="index.html" class="btn-nav">← Inicio</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>👤 Perfil</h1>
+  <p>Tu información personal y tareas asignadas.</p>
+</div>
+<div class="header-stripe"></div>
+
+<main>
+
+  <!-- ── Módulo 1: Información básica ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">👤</span>
+      <h2>Información Básica</h2>
+    </div>
+    <div class="card-stripe"></div>
+    <div class="card-body">
+      <div class="info-layout">
+        <div class="info-photo" id="info-photo">👤</div>
+        <div class="info-fields">
+          <div class="info-row">
+            <span class="info-label">Nombre</span>
+            <span class="info-value" id="info-nombre">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Correo electrónico</span>
+            <span class="info-value" id="info-correo">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Rol</span>
+            <span class="info-badge" id="info-rol-badge">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Módulo 2: Tareas ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">✅</span>
+      <h2>Tareas</h2>
+    </div>
+    <div class="card-stripe"></div>
+    <div class="card-body">
+      <div class="tareas-toolbar">
+        <button class="btn-nueva-tarea" id="btn-nueva-tarea">＋ Nueva tarea</button>
+      </div>
+      <div class="tareas-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarea</th>
+              <th>Estatus</th>
+              <th>Fecha inicio</th>
+              <th>Fecha fin</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody id="tareas-tbody">
+            <tr><td colspan="5" class="td-center">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Modal nueva tarea ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Nueva Tarea</h2>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-stripe"></div>
+    <div class="modal-body">
+      <div class="modal-alert" id="modal-alert"></div>
+      <div class="form-group">
+        <label for="f-tarea">Tarea <span style="color:#C41010">*</span></label>
+        <input type="text" id="f-tarea" maxlength="500" placeholder="Descripción de la tarea…" />
+      </div>
+      <div class="form-group">
+        <label for="f-estatus">Estatus</label>
+        <select id="f-estatus">
+          <option value="iniciada">Iniciada</option>
+          <option value="en desarrollo">En desarrollo</option>
+          <option value="en pruebas">En pruebas</option>
+          <option value="terminada">Terminada</option>
+          <option value="liberado">Liberado</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-finicio">Fecha inicio</label>
+          <input type="date" id="f-finicio" />
+        </div>
+        <div class="form-group">
+          <label for="f-ffin">Fecha fin</label>
+          <input type="date" id="f-ffin" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="f-obs">Observaciones</label>
+        <textarea id="f-obs" placeholder="Notas adicionales…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+      <button class="btn-save"   id="modal-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+  /* ── Sesión ── */
+  let session = null;
+  try { session = JSON.parse(localStorage.getItem('session')); } catch {}
+  if (!session) { window.location.href = 'index.html'; }
+
+  /* ── Info básica ── */
+  const ROL_MAP = {
+    superusuario:   ['badge-super',   '⭐ Superusuario'],
+    pmo:            ['badge-pmo',     '📊 PMO'],
+    administracion: ['badge-admin-r', '🏢 Administración'],
+    usuario:        ['badge-usuario', '👤 Usuario'],
+  };
+  document.getElementById('info-nombre').textContent = session.nombre || '—';
+  document.getElementById('info-correo').textContent = session.email  || '—';
+  const [rolCls, rolLbl] = ROL_MAP[session.rol] || ['badge-usuario', session.rol || '—'];
+  const badge = document.getElementById('info-rol-badge');
+  badge.textContent = rolLbl; badge.className = `info-badge ${rolCls}`;
+
+  /* cargar foto desde servidor */
+  (async () => {
+    try {
+      const res  = await fetch(`${API}/api/usuarios/${session.id}/info`);
+      const data = await res.json();
+      if (data.success && data.info?.foto) {
+        document.getElementById('info-photo').innerHTML =
+          `<img src="${API}${data.info.foto}" alt="Foto" />`;
+      }
+    } catch {}
+  })();
+
+  /* ── Helpers ── */
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  let toastT;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = type; t.style.display = 'block';
+    clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 2800);
+  }
+
+  const ESTATUS_CLS = {
+    'iniciada':      'est-iniciada',
+    'en desarrollo': 'est-en-desarrollo',
+    'en pruebas':    'est-en-pruebas',
+    'terminada':     'est-terminada',
+    'liberado':      'est-liberado',
+  };
+  const ESTATUS_OPTS = ['iniciada','en desarrollo','en pruebas','terminada','liberado'];
+
+  /* ── Tareas ── */
+  let tareas = [];
+
+  async function loadTareas() {
+    try {
+      const res  = await fetch(`${API}/api/usuarios/${session.id}/tareas`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      tareas = data.tareas;
+      renderTareas();
+    } catch (err) {
+      document.getElementById('tareas-tbody').innerHTML =
+        `<tr><td colspan="5" class="td-center" style="color:#C41010">Error: ${esc(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderTareas() {
+    const tbody = document.getElementById('tareas-tbody');
+    if (!tareas.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="td-center">Sin tareas aún. ¡Agrega la primera!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = tareas.map(t => {
+      const cls  = ESTATUS_CLS[t.estatus] || 'est-iniciada';
+      const opts = ESTATUS_OPTS.map(s =>
+        `<option value="${s}" ${s === t.estatus ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+      ).join('');
+      return `<tr>
+        <td class="td-tarea">${esc(t.tarea)}</td>
+        <td>
+          <select class="est-select" data-id="${t.id}">
+            ${opts}
+          </select>
+        </td>
+        <td class="td-date">${fmtDate(t.fecha_inicio)}</td>
+        <td class="td-date">${fmtDate(t.fecha_fin)}</td>
+        <td class="td-obs">${esc(t.observaciones || '—')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* Cambio de estatus inline */
+  document.getElementById('tareas-tbody').addEventListener('change', async e => {
+    const sel = e.target.closest('.est-select');
+    if (!sel) return;
+    const id      = parseInt(sel.dataset.id);
+    const estatus = sel.value;
+    try {
+      const res  = await fetch(`${API}/api/tareas/${id}/estatus`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estatus })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      const t = tareas.find(t => t.id === id);
+      if (t) t.estatus = estatus;
+      showToast('Estatus actualizado.');
+    } catch (err) { showToast(err.message, 'error'); await loadTareas(); }
+  });
+
+  /* ── Modal ── */
+  function openModal() {
+    document.getElementById('f-tarea').value   = '';
+    document.getElementById('f-estatus').value = 'iniciada';
+    document.getElementById('f-finicio').value = '';
+    document.getElementById('f-ffin').value    = '';
+    document.getElementById('f-obs').value     = '';
+    document.getElementById('modal-alert').className = 'modal-alert';
+    document.getElementById('modal-alert').textContent = '';
+    document.getElementById('modal-overlay').classList.add('active');
+    setTimeout(() => document.getElementById('f-tarea').focus(), 50);
+  }
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+
+  document.getElementById('btn-nueva-tarea').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click',  closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  document.getElementById('modal-save').addEventListener('click', async () => {
+    const tarea       = document.getElementById('f-tarea').value.trim();
+    const estatus     = document.getElementById('f-estatus').value;
+    const fecha_inicio= document.getElementById('f-finicio').value;
+    const fecha_fin   = document.getElementById('f-ffin').value;
+    const observaciones = document.getElementById('f-obs').value.trim();
+    const al  = document.getElementById('modal-alert');
+    const btn = document.getElementById('modal-save');
+
+    if (!tarea) { al.textContent = 'La tarea es requerida.'; al.className = 'modal-alert error'; return; }
+
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      const res  = await fetch(`${API}/api/usuarios/${session.id}/tareas`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tarea, estatus, fecha_inicio, fecha_fin, observaciones })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      showToast('Tarea creada correctamente.');
+      closeModal();
+      await loadTareas();
+    } catch (err) {
+      al.textContent = err.message; al.className = 'modal-alert error';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar';
+    }
+  });
+
+  loadTareas();
+</script>
+</body>
+</html>

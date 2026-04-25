@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analítica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  {
+      height:40px; width:40px; object-fit:contain;
+      border-radius:12px; background:#fff; padding:4px; display:block;
+    }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+
+    .page-header {
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
+      padding:36px 40px 30px; color:white;
+    }
+    .page-header h1 { font-size:28px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    main {
+      padding:48px 40px;
+      display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 130px);
+    }
+    .empty-state {
+      text-align:center; color:#9CA3AF;
+    }
+    .empty-icon  { font-size:64px; display:block; margin-bottom:20px; }
+    .empty-title { font-size:22px; font-weight:800; color:#374151; margin-bottom:8px; }
+    .empty-sub   { font-size:14px; font-weight:600; color:#9CA3AF; }
+
+    @media(max-width:600px) {
+      nav { padding:0 16px; }
+      .page-header { padding:28px 20px; }
+      main { padding:32px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">ANALÍTICA</span>
+  </div>
+  <div class="nav-right">
+    <a href="index.html" class="btn-nav">← Inicio</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>📊 Analítica</h1>
+  <p>Visualización y análisis de datos del sistema.</p>
+</div>
+<div class="header-stripe"></div>
+
+<main>
+  <div class="empty-state">
+    <span class="empty-icon">📊</span>
+    <div class="empty-title">Próximamente</div>
+    <div class="empty-sub">El módulo de analítica está en construcción.</div>
+  </div>
+</main>
+
+</body>
+</html>

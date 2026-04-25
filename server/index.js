@@ -756,6 +756,69 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+/* ── Entregables: renombrar item ───────────────── */
+app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const num      = parseInt(req.params.num);
+    const nombre   = (req.body.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const item = meta.items?.find(it => it.num === num);
+    if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
+    item.nombre = nombre;
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: eliminar item ────────────────── */
+app.delete('/api/entregables/:id/items/:num', (req, res) => {
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const num      = parseInt(req.params.num);
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const idx  = meta.items?.findIndex(it => it.num === num);
+    if (idx === -1 || idx === undefined) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
+    meta.items.splice(idx, 1);
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: agregar item ─────────────────── */
+app.post('/api/entregables/:id/items', (req, res) => {
+  try {
+    const id     = decodeURIComponent(req.params.id);
+    const nombre = (req.body.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta   = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const nextNum = (meta.items.length ? Math.max(...meta.items.map(it => it.num)) : 0) + 1;
+    meta.items.push({
+      num: nextNum, nombre,
+      etapas: {
+        creacion:      { completada: false, fecha: null },
+        revision:      { completada: false, fecha: null },
+        vobo:          { completada: false, rechazado: false, observaciones: [], fecha: null },
+        impresion:     { completada: false, fecha: null },
+        firma_interna: { completada: false, fecha: null },
+        firma_externa: { completada: false, fecha: null },
+        carpeta:       { completada: false, fecha: null },
+        acuse:         { completada: false, fecha: null },
+        vobo_final:    { completada: false, fecha: null }
+      }
+    });
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.status(201).json({ success: true, num: nextNum });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Entregables: PDF de etapa ─────────────────── */
 const pdfDir    = path.join(entregablesDir, 'pdfs');
 const obsImgDir = path.join(entregablesDir, 'obs-imgs');
@@ -870,6 +933,47 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     item.etapas.vobo.rechazado = !todasAceptadas;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true, rechazado: item.etapas.vobo.rechazado });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Tareas: listar por usuario ─────────────────── */
+app.get('/api/usuarios/:id/tareas', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      'SELECT * FROM tareas WHERE usuario_id = ? ORDER BY creado_en DESC',
+      [parseInt(req.params.id)]
+    );
+    res.json({ success: true, tareas: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Tareas: crear ──────────────────────────────── */
+app.post('/api/usuarios/:id/tareas', async (req, res) => {
+  const { tarea, estatus, fecha_inicio, fecha_fin, observaciones } = req.body;
+  if (!tarea?.trim()) return res.status(400).json({ success: false, error: 'La tarea es requerida.' });
+  const ESTATUS = ['iniciada','en desarrollo','terminada','en pruebas','liberado'];
+  const est = ESTATUS.includes(estatus) ? estatus : 'iniciada';
+  try {
+    const pool = await getPool();
+    const [result] = await pool.execute(
+      'INSERT INTO tareas (usuario_id, tarea, estatus, fecha_inicio, fecha_fin, observaciones) VALUES (?, ?, ?, ?, ?, ?)',
+      [parseInt(req.params.id), tarea.trim(), est,
+       fecha_inicio || null, fecha_fin || null, observaciones?.trim() || null]
+    );
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Tareas: actualizar estatus ─────────────────── */
+app.patch('/api/tareas/:id/estatus', async (req, res) => {
+  const ESTATUS = ['iniciada','en desarrollo','terminada','en pruebas','liberado'];
+  const { estatus } = req.body;
+  if (!ESTATUS.includes(estatus)) return res.status(400).json({ success: false, error: 'Estatus inválido.' });
+  try {
+    const pool = await getPool();
+    await pool.execute('UPDATE tareas SET estatus = ? WHERE id = ?', [estatus, parseInt(req.params.id)]);
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
