@@ -738,7 +738,7 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseInt(req.params.num);
-    const { etapa, completada } = req.body;
+    const { etapa, completada, en_proceso } = req.body;
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
@@ -750,6 +750,8 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     if (!item.etapas[etapa]) return res.status(400).json({ success: false, error: 'Etapa inválida.' });
     item.etapas[etapa].completada = completada;
     item.etapas[etapa].fecha      = completada ? new Date().toISOString() : null;
+    if (etapa === 'creacion' || etapa === 'revision')
+      item.etapas[etapa].en_proceso = (en_proceso === true && !completada);
     if (etapa === 'vobo' && completada) item.etapas.vobo.rechazado = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
@@ -901,8 +903,10 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     item.etapas.vobo.fecha            = null;
     item.etapas.revision.completada   = false;
     item.etapas.revision.fecha        = null;
+    item.etapas.revision.en_proceso   = false;
     item.etapas.creacion.completada   = false;
     item.etapas.creacion.fecha        = null;
+    item.etapas.creacion.en_proceso   = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true, imagen });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -926,8 +930,10 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     if (!obs) return res.status(404).json({ success: false, error: 'Observación no encontrada.' });
     obs.estado = estado;
     if (estado === 'rechazada') {
+      item.etapas.revision.en_proceso = false;
       item.etapas.creacion.completada = false;
       item.etapas.creacion.fecha      = null;
+      item.etapas.creacion.en_proceso = false;
     }
     const todasAceptadas = item.etapas.vobo.observaciones.every(o => o.estado === 'aceptada');
     item.etapas.vobo.rechazado = !todasAceptadas;

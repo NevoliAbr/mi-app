@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     /* ── Palette ────────────────────────────────
        #005D97  azul corporativo (primario)
@@ -865,6 +866,8 @@
     .ep-btn.done:hover  { background:#047857; }
     .ep-btn.avail { background:transparent; border-color:#2563EB; color:#60A5FA; cursor:pointer; }
     .ep-btn.avail:hover { background:rgba(37,99,235,.25); }
+    .ep-btn.inprog { background:rgba(0,93,151,.45); border-color:#005D97; color:#00AEEF; cursor:pointer; }
+    .ep-btn.inprog:hover { background:rgba(0,93,151,.7); }
     .ep-btn.lock  { background:transparent; border-color:rgba(255,255,255,.1); color:rgba(255,255,255,.18); cursor:not-allowed; }
     .ep-btn.reject { background:rgba(217,119,6,.18); border-color:#D97706; color:#FCD34D; cursor:default; }
     .ep-btn.warn   { background:rgba(234,88,12,.18); border-color:#EA580C; color:#FCA5A5; cursor:pointer; }
@@ -2399,7 +2402,9 @@
     let voboCurrent        = null;
 
     function normEtapas(etapas) {
-      if (!etapas.creacion)   etapas.creacion   = { completada: false, fecha: null };
+      if (!etapas.creacion)                               etapas.creacion  = { completada: false, fecha: null, en_proceso: false };
+      else if (etapas.creacion.en_proceso  === undefined) etapas.creacion.en_proceso  = false;
+      if (etapas.revision  && etapas.revision.en_proceso  === undefined) etapas.revision.en_proceso  = false;
       if (!etapas.vobo_final) etapas.vobo_final = { completada: false, fecha: null };
       return etapas;
     }
@@ -2449,19 +2454,29 @@
           }
           // Revisión: mostrar botón Obs junto al check; warn si vobo tiene observaciones pendientes
           if (et.key === 'revision') {
-            const done  = e.completada;
-            const vobo  = item.etapas.vobo;
-            const nObs  = vobo.observaciones.length;
+            const done      = e.completada;
+            const enProceso = e.en_proceso === true;
+            const vobo      = item.etapas.vobo;
+            const nObs      = vobo.observaciones.length;
             let cls, icon;
-            if (done)                       { cls = 'done';  icon = '✓'; }
-            else if (vobo.rechazado && prev) { cls = 'warn';  icon = '!'; }
-            else if (prev)                   { cls = 'avail'; icon = '·'; }
-            else                             { cls = 'lock';  icon = '·'; }
-            const showObs = prev || done || nObs > 0;
+            if (done)                        { cls = 'done';   icon = '✓'; }
+            else if (enProceso)              { cls = 'inprog'; icon = '⏳'; }
+            else if (vobo.rechazado && prev) { cls = 'warn';   icon = '!'; }
+            else if (prev)                   { cls = 'avail';  icon = '·'; }
+            else                             { cls = 'lock';   icon = '·'; }
+            const showObs = nObs > 0;
             return `<td><div class="vobo-cell">
               <button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision">${icon}</button>
               ${showObs ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs${nObs ? ' ('+nObs+')' : ''}</button>` : ''}
             </div></td>`;
+          }
+          if (et.key === 'creacion') {
+            let cls, icon;
+            if (e.completada)        { cls = 'done';   icon = '✓'; }
+            else if (e.en_proceso)   { cls = 'inprog'; icon = '⏳'; }
+            else if (prev)           { cls = 'avail';  icon = '·'; }
+            else                     { cls = 'lock';   icon = '·'; }
+            return `<td><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="creacion">${icon}</button></td>`;
           }
           const done  = e.completada;
           const cls   = done ? 'done' : prev ? 'avail' : 'lock';
@@ -2805,14 +2820,67 @@ if (btn.dataset.pdf === 'true') {
         inp.value = ''; inp.click(); return;
       }
 
-      /* Revisión: no permitir check si alguna observación no está aceptada */
-      if (etapa === 'revision' && !item.etapas.revision.completada) {
+      /* Revisión: dos pasos */
+      if (etapa === 'revision') {
+        const er  = item.etapas.revision;
         const obs = item.etapas.vobo.observaciones || [];
-        const noAceptada = obs.find(o => o.estado !== 'aceptada');
-        if (noAceptada) {
-          alert('Debes aceptar todas las observaciones antes de marcar Revisión.');
+
+        if (er.completada) {
+          // Revertir
+          if (hayPosterioresCompletas('revision')) {
+            const sig = ETAPAS.slice(ETAPAS.findIndex(s => s.key === 'revision') + 1).find(s => item.etapas[s.key]?.completada);
+            alert(`Debes desmarcar primero: ${ETAPA_LABELS[ETAPAS.findIndex(s => s.key === sig?.key)]}.`);
+            return;
+          }
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+            { method:'PATCH', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ etapa:'revision', completada:false, en_proceso:false }) });
+          if ((await r.json()).success) { er.completada=false; er.fecha=null; er.en_proceso=false; renderEntregables(); }
           return;
         }
+
+        if (er.en_proceso) {
+          // Segundo click → SweetAlert
+          const { value } = await Swal.fire({
+            title: 'Revisión en curso',
+            text: '¿Qué deseas hacer?',
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: '✓ Terminar revisión',
+            denyButtonText: '+ Agregar observación',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#047857',
+            denyButtonColor: '#005D97',
+            cancelButtonColor: '#6B7280',
+            background: '#0f172a',
+            color: '#f1f5f9',
+            customClass: { popup: 'swal-montserrat' }
+          });
+          if (value === true) {
+            // Terminar revisión — validar obs pendientes
+            const noAceptada = obs.find(o => o.estado !== 'aceptada');
+            if (noAceptada) {
+              Swal.fire({ title:'Observaciones pendientes', text:'Debes aceptar todas las observaciones antes de terminar la revisión.', icon:'warning', background:'#0f172a', color:'#f1f5f9', confirmButtonColor:'#005D97' });
+              return;
+            }
+            const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+              { method:'PATCH', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ etapa:'revision', completada:true, en_proceso:false }) });
+            if ((await r.json()).success) { er.completada=true; er.fecha=new Date().toISOString(); er.en_proceso=false; renderEntregables(); }
+          } else if (value === false) {
+            // Agregar observación → abrir modal Obs
+            openVoboModal(id, num, item.nombre);
+          }
+          return;
+        }
+
+        // Primer click → en proceso
+        const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+          { method:'PATCH', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ etapa:'revision', completada:false, en_proceso:true }) });
+        if ((await r.json()).success) { er.en_proceso=true; renderEntregables(); }
+        return;
       }
 
       /* VOBO: verificar que todas las observaciones estén aceptadas */
@@ -2823,6 +2891,38 @@ if (btn.dataset.pdf === 'true') {
           alert('Debes aceptar todas las observaciones (botón Obs) antes de aprobar el VOBO.');
           return;
         }
+      }
+
+      /* Creación: dos pasos */
+      if (etapa === 'creacion') {
+        const ec = item.etapas.creacion;
+        if (ec.completada) {
+          // Revertir
+          if (hayPosterioresCompletas('creacion')) {
+            const sig = ETAPAS.slice(1).find(s => item.etapas[s.key]?.completada);
+            alert(`Debes desmarcar primero: ${ETAPA_LABELS[ETAPAS.findIndex(s => s.key === sig?.key)]}.`);
+            return;
+          }
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+            { method:'PATCH', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ etapa:'creacion', completada:false, en_proceso:false }) });
+          if ((await r.json()).success) { ec.completada=false; ec.fecha=null; ec.en_proceso=false; renderEntregables(); }
+          return;
+        }
+        if (ec.en_proceso) {
+          // Segundo click → completar
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+            { method:'PATCH', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ etapa:'creacion', completada:true, en_proceso:false }) });
+          if ((await r.json()).success) { ec.completada=true; ec.fecha=new Date().toISOString(); ec.en_proceso=false; renderEntregables(); }
+          return;
+        }
+        // Primer click → en proceso
+        const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+          { method:'PATCH', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ etapa:'creacion', completada:false, en_proceso:true }) });
+        if ((await r.json()).success) { ec.en_proceso=true; renderEntregables(); }
+        return;
       }
 
       /* toggle etapa simple o VOBO */
@@ -2933,8 +3033,10 @@ if (btn.dataset.pdf === 'true') {
             item.etapas.vobo.observaciones[idx].estado = estado;
             item.etapas.vobo.rechazado = data.rechazado;
             if (estado === 'rechazada') {
+              item.etapas.revision.en_proceso = false;
               item.etapas.creacion.completada = false;
               item.etapas.creacion.fecha      = null;
+              item.etapas.creacion.en_proceso = false;
             }
           }
           renderVoboObs();
@@ -3033,8 +3135,10 @@ if (btn.dataset.pdf === 'true') {
             item.etapas.vobo.completada       = false;
             item.etapas.revision.completada   = false;
             item.etapas.revision.fecha        = null;
+            item.etapas.revision.en_proceso   = false;
             item.etapas.creacion.completada   = false;
             item.etapas.creacion.fecha        = null;
+            item.etapas.creacion.en_proceso   = false;
           }
           input.value = '';
           clearObsImg();
