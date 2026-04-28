@@ -375,7 +375,8 @@
 
   /* ══ ENTREGABLES ══ */
   let allEntregables = [];
-  let proyMap = {};   // proyecto_id → { nombre, procedimiento }
+  let proyMap  = {};   // proyecto_id → proyecto
+  let proyList = [];   // proyectos ordenados por orden, nombre
 
   async function loadEntregables() {
     try {
@@ -384,10 +385,10 @@
         fetch(`${API}/api/proyectos`).then(r => r.json()).catch(() => ({ proyectos: [] })),
       ]);
       allEntregables = rE.entregables || [];
-      // Poblar proyMap del módulo (usado en renderEntregables)
-      (rP.proyectos || []).forEach(p => { proyMap[p.id] = p; });
+      proyList = rP.proyectos || [];
+      proyList.forEach(p => { proyMap[p.id] = p; });
 
-      // Poblar selector de años
+      // Poblar selector de años (de los entregables existentes)
       const años = [...new Set(allEntregables.map(e => e.año))].sort((a,b) => b-a);
       const selAño = document.getElementById('e-año');
       años.forEach(a => {
@@ -396,23 +397,19 @@
         selAño.appendChild(opt);
       });
 
-      // Poblar selector de proyectos (variable local distinta para no pisar proyMap)
+      // Poblar selector de proyectos desde la lista ordenada
       const selProy = document.getElementById('e-proyecto');
-      const addedProy = new Set();
-      allEntregables.forEach(e => {
-        if (e.proyecto_id && !addedProy.has(String(e.proyecto_id))) {
-          addedProy.add(String(e.proyecto_id));
-          const opt = document.createElement('option');
-          opt.value = e.proyecto_id;
-          opt.textContent = e.proyectoNombre || e.proyecto_id;
-          selProy.appendChild(opt);
-        }
+      proyList.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nombre;
+        selProy.appendChild(opt);
       });
 
       renderEntregables();
     } catch (err) {
       document.getElementById('e-tbody').innerHTML =
-        `<tr><td colspan="11" class="td-center">Error al cargar: ${esc(err.message)}</td></tr>`;
+        `<tr><td colspan="18" class="td-center">Error al cargar: ${esc(err.message)}</td></tr>`;
     }
   }
 
@@ -420,9 +417,23 @@
     const año   = document.getElementById('e-año').value;
     const proy  = document.getElementById('e-proyecto').value;
 
+    // Entregables filtrados (para KPIs y columnas de meses)
     let data = allEntregables;
     if (año)  data = data.filter(e => String(e.año) === año);
     if (proy) data = data.filter(e => String(e.proyecto_id) === proy);
+
+    // Mapa de entregables filtrados agrupados por proyecto
+    const entByProy = new Map();
+    data.forEach(e => {
+      const key = String(e.proyecto_id || e.id);
+      if (!entByProy.has(key)) entByProy.set(key, []);
+      entByProy.get(key).push(e);
+    });
+
+    // Lista de proyectos a mostrar (todos, en orden, filtrada por selector)
+    const proyToShow = proy
+      ? proyList.filter(p => String(p.id) === proy)
+      : proyList;
 
     // KPIs
     let total = 0, done = 0, prog = 0, noinit = 0;
@@ -454,17 +465,10 @@
     ];
     const fmtD = d => d ? new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : null;
 
-    // Agrupar por proyecto
-    const gruposMap = new Map();
-    data.forEach(e => {
-      const key = String(e.proyecto_id || e.id);
-      if (!gruposMap.has(key)) gruposMap.set(key, []);
-      gruposMap.get(key).push(e);
-    });
-
-    tbody.innerHTML = [...gruposMap.values()].map(entList => {
-      const first    = entList[0];
-      const proy     = proyMap[first.proyecto_id] || {};
+    tbody.innerHTML = proyToShow.map(proyItem => {
+      const entList  = entByProy.get(String(proyItem.id)) || [];
+      const first    = entList[0] || null;
+      const proy     = proyMap[proyItem.id] || proyItem;
       const proc     = esc(proy.procedimiento || '—');
       const contrato = esc(proy.contrato || '—');
       const vi       = fmtD(proy.vigencia_inicio);
@@ -476,7 +480,7 @@
       const fc       = entList.some(e => e.fianza_cumplimiento) ? 'checked' : '';
       const fa       = entList.some(e => e.fianza_anticipo)     ? 'checked' : '';
       const fv       = entList.some(e => e.fianza_vicios)       ? 'checked' : '';
-      const allIds   = entList.map(e => e.id).join(',');
+      const allIds   = entList.length ? entList.map(e => e.id).join(',') : '';
 
       const mesCols = MESES_COLS.map(m => {
         const ent = entList.find(e => Number(e.mes) === m.num);
@@ -488,20 +492,21 @@
             : `<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${entProg>0?'#FEF3C7':'#F3F4F6'};color:${entProg>0?'#92400E':'#9CA3AF'}">${entProg}%</span>`;
           return `<td style="text-align:center;white-space:nowrap">${cell}</td>`;
         }
-        const nota = (first.meses_nota || {})[m.num] || '';
+        const nota = first ? ((first.meses_nota || {})[m.num] || '') : '';
+        const noteId = first ? esc(first.id) : '';
         return `<td style="text-align:center">
           <input type="text" maxlength="1" placeholder="·"
             style="width:24px;text-align:center;border:none;background:transparent;
                    font-size:13px;font-weight:700;color:#9CA3AF;outline:none;cursor:text"
             value="${esc(nota)}"
-            data-id="${esc(first.id)}" data-mes="${m.num}"
+            data-id="${noteId}" data-mes="${m.num}"
             oninput="this.value=this.value.replace(/[^\/]/g,'')"
-            onblur="saveMonthNota(this)" />
+            onblur="if(this.dataset.id) saveMonthNota(this)" />
         </td>`;
       }).join('');
 
       return `<tr>
-        <td><div class="td-bold">${esc(first.proyectoNombre || first.id)}</div></td>
+        <td><div class="td-bold">${esc(proyItem.nombre)}</div></td>
         <td style="font-size:12px;color:#374151;max-width:140px">${proc}</td>
         <td style="font-size:12px;color:#374151">${contrato}</td>
         <td style="font-size:12px;white-space:nowrap;color:#374151">${vigencia}</td>
@@ -512,9 +517,9 @@
             <span class="prog-pct">${avgProg}%</span>
           </div>
         </td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fc} data-ids="${allIds}" data-field="fianza_cumplimiento" onchange="saveExtraGroup(this)"></td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fa} data-ids="${allIds}" data-field="fianza_anticipo"     onchange="saveExtraGroup(this)"></td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fv} data-ids="${allIds}" data-field="fianza_vicios"       onchange="saveExtraGroup(this)"></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fc} data-ids="${allIds}" data-field="fianza_cumplimiento" onchange="if(this.dataset.ids) saveExtraGroup(this)" ${!allIds?'disabled':''}></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fa} data-ids="${allIds}" data-field="fianza_anticipo"     onchange="if(this.dataset.ids) saveExtraGroup(this)" ${!allIds?'disabled':''}></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fv} data-ids="${allIds}" data-field="fianza_vicios"       onchange="if(this.dataset.ids) saveExtraGroup(this)" ${!allIds?'disabled':''}></td>
       </tr>`;
     }).join('');
   }

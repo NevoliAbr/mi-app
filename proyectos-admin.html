@@ -281,6 +281,10 @@
       <div class="modal-body">
         <div class="modal-alert" id="modal-alert"></div>
         <div class="form-group">
+          <label for="input-orden">Número de orden</label>
+          <input type="number" id="input-orden" placeholder="Ej: 1" min="1" />
+        </div>
+        <div class="form-group">
           <label for="input-nombre">Nombre del proyecto</label>
           <input type="text" id="input-nombre" placeholder="Ej: Proyecto 2025" maxlength="200" />
         </div>
@@ -371,7 +375,7 @@
         const vigencia = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
         return `
         <tr>
-          <td class="td-id">${p.id}</td>
+          <td class="td-id">${p.orden ?? p.id}</td>
           <td class="td-name">${esc(p.nombre)}</td>
           <td class="td-long">${esc(p.NombreProyecto || '—')}</td>
           <td class="td-long">${esc(p.procedimiento || '—')}</td>
@@ -418,9 +422,10 @@
       return isNaN(d) ? '' : d.toISOString().slice(0, 10);
     }
 
-    function openModal(titulo, nombre = '', id = null, nombreProyecto = '', procedimiento = '', contrato = '', vigencia_inicio = '', vigencia_fin = '') {
+    function openModal(titulo, nombre = '', id = null, nombreProyecto = '', procedimiento = '', contrato = '', vigencia_inicio = '', vigencia_fin = '', orden = '') {
       editingId = id;
       document.getElementById('modal-title').textContent          = titulo;
+      document.getElementById('input-orden').value                = orden ?? '';
       document.getElementById('input-nombre').value               = nombre;
       document.getElementById('input-nombre-proyecto').value      = nombreProyecto;
       document.getElementById('input-procedimiento').value        = procedimiento;
@@ -442,6 +447,7 @@
 
     /* ── Guardar ── */
     document.getElementById('modal-save').addEventListener('click', async () => {
+      const orden           = document.getElementById('input-orden').value ? parseInt(document.getElementById('input-orden').value) : null;
       const nombre          = document.getElementById('input-nombre').value.trim();
       const NombreProyecto  = document.getElementById('input-nombre-proyecto').value.trim();
       const procedimiento   = document.getElementById('input-procedimiento').value.trim();
@@ -457,7 +463,7 @@
         const url    = editingId ? `${API}/api/admin/proyectos/${editingId}` : `${API}/api/admin/proyectos`;
         const method = editingId ? 'PATCH' : 'POST';
         const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin }) });
+          body: JSON.stringify({ orden, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin }) });
         const data   = await res.json();
         if (!data.success) throw new Error(data.error);
         showToast(editingId ? 'Proyecto actualizado.' : 'Proyecto creado.');
@@ -495,7 +501,7 @@
       const proy   = allProyectos.find(p => p.id === id);
 
       if (action === 'edit') {
-        openModal('Editar Proyecto', proy.nombre, id, proy.NombreProyecto || '', proy.procedimiento || '', proy.contrato || '', proy.vigencia_inicio, proy.vigencia_fin);
+        openModal('Editar Proyecto', proy.nombre, id, proy.NombreProyecto || '', proy.procedimiento || '', proy.contrato || '', proy.vigencia_inicio, proy.vigencia_fin, proy.orden);
         return;
       }
 

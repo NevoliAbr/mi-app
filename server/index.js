@@ -128,7 +128,7 @@ app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin FROM proyectos WHERE activo = 1 ORDER BY nombre'
+      'SELECT id, orden, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin FROM proyectos WHERE activo = 1 ORDER BY orden, nombre'
     );
     res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -138,12 +138,13 @@ app.get('/api/proyectos', async (_req, res) => {
 app.get('/api/admin/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const [rows] = await pool.execute('SELECT id, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo FROM proyectos ORDER BY nombre');
+    const [rows] = await pool.execute('SELECT id, orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo FROM proyectos ORDER BY orden, nombre');
     res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/proyectos', async (req, res) => {
+  const orden           = req.body.orden != null ? parseInt(req.body.orden) || null : null;
   const nombre          = (req.body.nombre          || '').trim();
   const procedimiento   = (req.body.procedimiento   || '').trim() || null;
   const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
@@ -154,14 +155,15 @@ app.post('/api/admin/proyectos', async (req, res) => {
   try {
     const pool = await getPool();
     const [result] = await pool.execute(
-      'INSERT INTO proyectos (nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo) VALUES (?, ?, ?, ?, ?, ?, 1)',
-      [nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin]
+      'INSERT INTO proyectos (orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
+      [orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.patch('/api/admin/proyectos/:id', async (req, res) => {
+  const orden           = req.body.orden != null ? parseInt(req.body.orden) || null : null;
   const nombre          = (req.body.nombre          || '').trim();
   const procedimiento   = (req.body.procedimiento   || '').trim() || null;
   const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
@@ -172,8 +174,8 @@ app.patch('/api/admin/proyectos/:id', async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute(
-      'UPDATE proyectos SET nombre = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ? WHERE id = ?',
-      [nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, parseInt(req.params.id)]
+      'UPDATE proyectos SET orden = ?, nombre = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ? WHERE id = ?',
+      [orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, parseInt(req.params.id)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
