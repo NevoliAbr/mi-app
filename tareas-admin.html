@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tareas – Administración</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    /* ── NAVBAR ── */
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left   { display:flex; align-items:center; gap:16px; }
+    .nav-right  { display:flex; align-items:center; gap:14px; }
+    .nav-center { display:flex; gap:6px; }
+    .logo-img   { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
+    .nav-title  { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    #admin-nombre { color:rgba(255,255,255,.85); font-size:13px; font-weight:700; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+    .btn-nav-tab {
+      background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
+      padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; text-decoration:none;
+      transition:background .15s, border-color .15s;
+    }
+    .btn-nav-tab:hover  { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.7); }
+    .btn-nav-tab.active { background:rgba(255,255,255,.22); border-color:#fff; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      background:linear-gradient(135deg,#003E66 0%,#003E66 45%,#005D97 100%);
+      padding:36px 40px 30px; color:white;
+    }
+    .page-header h1 { font-size:28px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    /* ── MAIN ── */
+    main { padding:40px; }
+
+    .table-card {
+      background:#fff; border-radius:14px;
+      box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden;
+    }
+    .table-toolbar {
+      padding:18px 24px; display:flex; align-items:center;
+      justify-content:space-between; gap:16px; flex-wrap:wrap;
+      border-bottom:1px solid #F3F4F6;
+    }
+    .toolbar-left  { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .search-wrap   { position:relative; }
+    .search-icon   { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; color:#9CA3AF; }
+    .search-input  {
+      padding:9px 12px 9px 36px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      outline:none; width:200px; transition:border-color .15s;
+    }
+    .search-input:focus { border-color:#005D97; }
+    .filter-select {
+      padding:9px 12px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      outline:none; background:#fff; cursor:pointer; transition:border-color .15s;
+    }
+    .filter-select:focus { border-color:#005D97; }
+    .btn-add {
+      padding:9px 20px; background:#005D97; color:#fff; border:none; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; transition:background .15s; display:flex; align-items:center; gap:6px;
+    }
+    .btn-add:hover { background:#003E66; }
+
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    th { padding:12px 16px; text-align:left; font-size:11px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid #F3F4F6; transition:background .1s; }
+    tbody tr:hover { background:#F9FAFB; }
+    tbody tr:last-child { border-bottom:none; }
+    td { padding:12px 16px; font-size:13px; color:#374151; vertical-align:middle; }
+    .td-center { text-align:center; color:#9CA3AF; padding:32px; }
+    .td-usuario { font-weight:800; color:#1F2937; }
+    .td-tarea   { font-weight:700; color:#1A1A1A; max-width:260px; }
+    .td-obs     { font-size:12px; color:#6B7280; max-width:180px; white-space:pre-wrap; word-break:break-word; }
+    .td-date    { font-size:12px; color:#9CA3AF; white-space:nowrap; }
+
+    .proy-chip {
+      display:inline-block; background:#EFF6FF; color:#1D4ED8;
+      padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700;
+    }
+
+    /* ── Estatus ── */
+    .est-select {
+      padding:5px 10px; border-radius:20px; border:none; cursor:pointer;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:800;
+      outline:none; appearance:none; text-align:center;
+    }
+    .est-iniciada      { background:#E0E7FF; color:#3730A3; }
+    .est-en-desarrollo { background:#FEF3C7; color:#92400E; }
+    .est-en-pruebas    { background:#DBEAFE; color:#1E40AF; }
+    .est-terminada     { background:#D1FAE5; color:#065F46; }
+    .est-liberado      { background:#F3F4F6; color:#374151; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:flex; align-items:center; justify-content:center;
+      z-index:200; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-overlay.active { opacity:1; pointer-events:all; }
+    .modal-card {
+      background:#fff; border-radius:16px; width:100%; max-width:520px;
+      max-height:90vh; overflow-y:auto;
+      box-shadow:0 8px 40px rgba(0,0,0,.25);
+      transform:translateY(16px); transition:transform .2s;
+    }
+    .modal-overlay.active .modal-card { transform:translateY(0); }
+    .modal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:20px 24px 16px; border-bottom:2px solid #005D97;
+    }
+    .modal-title  { font-size:16px; font-weight:900; color:#1F2937; }
+    .modal-close  { background:none; border:none; font-size:20px; cursor:pointer; color:#9CA3AF; line-height:1; }
+    .modal-body   { padding:24px; display:flex; flex-direction:column; gap:16px; }
+    .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
+
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:11px; font-weight:800; color:#374151; letter-spacing:.5px; text-transform:uppercase; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding:10px 13px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
+      background:#FAFAFA; outline:none; transition:border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color:#005D97; background:#fff; }
+    .form-group textarea { resize:vertical; min-height:72px; line-height:1.5; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+    .modal-alert {
+      padding:10px 14px; border-radius:8px; font-size:13px; font-weight:700; display:none;
+    }
+    .modal-alert.error { display:block; background:#FEE2E2; color:#B91C1C; }
+
+    .btn-cancel {
+      padding:10px 20px; background:#F3F4F6; color:#374151; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:700; cursor:pointer; transition:background .15s;
+    }
+    .btn-cancel:hover { background:#E5E7EB; }
+    .btn-save {
+      padding:10px 24px; background:#005D97; color:#fff; border:none;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; cursor:pointer; transition:background .15s;
+    }
+    .btn-save:hover    { background:#003E66; }
+    .btn-save:disabled { background:#9CA3AF; cursor:not-allowed; }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:24px; right:24px; z-index:999;
+      padding:12px 20px; border-radius:10px; font-size:13px; font-weight:700;
+      box-shadow:0 4px 16px rgba(0,0,0,.18); display:none; max-width:320px;
+    }
+    .toast.success { background:#065F46; color:#fff; }
+    .toast.error   { background:#991B1B; color:#fff; }
+
+    @media(max-width:700px) {
+      nav { padding:0 16px; }
+      .page-header { padding:28px 20px; }
+      main { padding:24px 16px; }
+      .form-row { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">/ Administración</span>
+  </div>
+  <div class="nav-center">
+    <a href="admin.html"          class="btn-nav-tab">👥 Usuarios</a>
+    <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+    <a href="tareas-admin.html"   class="btn-nav-tab active">📋 Tareas</a>
+    <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
+  </div>
+  <div class="nav-right">
+    <span id="admin-nombre"></span>
+    <a href="index.html" class="btn-nav">&#8592; Inicio</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>📋 Tareas</h1>
+  <p>Gestión y asignación de tareas a usuarios del sistema.</p>
+</div>
+<div class="header-stripe"></div>
+
+<main>
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="search-input" placeholder="Buscar tarea…" />
+        </div>
+        <select class="filter-select" id="filter-usuario">
+          <option value="">Todos los usuarios</option>
+        </select>
+        <select class="filter-select" id="filter-estatus">
+          <option value="">Todos los estatus</option>
+          <option value="iniciada">Iniciada</option>
+          <option value="en desarrollo">En desarrollo</option>
+          <option value="en pruebas">En pruebas</option>
+          <option value="terminada">Terminada</option>
+          <option value="liberado">Liberado</option>
+        </select>
+      </div>
+      <button class="btn-add" id="btn-nueva">＋ Nueva tarea</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Tarea</th>
+            <th>Proyecto</th>
+            <th>Estatus</th>
+            <th>Inicio</th>
+            <th>Fin</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody id="tareas-tbody">
+          <tr><td colspan="7" class="td-center">Cargando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ── Modal nueva tarea ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">Nueva tarea</span>
+      <button class="modal-close" id="modal-close">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-alert" id="modal-alert"></div>
+      <div class="form-group">
+        <label for="f-usuario">Usuario <span style="color:#C41010">*</span></label>
+        <select id="f-usuario">
+          <option value="">— Selecciona un usuario —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-tarea">Tarea <span style="color:#C41010">*</span></label>
+        <input type="text" id="f-tarea" maxlength="500" placeholder="Descripción de la tarea…" />
+      </div>
+      <div class="form-group">
+        <label for="f-proyecto">Proyecto</label>
+        <select id="f-proyecto">
+          <option value="">— Sin proyecto —</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-estatus">Estatus</label>
+          <select id="f-estatus">
+            <option value="iniciada">Iniciada</option>
+            <option value="en desarrollo">En desarrollo</option>
+            <option value="en pruebas">En pruebas</option>
+            <option value="terminada">Terminada</option>
+            <option value="liberado">Liberado</option>
+          </select>
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-finicio">Fecha inicio</label>
+          <input type="date" id="f-finicio" />
+        </div>
+        <div class="form-group">
+          <label for="f-ffin">Fecha fin</label>
+          <input type="date" id="f-ffin" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="f-obs">Observaciones</label>
+        <textarea id="f-obs" placeholder="Notas adicionales…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+      <button class="btn-save"   id="modal-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+  /* ── Nombre admin ── */
+  try {
+    const u = JSON.parse(sessionStorage.getItem('usuario') || '{}');
+    if (u.nombre) document.getElementById('admin-nombre').textContent = u.nombre;
+  } catch {}
+
+  /* ── Helpers ── */
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  let toastT;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type}`; t.style.display = 'block';
+    clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 2800);
+  }
+
+  const ESTATUS_CLS = {
+    'iniciada':      'est-iniciada',
+    'en desarrollo': 'est-en-desarrollo',
+    'en pruebas':    'est-en-pruebas',
+    'terminada':     'est-terminada',
+    'liberado':      'est-liberado',
+  };
+  const ESTATUS_OPTS = ['iniciada','en desarrollo','en pruebas','terminada','liberado'];
+
+  /* ── Datos ── */
+  let tareas    = [];
+  let usuarios  = [];
+  let proyectos = [];
+
+  async function loadAll() {
+    const [rTareas, rUsuarios, rProyectos] = await Promise.all([
+      fetch(`${API}/api/admin/tareas`).then(r => r.json()),
+      fetch(`${API}/api/admin/usuarios`).then(r => r.json()),
+      fetch(`${API}/api/proyectos`).then(r => r.json()),
+    ]);
+    tareas    = rTareas.tareas    || [];
+    usuarios  = (rUsuarios.usuarios || []).filter(u => u.activo);
+    proyectos = rProyectos.proyectos || [];
+
+    poblarFiltroUsuarios();
+    poblarSelectUsuarios();
+    poblarSelectProyectos();
+    renderTareas();
+  }
+
+  function poblarFiltroUsuarios() {
+    const sel = document.getElementById('filter-usuario');
+    usuarios.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id; opt.textContent = u.nombre;
+      sel.appendChild(opt);
+    });
+  }
+
+  function poblarSelectUsuarios() {
+    const sel = document.getElementById('f-usuario');
+    usuarios.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id; opt.textContent = u.nombre;
+      sel.appendChild(opt);
+    });
+  }
+
+  function poblarSelectProyectos() {
+    const sel = document.getElementById('f-proyecto');
+    proyectos.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id; opt.textContent = p.nombre;
+      sel.appendChild(opt);
+    });
+  }
+
+  /* ── Render ── */
+  function renderTareas() {
+    const search    = document.getElementById('search-input').value.toLowerCase();
+    const filUsr    = document.getElementById('filter-usuario').value;
+    const filEst    = document.getElementById('filter-estatus').value;
+
+    const filtradas = tareas.filter(t => {
+      if (filUsr && String(t.usuario_id) !== filUsr) return false;
+      if (filEst && t.estatus !== filEst)             return false;
+      if (search  && !t.tarea.toLowerCase().includes(search) &&
+                     !t.usuario_nombre.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('tareas-tbody');
+    if (!filtradas.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="td-center">Sin tareas que mostrar.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtradas.map(t => {
+      const cls  = ESTATUS_CLS[t.estatus] || 'est-iniciada';
+      const opts = ESTATUS_OPTS.map(s =>
+        `<option value="${s}" ${s === t.estatus ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+      ).join('');
+      const proy = t.proyecto_nombre
+        ? `<span class="proy-chip">${esc(t.proyecto_nombre)}</span>`
+        : '<span style="color:#9CA3AF;font-size:12px">—</span>';
+      return `<tr>
+        <td class="td-usuario">${esc(t.usuario_nombre)}</td>
+        <td class="td-tarea">${esc(t.tarea)}</td>
+        <td>${proy}</td>
+        <td>
+          <select class="est-select ${cls}" data-id="${t.id}" onchange="cambiarEstatus(this)">
+            ${opts}
+          </select>
+        </td>
+        <td class="td-date">${fmtDate(t.fecha_inicio)}</td>
+        <td class="td-date">${fmtDate(t.fecha_fin)}</td>
+        <td class="td-obs">${esc(t.observaciones || '—')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ── Cambiar estatus inline ── */
+  async function cambiarEstatus(sel) {
+    const id      = parseInt(sel.dataset.id);
+    const estatus = sel.value;
+    sel.className = `est-select ${ESTATUS_CLS[estatus] || 'est-iniciada'}`;
+    try {
+      const r = await fetch(`${API}/api/tareas/${id}/estatus`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estatus })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      const t = tareas.find(t => t.id === id);
+      if (t) t.estatus = estatus;
+      showToast('Estatus actualizado.');
+    } catch (err) { showToast(err.message, 'error'); await loadAll(); }
+  }
+
+  /* ── Filtros ── */
+  document.getElementById('search-input').addEventListener('input', renderTareas);
+  document.getElementById('filter-usuario').addEventListener('change', renderTareas);
+  document.getElementById('filter-estatus').addEventListener('change', renderTareas);
+
+  /* ── Modal ── */
+  function openModal() {
+    document.getElementById('f-usuario').value = '';
+    document.getElementById('f-tarea').value   = '';
+    document.getElementById('f-proyecto').value = '';
+    document.getElementById('f-estatus').value  = 'iniciada';
+    document.getElementById('f-finicio').value  = '';
+    document.getElementById('f-ffin').value     = '';
+    document.getElementById('f-obs').value      = '';
+    document.getElementById('modal-alert').className   = 'modal-alert';
+    document.getElementById('modal-alert').textContent = '';
+    document.getElementById('modal-overlay').classList.add('active');
+    setTimeout(() => document.getElementById('f-usuario').focus(), 50);
+  }
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+
+  document.getElementById('btn-nueva').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click',  closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  document.getElementById('modal-save').addEventListener('click', async () => {
+    const usuario_id    = document.getElementById('f-usuario').value;
+    const tarea         = document.getElementById('f-tarea').value.trim();
+    const proyecto_id   = document.getElementById('f-proyecto').value || null;
+    const estatus       = document.getElementById('f-estatus').value;
+    const fecha_inicio  = document.getElementById('f-finicio').value || null;
+    const fecha_fin     = document.getElementById('f-ffin').value || null;
+    const observaciones = document.getElementById('f-obs').value.trim() || null;
+    const al  = document.getElementById('modal-alert');
+    const btn = document.getElementById('modal-save');
+
+    if (!usuario_id) { al.textContent = 'Selecciona un usuario.'; al.className = 'modal-alert error'; return; }
+    if (!tarea)      { al.textContent = 'La tarea es requerida.';  al.className = 'modal-alert error'; return; }
+
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      const r = await fetch(`${API}/api/usuarios/${usuario_id}/tareas`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tarea, proyecto_id, estatus, fecha_inicio, fecha_fin, observaciones })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      showToast('Tarea asignada correctamente.');
+      closeModal();
+      await loadAll();
+    } catch (err) {
+      al.textContent = err.message; al.className = 'modal-alert error';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar';
+    }
+  });
+
+  loadAll();
+</script>
+</body>
+</html>

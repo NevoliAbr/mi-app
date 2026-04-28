@@ -193,6 +193,77 @@
     .btn-delete:hover { background:#FEE2E2; }
     .btn-edit   { background:#FFFBEB; }
     .btn-edit:hover   { background:#FEF3C7; }
+    .btn-reset  { background:#F0F9FF; }
+    .btn-reset:hover  { background:#E0F2FE; }
+    .btn-proj   { background:#F0FDF4; }
+    .btn-proj:hover   { background:#DCFCE7; }
+
+    /* Modal proyectos */
+    .proj-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
+      z-index:500; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    }
+    .proj-overlay.active { display:flex; }
+    .proj-modal {
+      background:#fff; border-radius:16px; width:100%; max-width:420px;
+      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.35); animation:fadeIn .2s ease;
+    }
+    .proj-header {
+      background:linear-gradient(135deg,#003E66,#005D97);
+      padding:18px 22px; display:flex; align-items:center; justify-content:space-between; color:#fff;
+    }
+    .proj-header h3  { font-size:15px; font-weight:800; }
+    .proj-header span { font-size:12px; color:rgba(255,255,255,.55); font-weight:600; margin-top:2px; display:block; }
+    .proj-close { background:none; border:none; color:#fff; font-size:18px; cursor:pointer; opacity:.65; }
+    .proj-close:hover { opacity:1; }
+    .proj-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+    .proj-body  { padding:20px 22px; max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+    .proj-item  {
+      display:flex; align-items:center; gap:12px; padding:10px 14px;
+      border:2px solid #E5E7EB; border-radius:10px; cursor:pointer;
+      transition:border-color .15s, background .15s;
+    }
+    .proj-item:hover  { border-color:#005D97; background:#F0F9FF; }
+    .proj-item.active { border-color:#005D97; background:#EFF6FF; }
+    .proj-item input  { accent-color:#005D97; width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+    .proj-item-name   { font-size:13px; font-weight:700; color:#1A1A1A; }
+    .proj-empty       { text-align:center; padding:24px; color:#9CA3AF; font-size:13px; font-weight:600; }
+    .proj-footer { padding:14px 22px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
+
+    /* Modal reset password */
+    .rp-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
+      z-index:500; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    }
+    .rp-overlay.active { display:flex; }
+    .rp-modal {
+      background:#fff; border-radius:16px; width:100%; max-width:400px;
+      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.35); animation:fadeIn .2s ease;
+    }
+    .rp-header {
+      background:linear-gradient(135deg,#003E66,#005D97);
+      padding:18px 22px; display:flex; align-items:center; justify-content:space-between; color:#fff;
+    }
+    .rp-header h3 { font-size:15px; font-weight:800; }
+    .rp-close { background:none; border:none; color:#fff; font-size:18px; cursor:pointer; opacity:.65; }
+    .rp-close:hover { opacity:1; }
+    .rp-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+    .rp-body { padding:24px; }
+    .rp-label { font-size:11px; font-weight:800; color:#6B7280; letter-spacing:.6px; text-transform:uppercase; margin-bottom:8px; }
+    .rp-pass-row { display:flex; gap:8px; align-items:center; }
+    .rp-pass-box {
+      flex:1; padding:12px 14px; background:#F9FAFB; border:2px solid #E5E7EB;
+      border-radius:10px; font-family:'Montserrat',sans-serif; font-size:16px;
+      font-weight:800; color:#003E66; letter-spacing:2px; text-align:center;
+    }
+    .rp-copy-btn {
+      padding:10px 16px; background:#005D97; color:#fff; border:none; border-radius:10px;
+      font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800; cursor:pointer;
+      transition:background .15s; white-space:nowrap;
+    }
+    .rp-copy-btn:hover { background:#003E66; }
+    .rp-copy-btn.copied { background:#16A34A; }
+    .rp-note { margin-top:14px; font-size:11px; color:#9CA3AF; font-weight:600; line-height:1.5; }
 
     /* ── EMPTY / LOADING ──────────────────────── */
     .td-center { text-align:center; padding:40px 16px; color:#9CA3AF; font-size:14px; }
@@ -372,6 +443,8 @@
     <div class="nav-center">
       <a href="admin.html" class="btn-nav-tab active">👥 Usuarios</a>
       <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+      <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
+      <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
     </div>
     <div class="nav-right">
       <span id="admin-nombre"></span>
@@ -473,21 +546,6 @@
             <label for="pf-fnac">Fecha de nacimiento</label>
             <input type="date" id="pf-fnac" />
           </div>
-          <div class="pf-group">
-            <label for="pf-ecivil">Estado civil</label>
-            <select id="pf-ecivil">
-              <option value="">— Seleccionar —</option>
-              <option>Soltero/a</option>
-              <option>Casado/a</option>
-              <option>Divorciado/a</option>
-              <option>Viudo/a</option>
-              <option>Unión libre</option>
-            </select>
-          </div>
-          <div class="pf-group full">
-            <label for="pf-dir">Dirección</label>
-            <input type="text" id="pf-dir" placeholder="Calle, ciudad, estado..." />
-          </div>
           <div class="pf-group full">
             <label>Proyectos</label>
             <div id="pf-proyectos-list" class="proyectos-checks"></div>
@@ -541,6 +599,44 @@
     </div>
   </div>
 
+  <!-- ══ PROYECTOS MODAL ═════════════════════════════ -->
+  <div class="proj-overlay" id="proj-overlay">
+    <div class="proj-modal">
+      <div class="proj-header">
+        <div>
+          <h3>📁 Proyectos asignados</h3>
+          <span id="proj-modal-sub">—</span>
+        </div>
+        <button class="proj-close" id="proj-close">✕</button>
+      </div>
+      <div class="proj-stripe"></div>
+      <div class="proj-body" id="proj-body"></div>
+      <div class="proj-footer">
+        <button class="confirm-btn cancel" id="proj-cancel">Cancelar</button>
+        <button class="confirm-btn" id="proj-save" style="background:#005D97;color:#fff;border-color:#005D97">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESET PASSWORD MODAL ════════════════════════ -->
+  <div class="rp-overlay" id="rp-overlay">
+    <div class="rp-modal">
+      <div class="rp-header">
+        <h3>🔑 Contraseña reseteada</h3>
+        <button class="rp-close" id="rp-close">✕</button>
+      </div>
+      <div class="rp-stripe"></div>
+      <div class="rp-body">
+        <div class="rp-label">Nueva contraseña generada</div>
+        <div class="rp-pass-row">
+          <div class="rp-pass-box" id="rp-pass-box">—</div>
+          <button class="rp-copy-btn" id="rp-copy-btn">Copiar</button>
+        </div>
+        <div class="rp-note">Comparte esta contraseña con el usuario. No se podrá consultar nuevamente.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ JAVASCRIPT ════════════════════════════════════ -->
   <script>
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
@@ -573,6 +669,7 @@
 
     /* ── Confirm dialog ──────────────────────── */
     let confirmResolve = null;
+    let pendingDeleteId = null, pendingDeleteName = null;
     function confirm(title, msg) {
       return new Promise(resolve => {
         confirmResolve = resolve;
@@ -583,11 +680,23 @@
     }
     document.getElementById('confirm-cancel').addEventListener('click', () => {
       document.getElementById('confirm-overlay').classList.remove('active');
+      pendingDeleteId = null; pendingDeleteName = null;
       if (confirmResolve) confirmResolve(false);
     });
-    document.getElementById('confirm-ok').addEventListener('click', () => {
+    document.getElementById('confirm-ok').addEventListener('click', async () => {
       document.getElementById('confirm-overlay').classList.remove('active');
-      if (confirmResolve) confirmResolve(true);
+      if (pendingDeleteId !== null) {
+        const id = pendingDeleteId;
+        pendingDeleteId = null; pendingDeleteName = null;
+        try {
+          const r = await fetch(`${API}/api/admin/usuarios/${id}`, { method: 'DELETE' });
+          if (!r.ok) throw new Error((await r.json()).error || 'Error al desactivar');
+          showToast('Usuario desactivado', 'success');
+          await loadUsers();
+        } catch (err) { showToast(err.message, 'error'); }
+      } else {
+        if (confirmResolve) confirmResolve(true);
+      }
     });
 
     /* ── Helpers ─────────────────────────────── */
@@ -682,6 +791,16 @@
                 onclick="openProfile(${u.id}, '${esc(u.nombre)}')">
                 &#128100;
               </button>
+              <button class="btn-action btn-reset"
+                title="Resetear contraseña"
+                onclick="resetPassword(${u.id}, '${esc(u.nombre)}')">
+                🔑
+              </button>
+              <button class="btn-action btn-proj"
+                title="Asignar proyectos"
+                onclick="openProjModal(${u.id}, '${esc(u.nombre)}')">
+                📁
+              </button>
             </div>
           </td>
         </tr>
@@ -744,6 +863,108 @@
       } catch (err) { showToast(err.message, 'error'); }
     }
 
+    /* ── Proyectos modal ────────────────────── */
+    let projTargetId = null;
+
+    async function openProjModal(id, nombre) {
+      projTargetId = id;
+      document.getElementById('proj-modal-sub').textContent = nombre;
+      document.getElementById('proj-body').innerHTML = '<div class="proj-empty">Cargando…</div>';
+      document.getElementById('proj-overlay').classList.add('active');
+
+      await loadProyectos();
+
+      try {
+        const res  = await fetch(`${API}/api/usuarios/${id}/info`);
+        const data = await res.json();
+        const asignados = (data.proyectos || []).map(p => p.id);
+        renderProjModal(asignados);
+      } catch { renderProjModal([]); }
+    }
+
+    function renderProjModal(asignados) {
+      const body = document.getElementById('proj-body');
+      if (!proyectos.length) {
+        body.innerHTML = '<div class="proj-empty">No hay proyectos disponibles.</div>';
+        return;
+      }
+      body.innerHTML = proyectos.map(p => {
+        const checked = asignados.includes(p.id);
+        return `<label class="proj-item ${checked ? 'active' : ''}" data-id="${p.id}">
+          <input type="checkbox" value="${p.id}" ${checked ? 'checked' : ''} />
+          <span class="proj-item-name">${esc(p.nombre)}</span>
+        </label>`;
+      }).join('');
+
+      body.querySelectorAll('.proj-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const cb = item.querySelector('input');
+          cb.checked = !cb.checked;
+          item.classList.toggle('active', cb.checked);
+        });
+        item.querySelector('input').addEventListener('click', e => e.stopPropagation());
+        item.querySelector('input').addEventListener('change', function() {
+          item.classList.toggle('active', this.checked);
+        });
+      });
+    }
+
+    function closeProjModal() {
+      document.getElementById('proj-overlay').classList.remove('active');
+      projTargetId = null;
+    }
+    document.getElementById('proj-close').addEventListener('click',  closeProjModal);
+    document.getElementById('proj-cancel').addEventListener('click', closeProjModal);
+    document.getElementById('proj-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('proj-overlay')) closeProjModal();
+    });
+
+    document.getElementById('proj-save').addEventListener('click', async () => {
+      const ids = [...document.querySelectorAll('#proj-body input:checked')].map(cb => parseInt(cb.value));
+      const btn = document.getElementById('proj-save');
+      btn.disabled = true; btn.textContent = 'Guardando…';
+      try {
+        const fd = new FormData();
+        fd.append('proyecto_ids', JSON.stringify(ids));
+        const res  = await fetch(`${API}/api/usuarios/${projTargetId}/info`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        showToast('Proyectos actualizados correctamente.');
+        closeProjModal();
+      } catch (err) { showToast(err.message, 'error'); }
+      finally { btn.disabled = false; btn.textContent = 'Guardar'; }
+    });
+
+    /* ── Reset password ──────────────────────── */
+    async function resetPassword(id, nombre) {
+      if (!confirm(`¿Resetear la contraseña de "${nombre}"? Se generará una nueva contraseña aleatoria.`)) return;
+      try {
+        const res  = await fetch(`${API}/api/admin/usuarios/${id}/reset-password`, { method: 'PATCH' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        document.getElementById('rp-pass-box').textContent = data.password;
+        document.getElementById('rp-copy-btn').textContent = 'Copiar';
+        document.getElementById('rp-copy-btn').classList.remove('copied');
+        document.getElementById('rp-overlay').classList.add('active');
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    document.getElementById('rp-close').addEventListener('click', () => {
+      document.getElementById('rp-overlay').classList.remove('active');
+    });
+    document.getElementById('rp-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('rp-overlay'))
+        document.getElementById('rp-overlay').classList.remove('active');
+    });
+    document.getElementById('rp-copy-btn').addEventListener('click', () => {
+      const pass = document.getElementById('rp-pass-box').textContent;
+      navigator.clipboard.writeText(pass).then(() => {
+        const btn = document.getElementById('rp-copy-btn');
+        btn.textContent = '✓ Copiada'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+
     async function toggleActivo(id, newActivo) {
       try {
         const res  = await fetch(`${API}/api/admin/usuarios/${id}/activo`, {
@@ -759,18 +980,12 @@
     }
 
     async function deleteUser(id, nombre) {
-      const ok = await confirm(
-        `¿Eliminar a "${nombre}"?`,
-        'Esta acción es permanente y no se puede deshacer.'
-      );
-      if (!ok) return;
-      try {
-        const res  = await fetch(`${API}/api/admin/usuarios/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
-        showToast(`Usuario "${nombre}" eliminado`);
-        await loadUsers();
-      } catch (err) { showToast(err.message, 'error'); }
+      pendingDeleteId   = id;
+      pendingDeleteName = nombre;
+      document.getElementById('confirm-title').textContent = `¿Desactivar a "${nombre}"?`;
+      document.getElementById('confirm-msg').textContent   = 'El usuario quedará inactivo pero se conservará su historial.';
+      document.getElementById('confirm-ok').textContent    = 'Desactivar';
+      document.getElementById('confirm-overlay').classList.add('active');
     }
 
     /* ── Init ────────────────────────────────── */
@@ -821,8 +1036,6 @@
       document.getElementById('profile-title').textContent = `Perfil — ${nombre}`;
       document.getElementById('pf-alert').className = 'pf-alert';
       document.getElementById('pf-fnac').value = '';
-      document.getElementById('pf-ecivil').value = '';
-      document.getElementById('pf-dir').value = '';
       document.getElementById('pf-foto').value = '';
       document.getElementById('pf-photo-circle').innerHTML = '&#128247;';
 
@@ -836,8 +1049,6 @@
           const info = data.info;
           if (info.fecha_nacimiento)
             document.getElementById('pf-fnac').value = info.fecha_nacimiento.split('T')[0];
-          document.getElementById('pf-ecivil').value = info.estado_civil || '';
-          document.getElementById('pf-dir').value    = info.direccion    || '';
           if (info.foto)
             document.getElementById('pf-photo-circle').innerHTML =
               `<img src="${API}${info.foto}" alt="Foto" />`;
@@ -882,8 +1093,6 @@
 
       const fd = new FormData();
       fd.append('fecha_nacimiento', document.getElementById('pf-fnac').value);
-      fd.append('direccion',        document.getElementById('pf-dir').value);
-      fd.append('estado_civil',     document.getElementById('pf-ecivil').value);
       fd.append('proyecto_ids', JSON.stringify(getCheckedProyectos()));
       const fotoFile = document.getElementById('pf-foto').files[0];
       if (fotoFile) fd.append('foto', fotoFile);

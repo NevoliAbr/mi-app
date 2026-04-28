@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistemas – Administración</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    .nav-center { display:flex; gap:6px; }
+    .btn-nav-tab {
+      background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
+      padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; text-decoration:none;
+      transition:background .15s, border-color .15s;
+    }
+    .btn-nav-tab:hover  { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.7); }
+    .btn-nav-tab.active { background:rgba(255,255,255,.22); border-color:#fff; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+    #admin-nombre { color:rgba(255,255,255,.85); font-size:13px; font-weight:700; }
+
+    .page-header {
+      background:linear-gradient(135deg,#003E66 0%,#003E66 45%,#005D97 100%);
+      padding:36px 40px 30px; color:white;
+    }
+    .page-header h1 { font-size:28px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    main { padding:40px; max-width:900px; }
+
+    /* ── Cards ── */
+    .sys-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    .sys-card {
+      background:#fff; border-radius:16px; padding:32px;
+      box-shadow:0 1px 8px rgba(0,0,0,.09);
+    }
+    .sys-card-title {
+      font-size:11px; font-weight:800; color:#9CA3AF;
+      letter-spacing:.8px; text-transform:uppercase; margin-bottom:20px;
+    }
+
+    /* ── DB Switch ── */
+    .db-current {
+      display:flex; align-items:center; gap:14px; margin-bottom:28px;
+    }
+    .db-icon { font-size:36px; line-height:1; }
+    .db-label { font-size:22px; font-weight:900; color:#1F2937; }
+    .db-host  { font-size:12px; color:#6B7280; font-weight:600; margin-top:2px; }
+
+    .db-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 14px; border-radius:30px; font-size:12px; font-weight:800;
+      letter-spacing:.3px; margin-bottom:24px;
+    }
+    .db-badge.connected    { background:#D1FAE5; color:#065F46; }
+    .db-badge.disconnected { background:#FEE2E2; color:#991B1B; }
+    .db-badge-dot { width:8px; height:8px; border-radius:50%; background:currentColor; }
+
+    .db-switch-row { display:flex; gap:12px; }
+    .db-btn {
+      flex:1; padding:14px; border-radius:10px; border:2px solid #E5E7EB;
+      background:#F9FAFB; font-family:'Montserrat',sans-serif; font-size:13px;
+      font-weight:800; color:#374151; cursor:pointer;
+      transition:all .15s; display:flex; flex-direction:column; align-items:center; gap:6px;
+    }
+    .db-btn:hover:not(.active):not(:disabled) { border-color:#005D97; background:#EFF6FF; color:#005D97; }
+    .db-btn.active { border-color:#005D97; background:#005D97; color:#fff; cursor:default; }
+    .db-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .db-btn-icon { font-size:22px; }
+    .db-btn-sub  { font-size:10px; font-weight:600; opacity:.75; }
+
+    .db-warn {
+      background:#FFFBEB; border:1px solid #FCD34D; border-radius:8px;
+      padding:10px 14px; font-size:12px; color:#92400E; font-weight:600;
+      margin-top:16px; display:none;
+    }
+
+    /* ── SMTP Card ── */
+    .smtp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .smtp-key { font-size:12px; font-weight:700; color:#6B7280; }
+    .smtp-val { font-size:12px; font-weight:800; color:#1F2937; }
+    .smtp-divider { height:1px; background:#F3F4F6; margin:8px 0; }
+    .smtp-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 12px; border-radius:30px; font-size:11px; font-weight:800;
+    }
+    .smtp-badge.ok  { background:#D1FAE5; color:#065F46; }
+    .smtp-badge.err { background:#FEE2E2; color:#991B1B; }
+
+    .btn-test {
+      width:100%; margin-top:20px; padding:11px; border-radius:8px;
+      border:none; background:#005D97; color:#fff;
+      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; transition:background .15s;
+    }
+    .btn-test:hover    { background:#003E66; }
+    .btn-test:disabled { background:#9CA3AF; cursor:not-allowed; }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:24px; right:24px; z-index:999;
+      padding:12px 20px; border-radius:10px; font-size:13px; font-weight:700;
+      box-shadow:0 4px 16px rgba(0,0,0,.18); display:none; max-width:320px;
+    }
+    .toast.success { background:#065F46; color:#fff; }
+    .toast.error   { background:#991B1B; color:#fff; }
+
+    @media(max-width:700px) {
+      nav { padding:0 16px; }
+      .page-header { padding:28px 20px; }
+      main { padding:24px 16px; }
+      .sys-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">/ Administración</span>
+  </div>
+  <div class="nav-center">
+    <a href="admin.html" class="btn-nav-tab">👥 Usuarios</a>
+    <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+    <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
+    <a href="sistemas-admin.html" class="btn-nav-tab active">⚙️ Sistemas</a>
+  </div>
+  <div class="nav-right">
+    <span id="admin-nombre"></span>
+    <a href="index.html" class="btn-nav">&#8592; Inicio</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>⚙️ Sistemas</h1>
+  <p>Configuración del servidor, base de datos y servicios.</p>
+</div>
+<div class="header-stripe"></div>
+
+<main>
+  <div class="sys-grid">
+
+    <!-- ── Tarjeta: Base de Datos ── -->
+    <div class="sys-card">
+      <div class="sys-card-title">Base de Datos</div>
+
+      <div class="db-current">
+        <div class="db-icon" id="db-icon">🗄️</div>
+        <div>
+          <div class="db-label" id="db-label">Cargando...</div>
+          <div class="db-host"  id="db-host"></div>
+        </div>
+      </div>
+
+      <div id="db-badge" class="db-badge connected">
+        <span class="db-badge-dot"></span>
+        <span id="db-badge-text">Conectado</span>
+      </div>
+
+      <div class="db-switch-row">
+        <button class="db-btn" id="btn-mssql" onclick="switchDB('mssql')">
+          <span class="db-btn-icon">🪟</span>
+          SQL Server
+          <span class="db-btn-sub">Local / desarrollo</span>
+        </button>
+        <button class="db-btn" id="btn-mysql" onclick="switchDB('mysql')">
+          <span class="db-btn-icon">🐬</span>
+          MySQL
+          <span class="db-btn-sub">Plesk / producción</span>
+        </button>
+      </div>
+
+      <div class="db-warn" id="db-warn">
+        ⚠️ Cambiar de base de datos afecta todas las operaciones del sistema en tiempo real.
+      </div>
+    </div>
+
+    <!-- ── Tarjeta: Correo SMTP ── -->
+    <div class="sys-card">
+      <div class="sys-card-title">Correo SMTP</div>
+
+      <div class="smtp-row">
+        <span class="smtp-key">Host</span>
+        <span class="smtp-val">mail.pmo.lcg.mx</span>
+      </div>
+      <div class="smtp-divider"></div>
+      <div class="smtp-row">
+        <span class="smtp-key">Puerto</span>
+        <span class="smtp-val">587 (STARTTLS)</span>
+      </div>
+      <div class="smtp-divider"></div>
+      <div class="smtp-row">
+        <span class="smtp-key">Cuenta</span>
+        <span class="smtp-val">Services@pmo.lcg.mx</span>
+      </div>
+      <div class="smtp-divider"></div>
+      <div class="smtp-row">
+        <span class="smtp-key">Estado</span>
+        <span id="smtp-badge" class="smtp-badge ok">● Configurado</span>
+      </div>
+
+      <div style="margin-top:20px">
+        <label style="display:block;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">Destinatario de prueba</label>
+        <input type="email" id="smtp-test-email" placeholder="correo@ejemplo.com"
+          style="width:100%;padding:10px 14px;border:1.5px solid #D1D5DB;border-radius:8px;
+                 font-family:'Montserrat',sans-serif;font-size:13px;color:#1F2937;outline:none;
+                 transition:border-color .15s;margin-bottom:10px"
+          onfocus="this.style.borderColor='#005D97'" onblur="this.style.borderColor='#D1D5DB'" />
+        <button class="btn-test" id="btn-test-smtp" onclick="testSmtp()">
+          Enviar correo de prueba
+        </button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+  /* ── Nombre admin en navbar ── */
+  try {
+    const u = JSON.parse(sessionStorage.getItem('usuario') || '{}');
+    if (u.nombre) document.getElementById('admin-nombre').textContent = u.nombre;
+  } catch {}
+
+  /* ── Cargar info de DB ── */
+  async function loadDBInfo() {
+    try {
+      const r = await fetch(`${API}/api/admin/sistema/db-info`);
+      const { db } = await r.json();
+      renderDB(db);
+    } catch {
+      document.getElementById('db-label').textContent = 'Sin conexión';
+    }
+  }
+
+  function renderDB(db) {
+    document.getElementById('db-icon').textContent  = db.type === 'mysql' ? '🐬' : '🪟';
+    document.getElementById('db-label').textContent = db.label;
+    document.getElementById('db-host').textContent  = `${db.host}:${db.port} — ${db.database}`;
+
+    const badge     = document.getElementById('db-badge');
+    const badgeTxt  = document.getElementById('db-badge-text');
+    badge.className = `db-badge ${db.connected ? 'connected' : 'disconnected'}`;
+    badgeTxt.textContent = db.connected ? 'Conectado' : 'Desconectado';
+
+    document.getElementById('btn-mssql').classList.toggle('active', db.type === 'mssql');
+    document.getElementById('btn-mysql').classList.toggle('active', db.type === 'mysql');
+  }
+
+  /* ── Cambiar DB ── */
+  async function switchDB(type) {
+    const warn = document.getElementById('db-warn');
+    warn.style.display = 'block';
+    document.getElementById('btn-mssql').disabled = true;
+    document.getElementById('btn-mysql').disabled  = true;
+
+    try {
+      const r = await fetch(`${API}/api/admin/sistema/db-switch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      renderDB(d.db);
+      warn.style.display = 'none';
+      showToast(`Cambiado a ${d.db.label} correctamente`, 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      document.getElementById('btn-mssql').disabled = false;
+      document.getElementById('btn-mysql').disabled  = false;
+    }
+  }
+
+  /* ── Probar SMTP ── */
+  async function testSmtp() {
+    const emailInput = document.getElementById('smtp-test-email');
+    const to = emailInput.value.trim();
+    if (!to) { emailInput.style.borderColor = '#EF4444'; emailInput.focus(); return; }
+    emailInput.style.borderColor = '#D1D5DB';
+
+    const btn = document.getElementById('btn-test-smtp');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    try {
+      const r = await fetch(`${API}/api/admin/sistema/test-smtp`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error);
+      showToast('Correo de prueba enviado a ' + d.to, 'success');
+    } catch (err) {
+      showToast('Error SMTP: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Enviar correo de prueba';
+    }
+  }
+
+  /* ── Toast ── */
+  let toastTimer;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    t.textContent = msg; t.className = `toast ${type}`; t.style.display = 'block';
+    toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+
+  loadDBInfo();
+</script>
+</body>
+</html>

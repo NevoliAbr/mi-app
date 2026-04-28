@@ -1143,8 +1143,8 @@
       <li id="nav-btn1" style="display:none"><a href="projects.html" id="btn1">Cargar projects</a></li>
       <li id="nav-btn2" style="display:none"><a href="avisos.html" id="btn2">Crear Avisos</a></li>
       <li id="nav-btn-entregables" style="display:none"><a href="entregables.html" id="btn-entregables">Carga de entregables</a></li>
-      <li id="nav-btn-analitica" style="display:none"><a href="analitica.html">Analítica</a></li>
       <li id="nav-btn-perfil"    style="display:none"><a href="perfil.html">Perfil</a></li>
+      <li id="nav-btn-analitica" style="display:none"><a href="analitica.html">Dashboard de Entregables</a></li>
       <li id="nav-btn3" style="display:none"><a href="#" id="btn3">Descargar</a></li>
       <li id="auth-sep"><span id="btn4">|</span></li>
       <li id="auth-reg"><a href="#" id="btn5">Regístrate</a></li>
@@ -1351,11 +1351,49 @@
             <select id="login-year"></select>
           </div>
           <button type="submit" class="submit-btn">INICIAR SESIÓN</button>
+          <p style="text-align:center;margin-top:10px;font-size:12px">
+            <a id="go-to-forgot" style="color:#005D97;cursor:pointer;font-weight:700;text-decoration:none">¿Olvidaste tu contraseña?</a>
+          </p>
         </form>
         <div class="divider">o</div>
         <p class="modal-footer">
           ¿No tienes cuenta?&nbsp;
           <a id="go-to-register">Regístrate aquí</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: OLVIDÉ MI CONTRASEÑA ═══════════════════ -->
+  <div class="modal-overlay" id="modal-forgot" role="dialog" aria-modal="true" aria-label="Recuperar contraseña">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-header-icon">🔑</div>
+          <h2>Recuperar contraseña</h2>
+        </div>
+        <button class="modal-close" data-close="modal-forgot" aria-label="Cerrar">&#10005;</button>
+      </div>
+      <div class="modal-header-stripe"></div>
+      <div class="modal-body">
+        <div class="alert" id="alert-forgot"></div>
+        <div id="forgot-form-wrap">
+          <p style="font-size:13px;color:#555;margin-bottom:18px;font-weight:600">Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
+          <form id="form-forgot" novalidate>
+            <div class="form-group">
+              <label for="forgot-email">Correo electrónico</label>
+              <input type="email" id="forgot-email" placeholder="tu@correo.com" autocomplete="email" required />
+            </div>
+            <button type="submit" class="submit-btn">ENVIAR ENLACE</button>
+          </form>
+        </div>
+        <div id="forgot-success-wrap" style="display:none;text-align:center;padding:16px 0">
+          <div style="font-size:48px;margin-bottom:12px">📬</div>
+          <div style="font-size:15px;font-weight:800;color:#374151;margin-bottom:8px">¡Correo enviado!</div>
+          <div style="font-size:13px;color:#6B7280;font-weight:600">Revisa tu bandeja de entrada y sigue el enlace para restablecer tu contraseña.<br>El enlace expira en 1 hora.</div>
+        </div>
+        <p style="text-align:center;margin-top:16px;font-size:12px">
+          <a id="go-back-login" style="color:#005D97;cursor:pointer;font-weight:700;text-decoration:none">← Volver al inicio de sesión</a>
         </p>
       </div>
     </div>
@@ -1421,21 +1459,6 @@
                 <label for="reg-fnac">Fecha de nacimiento</label>
                 <input type="date" id="reg-fnac" />
               </div>
-              <div class="form-group">
-                <label for="reg-ecivil">Estado civil</label>
-                <select id="reg-ecivil">
-                  <option value="">— Seleccionar —</option>
-                  <option>Soltero/a</option>
-                  <option>Casado/a</option>
-                  <option>Divorciado/a</option>
-                  <option>Viudo/a</option>
-                  <option>Unión libre</option>
-                </select>
-              </div>
-              <div class="form-group full">
-                <label for="reg-dir">Dirección</label>
-                <input type="text" id="reg-dir" placeholder="Calle, ciudad..." />
-              </div>
               <div class="form-group full">
                 <label>Proyectos</label>
                 <div id="reg-proyectos-list" class="proyectos-checks"></div>
@@ -1475,10 +1498,11 @@
       document.getElementById('nav-btn2').style.display            = esSuperusuario ? '' : 'none';
       document.getElementById('nav-btn-entregables').style.display = esSuperusuario ? '' : 'none';
 
-      // btn3: oculto sin sesión, "Descargar" para usuarios, "Usuarios" para superusuario
+      // btn3: oculto sin sesión o para rol usuario, "Descargar" para otros, "Administración" para superusuario
+      const esUsuario = loggedIn && user.rol === 'usuario';
       const navBtn3 = document.getElementById('nav-btn3');
       const btn3    = document.getElementById('btn3');
-      navBtn3.style.display = loggedIn ? '' : 'none';
+      navBtn3.style.display = (loggedIn && !esUsuario) ? '' : 'none';
       if (loggedIn && user.rol === 'superusuario') {
         btn3.textContent = 'Administración';
         btn3.href = 'admin.html';
@@ -1487,14 +1511,14 @@
         btn3.href = '#';
       }
 
-      document.getElementById('nav-btn-analitica').style.display = loggedIn ? '' : 'none';
+      document.getElementById('nav-btn-analitica').style.display = (loggedIn && !esUsuario) ? '' : 'none';
       document.getElementById('nav-btn-perfil').style.display    = loggedIn ? '' : 'none';
 
-      // Mostrar/ocultar módulos según sesión
-      document.getElementById('modulo-seguimiento').style.display = loggedIn ? '' : 'none';
+      // Mostrar/ocultar módulos según sesión y rol
+      document.getElementById('modulo-seguimiento').style.display = (loggedIn && !esUsuario) ? '' : 'none';
       document.getElementById('modulo-entregables').style.display = loggedIn ? '' : 'none';
 
-      if (loggedIn) { loadDashboard(); loadEntregables(); }
+      if (loggedIn) { if (!esUsuario) loadDashboard(); loadEntregables(); }
     }
 
     function setSession(user) {
@@ -1558,6 +1582,36 @@
     });
     document.getElementById('go-to-login').addEventListener('click', () => {
       closeModal('modal-register'); openModal('modal-login');
+    });
+    document.getElementById('go-to-forgot').addEventListener('click', () => {
+      closeModal('modal-login'); openModal('modal-forgot');
+    });
+    document.getElementById('go-back-login').addEventListener('click', () => {
+      closeModal('modal-forgot'); openModal('modal-login');
+    });
+
+    /* ── Formulario: olvidé contraseña ───────────── */
+    document.getElementById('form-forgot').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
+      const alert = document.getElementById('alert-forgot');
+      alert.style.display = 'none';
+      if (!email) { alert.textContent = 'Ingresa tu correo.'; alert.style.display = 'block'; return; }
+      const btn = e.target.querySelector('button[type=submit]');
+      btn.disabled = true; btn.textContent = 'Enviando...';
+      try {
+        const r = await fetch(`${API}/api/auth/forgot-password`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Error al enviar');
+        document.getElementById('forgot-form-wrap').style.display = 'none';
+        document.getElementById('forgot-success-wrap').style.display = 'block';
+      } catch (err) {
+        alert.textContent = err.message; alert.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'ENVIAR ENLACE';
+      }
     });
 
     /* ── Toggle contraseña ───────────────────────── */
@@ -1715,8 +1769,6 @@
         // Paso 2: guardar info personal (si hay algo)
         const fd = new FormData();
         fd.append('fecha_nacimiento', document.getElementById('reg-fnac').value);
-        fd.append('direccion',        document.getElementById('reg-dir').value);
-        fd.append('estado_civil',     document.getElementById('reg-ecivil').value);
         fd.append('proyecto_ids', JSON.stringify(getRegProyectos()));
         const fotoFile = document.getElementById('reg-foto').files[0];
         if (fotoFile) fd.append('foto', fotoFile);
@@ -2394,6 +2446,7 @@
       { key: 'acuse',         pdf: true  },
       { key: 'vobo_final'                },
     ];
+    const ETAPAS_USUARIO = new Set(['creacion','impresion','firma_interna','firma_externa','carpeta','acuse']);
 
     let entregablesData    = [];
     let allEntregablesData = [];
@@ -2442,9 +2495,30 @@
       totalFil.style.width   = avg + '%';
       tbody.innerHTML = acta.items.map(item => {
         const pct   = etapaProgress(item.etapas);
+        const esUsuarioRol = currentUserRol === 'usuario';
         const cells = ETAPAS.map((et, idx) => {
           const e    = item.etapas[et.key];
           const prev = prevDone(item.etapas, idx);
+
+          // Rol usuario: etapas no permitidas → solo lectura (muestra estado real, no interactivo)
+          if (esUsuarioRol && !ETAPAS_USUARIO.has(et.key)) {
+            if (et.key === 'revision') {
+              const done = e.completada, enP = e.en_proceso === true;
+              let cls, icon;
+              if (done)      { cls = 'done';   icon = '✓'; }
+              else if (enP)  { cls = 'inprog'; icon = '⏳'; }
+              else           { cls = 'lock';   icon = '·'; }
+              const nObs = item.etapas.vobo.observaciones.length;
+              return `<td><div class="vobo-cell">
+                <button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision">${icon}</button>
+                ${nObs > 0 ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs (${nObs})</button>` : ''}
+              </div></td>`;
+            }
+            const icon = e.completada ? '✓' : (et.vobo ? '—' : '·');
+            const cls  = e.completada ? 'done' : 'lock';
+            return `<td><button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}">${icon}</button></td>`;
+          }
+
           if (et.vobo) {
             let cls, icon;
             if (e.completada) { cls = 'done';  icon = '✓'; }
@@ -2787,6 +2861,10 @@
       const id    = btn.dataset.id;
       const num   = parseInt(btn.dataset.num);
       const etapa = btn.dataset.etapa;
+
+      // Rol usuario: solo puede usar etapas permitidas
+      if (currentUserRol === 'usuario' && !ETAPAS_USUARIO.has(etapa)) return;
+
       const acta  = entregablesData.find(a => a.id === id);
       const item  = acta?.items.find(it => it.num === num);
       if (!item) return;
@@ -3087,7 +3165,10 @@ if (btn.dataset.pdf === 'true') {
       const input  = document.getElementById('vobo-input');
       const send   = document.getElementById('vobo-send');
       const imgBtn = document.getElementById('vobo-img-btn');
-      if (aprobado) {
+      if (currentUserRol === 'usuario') {
+        row.style.display = 'none';
+      } else if (aprobado) {
+        row.style.display  = '';
         row.style.opacity  = '0.35';
         input.disabled     = true;
         input.placeholder  = 'VOBO aprobado — no se pueden agregar observaciones';
@@ -3096,6 +3177,7 @@ if (btn.dataset.pdf === 'true') {
         imgBtn.disabled    = true;
         clearObsImg();
       } else {
+        row.style.display  = '';
         row.style.opacity  = '1';
         input.disabled     = false;
         input.placeholder  = 'Escribir observación… (Ctrl+V para pegar imagen)';

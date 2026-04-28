@@ -1,12 +1,22 @@
 require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const bcrypt  = require('bcrypt');
-const multer  = require('multer');
-const path    = require('path');
-const fs      = require('fs');
-const XLSX    = require('xlsx');
-const { getPool } = require('./db');
+const express    = require('express');
+const cors       = require('cors');
+const bcrypt     = require('bcrypt');
+const multer     = require('multer');
+const path       = require('path');
+const fs         = require('fs');
+const crypto     = require('crypto');
+const XLSX       = require('xlsx');
+const nodemailer = require('nodemailer');
+const { getPool, switchDB, getDBType, getDBInfo } = require('./db');
+
+/* ── Mailer (Plesk SMTP) ─────────────────────────── */
+const transporter = nodemailer.createTransport({
+  host:   process.env.SMTP_HOST,
+  port:   parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+});
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -345,6 +355,19 @@ app.patch('/api/admin/usuarios/:id/rol', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+/* ── Admin: Resetear contraseña ─────────────────── */
+app.patch('/api/admin/usuarios/:id/reset-password', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+    let newPass = '';
+    for (let i = 0; i < 10; i++) newPass += chars[Math.floor(Math.random() * chars.length)];
+    const hash = await bcrypt.hash(newPass, 10);
+    await pool.execute('UPDATE usuarios SET password_hash = ? WHERE id = ?', [hash, parseInt(req.params.id)]);
+    res.json({ success: true, password: newPass });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Admin: Activar / desactivar ────────────────── */
 app.patch('/api/admin/usuarios/:id/activo', async (req, res) => {
   try {
@@ -361,7 +384,7 @@ app.patch('/api/admin/usuarios/:id/activo', async (req, res) => {
 app.delete('/api/admin/usuarios/:id', async (req, res) => {
   try {
     const pool = await getPool();
-    await pool.execute('DELETE FROM usuarios WHERE id = ?', [parseInt(req.params.id)]);
+    await pool.execute('UPDATE usuarios SET activo = 0 WHERE id = ?', [parseInt(req.params.id)]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -947,7 +970,10 @@ app.get('/api/usuarios/:id/tareas', async (req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT * FROM tareas WHERE usuario_id = ? ORDER BY creado_en DESC',
+      `SELECT t.*, p.nombre AS proyecto_nombre
+       FROM tareas t
+       LEFT JOIN proyectos p ON p.id = t.proyecto_id
+       WHERE t.usuario_id = ? ORDER BY t.creado_en DESC`,
       [parseInt(req.params.id)]
     );
     res.json({ success: true, tareas: rows });
@@ -956,16 +982,17 @@ app.get('/api/usuarios/:id/tareas', async (req, res) => {
 
 /* ── Tareas: crear ──────────────────────────────── */
 app.post('/api/usuarios/:id/tareas', async (req, res) => {
-  const { tarea, estatus, fecha_inicio, fecha_fin, observaciones } = req.body;
+  const { tarea, estatus, fecha_inicio, fecha_fin, observaciones, proyecto_id } = req.body;
   if (!tarea?.trim()) return res.status(400).json({ success: false, error: 'La tarea es requerida.' });
   const ESTATUS = ['iniciada','en desarrollo','terminada','en pruebas','liberado'];
   const est = ESTATUS.includes(estatus) ? estatus : 'iniciada';
   try {
     const pool = await getPool();
     const [result] = await pool.execute(
-      'INSERT INTO tareas (usuario_id, tarea, estatus, fecha_inicio, fecha_fin, observaciones) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO tareas (usuario_id, tarea, estatus, fecha_inicio, fecha_fin, observaciones, proyecto_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [parseInt(req.params.id), tarea.trim(), est,
-       fecha_inicio || null, fecha_fin || null, observaciones?.trim() || null]
+       fecha_inicio || null, fecha_fin || null, observaciones?.trim() || null,
+       proyecto_id ? parseInt(proyecto_id) : null]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -979,6 +1006,120 @@ app.patch('/api/tareas/:id/estatus', async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute('UPDATE tareas SET estatus = ? WHERE id = ?', [estatus, parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Admin: Todas las tareas ────────────────────────── */
+app.get('/api/admin/tareas', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      `SELECT t.*, u.nombre AS usuario_nombre, p.nombre AS proyecto_nombre
+       FROM tareas t
+       JOIN usuarios u ON u.id = t.usuario_id
+       LEFT JOIN proyectos p ON p.id = t.proyecto_id
+       ORDER BY t.creado_en DESC`
+    );
+    res.json({ success: true, tareas: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Sistema: Info de DB ─────────────────────────────── */
+app.get('/api/admin/sistema/db-info', (_req, res) => {
+  res.json({ success: true, db: getDBInfo() });
+});
+
+/* ── Sistema: Cambiar motor de DB ───────────────────── */
+app.post('/api/admin/sistema/db-switch', async (req, res) => {
+  const { type } = req.body;
+  try {
+    await switchDB(type);
+    res.json({ success: true, db: getDBInfo() });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* ── Sistema: Probar SMTP ────────────────────────────── */
+app.post('/api/admin/sistema/test-smtp', async (req, res) => {
+  const { to } = req.body;
+  if (!to) return res.status(400).json({ success: false, error: 'Destinatario requerido.' });
+  try {
+    await transporter.sendMail({
+      from:    process.env.SMTP_FROM,
+      to,
+      subject: 'Prueba SMTP – Sistema de Entregables',
+      html:    '<p style="font-family:Arial">El servicio de correo está funcionando correctamente.</p>',
+    });
+    res.json({ success: true, to });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ── Auth: Solicitar recuperación de contraseña ─────── */
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, error: 'Correo requerido.' });
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      'SELECT id, nombre FROM usuarios WHERE email = ? AND activo = 1', [email]
+    );
+    if (!rows.length) return res.json({ success: true }); // no revelar si existe
+
+    const user  = rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await pool.execute(
+      `INSERT INTO password_reset_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)`,
+      [user.id, token, expires]
+    );
+
+    const link = `${process.env.APP_URL}/reset-password.html?token=${token}`;
+    await transporter.sendMail({
+      from:    process.env.SMTP_FROM,
+      to:      email,
+      subject: 'Recuperación de contraseña – Sistema de Entregables',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">
+          <div style="background:#005D97;padding:24px 32px;border-radius:8px 8px 0 0">
+            <h2 style="color:#fff;margin:0;font-size:20px">Recuperación de contraseña</h2>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px">
+            <p style="margin:0 0 16px">Hola <strong>${user.nombre}</strong>,</p>
+            <p style="margin:0 0 24px;color:#555">Recibimos una solicitud para restablecer tu contraseña. Haz clic en el botón para continuar. El enlace expira en <strong>1 hora</strong>.</p>
+            <a href="${link}" style="display:inline-block;background:#005D97;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px">Restablecer contraseña</a>
+            <p style="margin:24px 0 0;font-size:12px;color:#999">Si no solicitaste este cambio, ignora este correo.</p>
+          </div>
+        </div>
+      `,
+    });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Auth: Restablecer contraseña con token ─────────── */
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ success: false, error: 'Datos incompletos.' });
+  if (password.length < 6) return res.status(400).json({ success: false, error: 'Mínimo 6 caracteres.' });
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      `SELECT * FROM password_reset_tokens WHERE token = ? AND usado = 0 AND expires_at > NOW()`,
+      [token]
+    );
+    if (!rows.length) return res.status(400).json({ success: false, error: 'El enlace es inválido o ha expirado.' });
+
+    const { id: tokenId, usuario_id } = rows[0];
+    const hash = await bcrypt.hash(password, 10);
+
+    await pool.execute('UPDATE usuarios SET password_hash = ? WHERE id = ?', [hash, usuario_id]);
+    await pool.execute('UPDATE password_reset_tokens SET usado = 1 WHERE id = ?', [tokenId]);
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });

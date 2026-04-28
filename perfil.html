@@ -71,6 +71,12 @@
     .badge-pmo      { background:#F5F3FF; color:#6D28D9; }
     .badge-admin-r  { background:#FFF7ED; color:#C2410C; }
 
+    .proyectos-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+    .proy-chip {
+      display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px;
+      font-size:11px; font-weight:800; background:#E0F0FF; color:#003E66; letter-spacing:.2px;
+    }
+
     /* ── TAREAS ── */
     .tareas-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
     .btn-nueva-tarea {
@@ -211,6 +217,10 @@
             <span class="info-label">Rol</span>
             <span class="info-badge" id="info-rol-badge">—</span>
           </div>
+          <div class="info-row" id="info-proyectos-row" style="display:none">
+            <span class="info-label">Proyectos</span>
+            <div class="proyectos-chips" id="info-proyectos-chips"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -232,6 +242,7 @@
           <thead>
             <tr>
               <th>Tarea</th>
+              <th>Proyecto</th>
               <th>Estatus</th>
               <th>Fecha inicio</th>
               <th>Fecha fin</th>
@@ -239,7 +250,7 @@
             </tr>
           </thead>
           <tbody id="tareas-tbody">
-            <tr><td colspan="5" class="td-center">Cargando…</td></tr>
+            <tr><td colspan="6" class="td-center">Cargando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -261,6 +272,12 @@
       <div class="form-group">
         <label for="f-tarea">Tarea <span style="color:#C41010">*</span></label>
         <input type="text" id="f-tarea" maxlength="500" placeholder="Descripción de la tarea…" />
+      </div>
+      <div class="form-group">
+        <label for="f-proyecto">Proyecto</label>
+        <select id="f-proyecto">
+          <option value="">— Sin proyecto —</option>
+        </select>
       </div>
       <div class="form-group">
         <label for="f-estatus">Estatus</label>
@@ -317,7 +334,8 @@
   const badge = document.getElementById('info-rol-badge');
   badge.textContent = rolLbl; badge.className = `info-badge ${rolCls}`;
 
-  /* cargar foto desde servidor */
+  /* cargar foto, proyectos del usuario y poblar select */
+  let userProyectos = [];
   (async () => {
     try {
       const res  = await fetch(`${API}/api/usuarios/${session.id}/info`);
@@ -325,6 +343,18 @@
       if (data.success && data.info?.foto) {
         document.getElementById('info-photo').innerHTML =
           `<img src="${API}${data.info.foto}" alt="Foto" />`;
+      }
+      if (data.success && data.proyectos?.length) {
+        userProyectos = data.proyectos;
+        document.getElementById('info-proyectos-chips').innerHTML =
+          userProyectos.map(p => `<span class="proy-chip">${esc(p.nombre)}</span>`).join('');
+        document.getElementById('info-proyectos-row').style.display = '';
+        const sel = document.getElementById('f-proyecto');
+        userProyectos.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id; opt.textContent = p.nombre;
+          sel.appendChild(opt);
+        });
       }
     } catch {}
   })();
@@ -374,7 +404,7 @@
   function renderTareas() {
     const tbody = document.getElementById('tareas-tbody');
     if (!tareas.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="td-center">Sin tareas aún. ¡Agrega la primera!</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="td-center">Sin tareas aún. ¡Agrega la primera!</td></tr>';
       return;
     }
     tbody.innerHTML = tareas.map(t => {
@@ -382,8 +412,12 @@
       const opts = ESTATUS_OPTS.map(s =>
         `<option value="${s}" ${s === t.estatus ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
       ).join('');
+      const proyChip = t.proyecto_nombre
+        ? `<span class="proy-chip">${esc(t.proyecto_nombre)}</span>`
+        : '<span style="color:#9CA3AF;font-size:12px">—</span>';
       return `<tr>
         <td class="td-tarea">${esc(t.tarea)}</td>
+        <td>${proyChip}</td>
         <td>
           <select class="est-select" data-id="${t.id}">
             ${opts}
@@ -417,11 +451,12 @@
 
   /* ── Modal ── */
   function openModal() {
-    document.getElementById('f-tarea').value   = '';
-    document.getElementById('f-estatus').value = 'iniciada';
-    document.getElementById('f-finicio').value = '';
-    document.getElementById('f-ffin').value    = '';
-    document.getElementById('f-obs').value     = '';
+    document.getElementById('f-tarea').value    = '';
+    document.getElementById('f-proyecto').value = '';
+    document.getElementById('f-estatus').value  = 'iniciada';
+    document.getElementById('f-finicio').value  = '';
+    document.getElementById('f-ffin').value     = '';
+    document.getElementById('f-obs').value      = '';
     document.getElementById('modal-alert').className = 'modal-alert';
     document.getElementById('modal-alert').textContent = '';
     document.getElementById('modal-overlay').classList.add('active');
@@ -437,10 +472,11 @@
   });
 
   document.getElementById('modal-save').addEventListener('click', async () => {
-    const tarea       = document.getElementById('f-tarea').value.trim();
-    const estatus     = document.getElementById('f-estatus').value;
-    const fecha_inicio= document.getElementById('f-finicio').value;
-    const fecha_fin   = document.getElementById('f-ffin').value;
+    const tarea         = document.getElementById('f-tarea').value.trim();
+    const proyecto_id   = document.getElementById('f-proyecto').value || null;
+    const estatus       = document.getElementById('f-estatus').value;
+    const fecha_inicio  = document.getElementById('f-finicio').value;
+    const fecha_fin     = document.getElementById('f-ffin').value;
     const observaciones = document.getElementById('f-obs').value.trim();
     const al  = document.getElementById('modal-alert');
     const btn = document.getElementById('modal-save');
@@ -451,7 +487,7 @@
     try {
       const res  = await fetch(`${API}/api/usuarios/${session.id}/tareas`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tarea, estatus, fecha_inicio, fecha_fin, observaciones })
+        body: JSON.stringify({ tarea, proyecto_id, estatus, fecha_inicio, fecha_fin, observaciones })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);

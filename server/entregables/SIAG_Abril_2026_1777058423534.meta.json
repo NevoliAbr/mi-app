@@ -14,38 +14,47 @@
       "etapas": {
         "creacion": {
           "completada": true,
-          "fecha": "2026-04-24T19:20:39.803Z"
+          "fecha": "2026-04-28T01:52:44.143Z",
+          "en_proceso": false
         },
         "revision": {
-          "completada": true,
-          "fecha": "2026-04-24T19:20:40.548Z"
+          "completada": false,
+          "fecha": null,
+          "en_proceso": false
         },
         "vobo": {
-          "completada": true,
-          "rechazado": false,
-          "observaciones": [],
-          "fecha": "2026-04-24T19:20:41.458Z"
+          "completada": false,
+          "rechazado": true,
+          "observaciones": [
+            {
+              "texto": "1",
+              "imagen": null,
+              "fecha": "2026-04-27T19:26:16.930Z",
+              "estado": "rechazada"
+            }
+          ],
+          "fecha": null
         },
         "impresion": {
-          "completada": true,
-          "fecha": "2026-04-24T19:24:03.591Z"
+          "completada": false,
+          "fecha": null
         },
         "firma_interna": {
-          "completada": true,
-          "fecha": "2026-04-24T19:24:04.413Z"
+          "completada": false,
+          "fecha": null
         },
         "firma_externa": {
-          "completada": true,
-          "fecha": "2026-04-24T19:24:05.053Z"
+          "completada": false,
+          "fecha": null
         },
         "carpeta": {
-          "completada": true,
-          "fecha": "2026-04-24T19:24:05.704Z"
+          "completada": false,
+          "fecha": null
         },
         "acuse": {
-          "completada": true,
+          "completada": false,
           "pdf": "/entregables/pdfs/pdf_1777058649551.pdf",
-          "fecha": "2026-04-24T19:24:09.566Z"
+          "fecha": null
         },
         "vobo_final": {
           "completada": false,
@@ -230,6 +239,71 @@
         "vobo_final": {
           "completada": true,
           "fecha": "2026-04-24T21:28:07.466Z"
+        }
+      }
+    },
+    {
+      "num": 5,
+      "nombre": "s{ókdnf{wl",
+      "etapas": {
+        "creacion": {
+          "completada": true,
+          "fecha": "2026-04-27T19:32:32.339Z",
+          "en_proceso": false
+        },
+        "revision": {
+          "completada": true,
+          "fecha": "2026-04-27T19:33:17.255Z",
+          "en_proceso": false
+        },
+        "vobo": {
+          "completada": false,
+          "rechazado": false,
+          "observaciones": [
+            {
+              "texto": "X",
+              "imagen": null,
+              "fecha": "2026-04-27T19:27:41.464Z",
+              "estado": "aceptada"
+            },
+            {
+              "texto": "l",
+              "imagen": null,
+              "fecha": "2026-04-27T19:30:16.931Z",
+              "estado": "aceptada"
+            },
+            {
+              "texto": "f",
+              "imagen": null,
+              "fecha": "2026-04-27T19:32:25.769Z",
+              "estado": "aceptada"
+            }
+          ],
+          "fecha": null
+        },
+        "impresion": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_interna": {
+          "completada": false,
+          "fecha": null
+        },
+        "firma_externa": {
+          "completada": false,
+          "fecha": null
+        },
+        "carpeta": {
+          "completada": false,
+          "fecha": null
+        },
+        "acuse": {
+          "completada": false,
+          "fecha": null
+        },
+        "vobo_final": {
+          "completada": false,
+          "fecha": null
         }
       }
     }
