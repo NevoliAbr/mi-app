@@ -256,6 +256,8 @@
               <th>Nombre</th>
               <th>Nombre Proyecto</th>
               <th>Procedimiento</th>
+              <th>Contrato</th>
+              <th>Vigencia</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -289,6 +291,20 @@
         <div class="form-group">
           <label for="input-procedimiento">Procedimiento</label>
           <textarea id="input-procedimiento" placeholder="Descripción del procedimiento…"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="input-contrato">Contrato</label>
+          <input type="text" id="input-contrato" placeholder="Ej: CONT-2025-001" maxlength="200" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group" style="margin-bottom:0">
+            <label for="input-vigencia-inicio">Vigencia inicio</label>
+            <input type="date" id="input-vigencia-inicio" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label for="input-vigencia-fin">Vigencia fin</label>
+            <input type="date" id="input-vigencia-fin" />
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -348,12 +364,19 @@
         tbody.innerHTML = '<tr><td colspan="6" class="td-center">No se encontraron proyectos.</td></tr>';
         return;
       }
-      tbody.innerHTML = list.map(p => `
+      tbody.innerHTML = list.map(p => {
+        const fmtDate = d => d ? new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : null;
+        const vi = fmtDate(p.vigencia_inicio);
+        const vf = fmtDate(p.vigencia_fin);
+        const vigencia = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
+        return `
         <tr>
           <td class="td-id">${p.id}</td>
           <td class="td-name">${esc(p.nombre)}</td>
           <td class="td-long">${esc(p.NombreProyecto || '—')}</td>
           <td class="td-long">${esc(p.procedimiento || '—')}</td>
+          <td class="td-long">${esc(p.contrato || '—')}</td>
+          <td style="font-size:12px;white-space:nowrap;color:#4B5563">${vigencia}</td>
           <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? '● Activo' : '○ Inactivo'}</span></td>
           <td>
             <div class="td-actions">
@@ -362,7 +385,7 @@
               <button class="btn-action btn-delete" title="Eliminar" data-id="${p.id}" data-action="delete" data-nombre="${esc(p.nombre)}">🗑️</button>
             </div>
           </td>
-        </tr>`).join('');
+        </tr>`;}).join('');
     }
 
     /* ── Cargar ── */
@@ -389,12 +412,21 @@
     });
 
     /* ── Modal helpers ── */
-    function openModal(titulo, nombre = '', id = null, nombreProyecto = '', procedimiento = '') {
+    function toInputDate(val) {
+      if (!val) return '';
+      const d = new Date(val);
+      return isNaN(d) ? '' : d.toISOString().slice(0, 10);
+    }
+
+    function openModal(titulo, nombre = '', id = null, nombreProyecto = '', procedimiento = '', contrato = '', vigencia_inicio = '', vigencia_fin = '') {
       editingId = id;
       document.getElementById('modal-title').textContent          = titulo;
       document.getElementById('input-nombre').value               = nombre;
       document.getElementById('input-nombre-proyecto').value      = nombreProyecto;
       document.getElementById('input-procedimiento').value        = procedimiento;
+      document.getElementById('input-contrato').value             = contrato;
+      document.getElementById('input-vigencia-inicio').value      = toInputDate(vigencia_inicio);
+      document.getElementById('input-vigencia-fin').value         = toInputDate(vigencia_fin);
       document.getElementById('modal-alert').className            = 'modal-alert';
       document.getElementById('modal-alert').textContent          = '';
       document.getElementById('modal-overlay').classList.add('active');
@@ -413,6 +445,9 @@
       const nombre          = document.getElementById('input-nombre').value.trim();
       const NombreProyecto  = document.getElementById('input-nombre-proyecto').value.trim();
       const procedimiento   = document.getElementById('input-procedimiento').value.trim();
+      const contrato        = document.getElementById('input-contrato').value.trim();
+      const vigencia_inicio = document.getElementById('input-vigencia-inicio').value || null;
+      const vigencia_fin    = document.getElementById('input-vigencia-fin').value    || null;
       const alert           = document.getElementById('modal-alert');
       const btn             = document.getElementById('modal-save');
       if (!nombre) { alert.textContent = 'El nombre es requerido.'; alert.className = 'modal-alert error'; return; }
@@ -422,7 +457,7 @@
         const url    = editingId ? `${API}/api/admin/proyectos/${editingId}` : `${API}/api/admin/proyectos`;
         const method = editingId ? 'PATCH' : 'POST';
         const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, NombreProyecto, procedimiento }) });
+          body: JSON.stringify({ nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin }) });
         const data   = await res.json();
         if (!data.success) throw new Error(data.error);
         showToast(editingId ? 'Proyecto actualizado.' : 'Proyecto creado.');
@@ -460,7 +495,7 @@
       const proy   = allProyectos.find(p => p.id === id);
 
       if (action === 'edit') {
-        openModal('Editar Proyecto', proy.nombre, id, proy.NombreProyecto || '', proy.procedimiento || '');
+        openModal('Editar Proyecto', proy.nombre, id, proy.NombreProyecto || '', proy.procedimiento || '', proy.contrato || '', proy.vigencia_inicio, proy.vigencia_fin);
         return;
       }
 

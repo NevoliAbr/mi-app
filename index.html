@@ -872,6 +872,10 @@
     .ep-btn.reject { background:rgba(217,119,6,.18); border-color:#D97706; color:#FCD34D; cursor:default; }
     .ep-btn.warn   { background:rgba(234,88,12,.18); border-color:#EA580C; color:#FCA5A5; cursor:pointer; }
     .ep-btn.warn:hover { background:rgba(234,88,12,.32); }
+    .ep-btn.notice { background:rgba(251,146,60,.2); border-color:#F97316; color:#FED7AA; cursor:pointer; }
+    .ep-btn.notice:hover { background:rgba(251,146,60,.35); }
+    .ep-cell  { display:flex; flex-direction:column; align-items:center; gap:1px; }
+    .ep-date  { font-size:9px; color:rgba(255,255,255,.22); font-weight:700; line-height:1; letter-spacing:.2px; pointer-events:none; }
     .vobo-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
     .vobo-obs-btn {
       font-size:9px; font-weight:800; padding:2px 7px; border-radius:10px; border:none; cursor:pointer;
@@ -1240,7 +1244,7 @@
               <tr>
                 <th style="width:36px">#</th>
                 <th class="col-nombre">Nombre del Entregable</th>
-                <th>Creación<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">10%</span></th>
+                <th>Elaboración<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">10%</span></th>
                 <th>Revisión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">20%</span></th>
                 <th>VOBO<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">30%</span></th>
                 <th>Impresión<br><span style="color:#00AEEF;font-size:9px;text-transform:none;letter-spacing:0">40%</span></th>
@@ -2454,6 +2458,13 @@
     let activeId           = null;
     let voboCurrent        = null;
 
+    function etapaDate(e) {
+      const d = e?.fecha_cambio || e?.fecha;
+      if (!d) return '';
+      const dt = new Date(d);
+      return `<span class="ep-date">${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}</span>`;
+    }
+
     function normEtapas(etapas) {
       if (!etapas.creacion)                               etapas.creacion  = { completada: false, fecha: null, en_proceso: false };
       else if (etapas.creacion.en_proceso  === undefined) etapas.creacion.en_proceso  = false;
@@ -2511,12 +2522,13 @@
               const nObs = item.etapas.vobo.observaciones.length;
               return `<td><div class="vobo-cell">
                 <button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision">${icon}</button>
+                ${etapaDate(e)}
                 ${nObs > 0 ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs (${nObs})</button>` : ''}
               </div></td>`;
             }
             const icon = e.completada ? '✓' : (et.vobo ? '—' : '·');
             const cls  = e.completada ? 'done' : 'lock';
-            return `<td><button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}">${icon}</button></td>`;
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}">${icon}</button>${etapaDate(e)}</div></td>`;
           }
 
           if (et.vobo) {
@@ -2524,7 +2536,7 @@
             if (e.completada) { cls = 'done';  icon = '✓'; }
             else if (prev)    { cls = 'avail'; icon = '✓'; }
             else              { cls = 'lock';  icon = '—'; }
-            return `<td><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="vobo">${icon}</button></td>`;
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="vobo">${icon}</button>${etapaDate(e)}</div></td>`;
           }
           // Revisión: mostrar botón Obs junto al check; warn si vobo tiene observaciones pendientes
           if (et.key === 'revision') {
@@ -2541,23 +2553,26 @@
             const showObs = nObs > 0;
             return `<td><div class="vobo-cell">
               <button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision">${icon}</button>
+              ${etapaDate(e)}
               ${showObs ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs${nObs ? ' ('+nObs+')' : ''}</button>` : ''}
             </div></td>`;
           }
           if (et.key === 'creacion') {
             let cls, icon;
-            if (e.completada)        { cls = 'done';   icon = '✓'; }
-            else if (e.en_proceso)   { cls = 'inprog'; icon = '⏳'; }
-            else if (prev)           { cls = 'avail';  icon = '·'; }
-            else                     { cls = 'lock';   icon = '·'; }
-            return `<td><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="creacion">${icon}</button></td>`;
+            const hasObsPend = (item.etapas.vobo?.observaciones?.length > 0) && !item.etapas.vobo?.completada;
+            if (e.completada)              { cls = 'done';   icon = '✓'; }
+            else if (e.en_proceso)         { cls = 'inprog'; icon = '⏳'; }
+            else if (hasObsPend && prev)   { cls = 'notice'; icon = '!'; }
+            else if (prev)                 { cls = 'avail';  icon = '·'; }
+            else                           { cls = 'lock';   icon = '·'; }
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="creacion">${icon}</button>${etapaDate(e)}</div></td>`;
           }
           const done  = e.completada;
           const cls   = done ? 'done' : prev ? 'avail' : 'lock';
           const icon  = done ? '✓' : et.pdf ? '↑' : '·';
           const attrs = et.pdf ? `data-pdf="true"` : '';
           const pdfPrev = (et.pdf && done && e.pdf) ? `data-pdf-url="${escH(e.pdf)}"` : '';
-          return `<td><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${attrs} ${pdfPrev}>${icon}</button></td>`;
+          return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${attrs} ${pdfPrev}>${icon}</button>${etapaDate(e)}</div></td>`;
         }).join('');
         return `<tr data-item-id="${escH(acta.id)}" data-item-num="${item.num}">
           <td class="col-num">${item.num}</td>
@@ -2676,7 +2691,7 @@
     document.getElementById('evt-informe').addEventListener('click', () => setEntregVista('informe'));
 
     /* ── Informe ejecutivo ── */
-    const ETAPA_LABELS = ['Creación','Revisión','VOBO','Impresión','Firma Interna','Firma Externa','Carpeta y Dig.','Acuse','VOBO Final'];
+    const ETAPA_LABELS = ['Elaboración','Revisión','VOBO','Impresión','Firma Interna','Firma Externa','Carpeta y Dig.','Acuse','VOBO Final'];
     function renderInforme() {
       const wrap = document.getElementById('informe-wrap');
       if (!entregablesData.length) {
@@ -2918,6 +2933,13 @@ if (btn.dataset.pdf === 'true') {
         }
 
         if (er.en_proceso) {
+          // Si hay observaciones pendientes → abrir directo el modal de obs
+          const obsPendientes = obs.filter(o => o.estado === 'pendiente');
+          if (obsPendientes.length > 0) {
+            openVoboModal(id, num, item.nombre);
+            return;
+          }
+
           // Segundo click → SweetAlert
           const { value } = await Swal.fire({
             title: 'Revisión en curso',
@@ -2945,7 +2967,20 @@ if (btn.dataset.pdf === 'true') {
             const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
               { method:'PATCH', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({ etapa:'revision', completada:true, en_proceso:false }) });
-            if ((await r.json()).success) { er.completada=true; er.fecha=new Date().toISOString(); er.en_proceso=false; renderEntregables(); }
+            if ((await r.json()).success) {
+              er.completada=true; er.fecha=new Date().toISOString(); er.en_proceso=false;
+              // Auto-completar VOBO
+              const rv = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+                { method:'PATCH', headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({ etapa:'vobo', completada:true }) });
+              if ((await rv.json()).success) {
+                item.etapas.vobo.completada = true;
+                item.etapas.vobo.fecha      = new Date().toISOString();
+                item.etapas.vobo.rechazado  = false;
+                if (!item.etapas.vobo.fecha_cambio) item.etapas.vobo.fecha_cambio = new Date().toISOString();
+              }
+              renderEntregables();
+            }
           } else if (value === false) {
             // Agregar observación → abrir modal Obs
             openVoboModal(id, num, item.nombre);
@@ -2992,7 +3027,18 @@ if (btn.dataset.pdf === 'true') {
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
             { method:'PATCH', headers:{'Content-Type':'application/json'},
               body: JSON.stringify({ etapa:'creacion', completada:true, en_proceso:false }) });
-          if ((await r.json()).success) { ec.completada=true; ec.fecha=new Date().toISOString(); ec.en_proceso=false; renderEntregables(); }
+          if ((await r.json()).success) {
+            ec.completada=true; ec.fecha=new Date().toISOString(); ec.en_proceso=false;
+            renderEntregables();
+            Swal.fire({
+              toast: true, position: 'top-end', showConfirmButton: false,
+              timer: 3500, timerProgressBar: true,
+              icon: 'info', iconColor: '#F97316',
+              title: 'Elaboración completada',
+              text: 'El documento continúa a revisión.',
+              background: '#1e293b', color: '#FED7AA',
+            });
+          }
           return;
         }
         // Primer click → en proceso

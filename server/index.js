@@ -128,7 +128,7 @@ app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, nombre, NombreProyecto, procedimiento FROM proyectos WHERE activo = 1 ORDER BY nombre'
+      'SELECT id, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin FROM proyectos WHERE activo = 1 ORDER BY nombre'
     );
     res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -138,7 +138,7 @@ app.get('/api/proyectos', async (_req, res) => {
 app.get('/api/admin/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const [rows] = await pool.execute('SELECT id, nombre, procedimiento, NombreProyecto, activo FROM proyectos ORDER BY nombre');
+    const [rows] = await pool.execute('SELECT id, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo FROM proyectos ORDER BY nombre');
     res.json({ success: true, proyectos: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -147,12 +147,15 @@ app.post('/api/admin/proyectos', async (req, res) => {
   const nombre          = (req.body.nombre          || '').trim();
   const procedimiento   = (req.body.procedimiento   || '').trim() || null;
   const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
+  const contrato        = (req.body.contrato        || '').trim() || null;
+  const vigencia_inicio = req.body.vigencia_inicio  || null;
+  const vigencia_fin    = req.body.vigencia_fin     || null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
     const [result] = await pool.execute(
-      'INSERT INTO proyectos (nombre, procedimiento, NombreProyecto, activo) VALUES (?, ?, ?, 1)',
-      [nombre, procedimiento, NombreProyecto]
+      'INSERT INTO proyectos (nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo) VALUES (?, ?, ?, ?, ?, ?, 1)',
+      [nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -162,12 +165,15 @@ app.patch('/api/admin/proyectos/:id', async (req, res) => {
   const nombre          = (req.body.nombre          || '').trim();
   const procedimiento   = (req.body.procedimiento   || '').trim() || null;
   const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
+  const contrato        = (req.body.contrato        || '').trim() || null;
+  const vigencia_inicio = req.body.vigencia_inicio  || null;
+  const vigencia_fin    = req.body.vigencia_fin     || null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
     await pool.execute(
-      'UPDATE proyectos SET nombre = ?, procedimiento = ?, NombreProyecto = ? WHERE id = ?',
-      [nombre, procedimiento, NombreProyecto, parseInt(req.params.id)]
+      'UPDATE proyectos SET nombre = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ? WHERE id = ?',
+      [nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, parseInt(req.params.id)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -744,6 +750,25 @@ app.get('/api/entregables', (_req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+/* ── Entregables: guardar campos extra ─────────── */
+app.patch('/api/entregables/:id/extra', (req, res) => {
+  try {
+    const id       = decodeURIComponent(req.params.id);
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const { dictamen, vigencia, fianza_cumplimiento, fianza_anticipo, fianza_vicios, meses_nota } = req.body;
+    if (dictamen            !== undefined) meta.dictamen            = String(dictamen).slice(0,10);
+    if (vigencia            !== undefined) meta.vigencia            = vigencia || null;
+    if (fianza_cumplimiento !== undefined) meta.fianza_cumplimiento = !!fianza_cumplimiento;
+    if (fianza_anticipo     !== undefined) meta.fianza_anticipo     = !!fianza_anticipo;
+    if (fianza_vicios       !== undefined) meta.fianza_vicios       = !!fianza_vicios;
+    if (meses_nota          !== undefined) meta.meses_nota          = { ...(meta.meses_nota || {}), ...meses_nota };
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Entregables: eliminar ──────────────────────── */
 app.delete('/api/entregables/:id', (req, res) => {
   try {
@@ -776,6 +801,8 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     if (etapa === 'creacion' || etapa === 'revision')
       item.etapas[etapa].en_proceso = (en_proceso === true && !completada);
     if (etapa === 'vobo' && completada) item.etapas.vobo.rechazado = false;
+    if (!item.etapas[etapa].fecha_cambio && (completada || en_proceso === true))
+      item.etapas[etapa].fecha_cambio = new Date().toISOString();
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -885,6 +912,7 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
     item.etapas[etapa].pdf        = ruta;
     item.etapas[etapa].completada = true;
     item.etapas[etapa].fecha      = new Date().toISOString();
+    if (!item.etapas[etapa].fecha_cambio) item.etapas[etapa].fecha_cambio = new Date().toISOString();
     if (etapa === 'revision') item.etapas.vobo.rechazado = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true, pdf: ruta });

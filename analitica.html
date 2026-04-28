@@ -11,6 +11,7 @@
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
 
+    /* ── NAV ── */
     nav {
       background:#005D97; padding:0 40px; height:64px;
       display:flex; align-items:center; justify-content:space-between;
@@ -19,10 +20,7 @@
     }
     .nav-left  { display:flex; align-items:center; gap:16px; }
     .nav-right { display:flex; align-items:center; gap:14px; }
-    .logo-img  {
-      height:40px; width:40px; object-fit:contain;
-      border-radius:12px; background:#fff; padding:4px; display:block;
-    }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
     .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
     .btn-nav {
       background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
@@ -33,29 +31,134 @@
     }
     .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
 
+    /* ── HEADER ── */
     .page-header {
-      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
-      padding:36px 40px 30px; color:white;
+      background:linear-gradient(135deg,#003E66 0%,#003E66 45%,#005D97 100%);
+      padding:28px 40px 0; color:white;
     }
-    .page-header h1 { font-size:28px; font-weight:900; letter-spacing:-.5px; }
-    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:4px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
     .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
 
-    main {
-      padding:48px 40px;
-      display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 130px);
+    /* ── TABS ── */
+    .tabs-bar {
+      background:linear-gradient(135deg,#003E66 0%,#003E66 45%,#005D97 100%);
+      padding:16px 40px 0; display:flex; gap:4px;
     }
-    .empty-state {
-      text-align:center; color:#9CA3AF;
+    .tab-btn {
+      padding:10px 24px; border-radius:10px 10px 0 0;
+      border:none; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; letter-spacing:.3px; transition:background .15s, color .15s;
+      background:rgba(255,255,255,.1); color:rgba(255,255,255,.6);
     }
-    .empty-icon  { font-size:64px; display:block; margin-bottom:20px; }
-    .empty-title { font-size:22px; font-weight:800; color:#374151; margin-bottom:8px; }
-    .empty-sub   { font-size:14px; font-weight:600; color:#9CA3AF; }
+    .tab-btn:hover  { background:rgba(255,255,255,.18); color:rgba(255,255,255,.85); }
+    .tab-btn.active { background:#F3F4F6; color:#005D97; }
 
-    @media(max-width:600px) {
+    /* ── MAIN ── */
+    main { padding:32px 40px; }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:24px;
+    }
+    .filter-select {
+      padding:9px 14px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      background:#fff; outline:none; cursor:pointer; transition:border-color .15s;
+      font-weight:600;
+    }
+    .filter-select:focus { border-color:#005D97; }
+    .toolbar-label { font-size:12px; font-weight:800; color:#6B7280; letter-spacing:.3px; }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    .kpi-card {
+      background:#fff; border-radius:14px; padding:20px 22px;
+      box-shadow:0 1px 6px rgba(0,0,0,.08);
+      border-left:4px solid transparent;
+    }
+    .kpi-card.blue   { border-color:#005D97; }
+    .kpi-card.green  { border-color:#059669; }
+    .kpi-card.amber  { border-color:#D97706; }
+    .kpi-card.gray   { border-color:#9CA3AF; }
+    .kpi-card.purple { border-color:#7C3AED; }
+    .kpi-label { font-size:10px; font-weight:800; color:#9CA3AF; letter-spacing:.7px; text-transform:uppercase; margin-bottom:6px; }
+    .kpi-value { font-size:28px; font-weight:900; color:#1F2937; line-height:1; }
+    .kpi-sub   { font-size:11px; font-weight:700; color:#6B7280; margin-top:4px; }
+
+    /* ── INPUTS INLINE ── */
+    .inline-text {
+      width:84px; padding:5px 7px; border:1.5px solid #E5E7EB; border-radius:6px;
+      font-family:'Montserrat',sans-serif; font-size:12px; font-weight:700; color:#1F2937;
+      text-align:center; outline:none; background:#F9FAFB; transition:border-color .15s;
+    }
+    .inline-text:focus { border-color:#005D97; background:#fff; }
+    .inline-date {
+      padding:5px 7px; border:1.5px solid #E5E7EB; border-radius:6px;
+      font-family:'Montserrat',sans-serif; font-size:12px; color:#374151;
+      outline:none; background:#F9FAFB; transition:border-color .15s; cursor:pointer;
+    }
+    .inline-date:focus { border-color:#005D97; background:#fff; }
+    .inline-check { width:17px; height:17px; cursor:pointer; accent-color:#005D97; }
+    .check-cell   { text-align:center; }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+      background:#fff; border-radius:14px;
+      box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden;
+    }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    th { padding:12px 16px; text-align:left; font-size:11px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid #F3F4F6; transition:background .1s; }
+    tbody tr:hover { background:#F9FAFB; }
+    tbody tr:last-child { border-bottom:none; }
+    td { padding:11px 16px; font-size:13px; color:#374151; vertical-align:middle; }
+    .td-center { text-align:center; color:#9CA3AF; padding:32px; font-size:13px; font-weight:600; }
+    .td-bold   { font-weight:800; color:#1F2937; }
+    .td-sub    { font-size:11px; color:#9CA3AF; font-weight:600; }
+
+    /* ── PROGRESS BAR ── */
+    .prog-wrap { display:flex; align-items:center; gap:10px; }
+    .prog-bar  { flex:1; height:6px; background:#E5E7EB; border-radius:4px; overflow:hidden; min-width:80px; }
+    .prog-fill { height:100%; border-radius:4px; transition:width .3s; }
+    .prog-fill.p100  { background:#059669; }
+    .prog-fill.p75   { background:#2563EB; }
+    .prog-fill.p50   { background:#D97706; }
+    .prog-fill.p0    { background:#E5E7EB; }
+    .prog-pct  { font-size:12px; font-weight:800; color:#374151; min-width:36px; text-align:right; }
+
+    /* ── ESTATUS BADGE ── */
+    .est-badge {
+      display:inline-block; padding:3px 10px; border-radius:20px;
+      font-size:11px; font-weight:800; letter-spacing:.2px;
+    }
+    .est-iniciada      { background:#E0E7FF; color:#3730A3; }
+    .est-en-desarrollo { background:#FEF3C7; color:#92400E; }
+    .est-en-pruebas    { background:#DBEAFE; color:#1E40AF; }
+    .est-terminada     { background:#D1FAE5; color:#065F46; }
+    .est-liberado      { background:#F3F4F6; color:#374151; }
+
+    /* ── VISTA PANELS ── */
+    .vista { display:none; }
+    .vista.active { display:block; }
+
+    /* ── PROYECTO SECTION (entregables view) ── */
+    .section-title {
+      font-size:12px; font-weight:800; color:#6B7280;
+      letter-spacing:.6px; text-transform:uppercase;
+      margin-bottom:12px; padding-left:4px;
+    }
+
+    @media(max-width:900px) {
       nav { padding:0 16px; }
-      .page-header { padding:28px 20px; }
-      main { padding:32px 16px; }
+      .page-header, .tabs-bar { padding-left:16px; padding-right:16px; }
+      main { padding:24px 16px; }
+      .kpi-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    @media(max-width:500px) {
+      .kpi-grid { grid-template-columns:1fr 1fr; }
     }
   </style>
 </head>
@@ -75,17 +178,452 @@
 
 <div class="page-header">
   <h1>📊 Dashboard de Entregables</h1>
-  <p>Visualización y análisis de entregables del sistema.</p>
+  <p>Visualización y análisis de entregables y tareas del sistema.</p>
+</div>
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tab-entregables" onclick="setVista('entregables')">📄 Entregables</button>
+  <button class="tab-btn"        id="tab-tareas"       onclick="setVista('tareas')">📋 Tareas</button>
 </div>
 <div class="header-stripe"></div>
 
 <main>
-  <div class="empty-state">
-    <span class="empty-icon">📊</span>
-    <div class="empty-title">Próximamente</div>
-    <div class="empty-sub">El módulo de analítica está en construcción.</div>
+
+  <!-- ══ VISTA: ENTREGABLES ══ -->
+  <div class="vista active" id="vista-entregables">
+
+    <div class="toolbar">
+      <span class="toolbar-label">Año:</span>
+      <select class="filter-select" id="e-año"></select>
+      <span class="toolbar-label">Proyecto:</span>
+      <select class="filter-select" id="e-proyecto">
+        <option value="">Todos</option>
+      </select>
+    </div>
+
+    <div class="kpi-grid" id="e-kpis">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Entregables</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">en todos los proyectos</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Completados 100%</div>
+        <div class="kpi-value" id="kpi-done">—</div>
+        <div class="kpi-sub" id="kpi-done-pct">—</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">En Progreso</div>
+        <div class="kpi-value" id="kpi-prog">—</div>
+        <div class="kpi-sub">con avance parcial</div>
+      </div>
+      <div class="kpi-card gray">
+        <div class="kpi-label">Sin Iniciar</div>
+        <div class="kpi-value" id="kpi-noinit">—</div>
+        <div class="kpi-sub">avance 0%</div>
+      </div>
+    </div>
+
+    <div class="section-title">Detalle por Proyecto</div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Procedimiento</th>
+              <th>Contrato</th>
+              <th>Vigencia</th>
+              <th style="text-align:center">Mar</th>
+              <th style="text-align:center">Abr</th>
+              <th style="text-align:center">May</th>
+              <th style="text-align:center">Jun</th>
+              <th style="text-align:center">Jul</th>
+              <th style="text-align:center">Ago</th>
+              <th style="text-align:center">Sep</th>
+              <th style="text-align:center">Oct</th>
+              <th style="text-align:center">Nov</th>
+              <th style="text-align:center">Dic</th>
+              <th>Avance promedio</th>
+              <th style="text-align:center">Fianza<br>Cumplimiento</th>
+              <th style="text-align:center">Fianza<br>Anticipo</th>
+              <th style="text-align:center">Fianza<br>Vicios Ocultos</th>
+            </tr>
+          </thead>
+          <tbody id="e-tbody">
+            <tr><td colspan="18" class="td-center">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
+
+  <!-- ══ VISTA: TAREAS ══ -->
+  <div class="vista" id="vista-tareas">
+
+    <div class="toolbar">
+      <span class="toolbar-label">Estatus:</span>
+      <select class="filter-select" id="t-estatus">
+        <option value="">Todos</option>
+        <option value="iniciada">Iniciada</option>
+        <option value="en desarrollo">En desarrollo</option>
+        <option value="en pruebas">En pruebas</option>
+        <option value="terminada">Terminada</option>
+        <option value="liberado">Liberado</option>
+      </select>
+      <span class="toolbar-label">Usuario:</span>
+      <select class="filter-select" id="t-usuario">
+        <option value="">Todos</option>
+      </select>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Tareas</div>
+        <div class="kpi-value" id="kpi-t-total">—</div>
+        <div class="kpi-sub">registradas</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">En Progreso</div>
+        <div class="kpi-value" id="kpi-t-prog">—</div>
+        <div class="kpi-sub">iniciadas + desarrollo + pruebas</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Terminadas</div>
+        <div class="kpi-value" id="kpi-t-done">—</div>
+        <div class="kpi-sub">terminadas + liberadas</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">Liberadas</div>
+        <div class="kpi-value" id="kpi-t-lib">—</div>
+        <div class="kpi-sub">en producción</div>
+      </div>
+    </div>
+
+    <div class="section-title">Detalle de tareas</div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Tarea</th>
+              <th>Proyecto</th>
+              <th>Estatus</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+            </tr>
+          </thead>
+          <tbody id="t-tbody">
+            <tr><td colspan="6" class="td-center">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </main>
 
+<script>
+  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+  const ETAPAS_KEYS = ['creacion','revision','vobo','impresion','firma_interna','firma_externa','carpeta','acuse','vobo_final'];
+  const ETAPAS_PCTS = [10,20,30,40,50,80,90,95,100];
+
+  function calcProgress(etapas) {
+    let last = 0;
+    for (let i = 0; i < ETAPAS_KEYS.length; i++) {
+      if (etapas[ETAPAS_KEYS[i]]?.completada) last = ETAPAS_PCTS[i];
+      else break;
+    }
+    return last;
+  }
+
+  function hasStarted(etapas) {
+    return ETAPAS_KEYS.some(k =>
+      etapas[k]?.completada ||
+      etapas[k]?.en_proceso === true ||
+      etapas[k]?.fecha_cambio != null
+    );
+  }
+
+  function progClass(p) {
+    if (p === 100) return 'p100';
+    if (p >= 50)  return 'p75';
+    if (p > 0)    return 'p50';
+    return 'p0';
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  /* ── Tabs ── */
+  let vistaActual = 'entregables';
+  function setVista(v) {
+    vistaActual = v;
+    document.querySelectorAll('.vista').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`vista-${v}`).classList.add('active');
+    document.getElementById(`tab-${v}`).classList.add('active');
+  }
+
+  /* ══ ENTREGABLES ══ */
+  let allEntregables = [];
+  let proyMap = {};   // proyecto_id → { nombre, procedimiento }
+
+  async function loadEntregables() {
+    try {
+      const [rE, rP] = await Promise.all([
+        fetch(`${API}/api/entregables`).then(r => r.json()),
+        fetch(`${API}/api/proyectos`).then(r => r.json()).catch(() => ({ proyectos: [] })),
+      ]);
+      allEntregables = rE.entregables || [];
+      // Poblar proyMap del módulo (usado en renderEntregables)
+      (rP.proyectos || []).forEach(p => { proyMap[p.id] = p; });
+
+      // Poblar selector de años
+      const años = [...new Set(allEntregables.map(e => e.año))].sort((a,b) => b-a);
+      const selAño = document.getElementById('e-año');
+      años.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        selAño.appendChild(opt);
+      });
+
+      // Poblar selector de proyectos (variable local distinta para no pisar proyMap)
+      const selProy = document.getElementById('e-proyecto');
+      const addedProy = new Set();
+      allEntregables.forEach(e => {
+        if (e.proyecto_id && !addedProy.has(String(e.proyecto_id))) {
+          addedProy.add(String(e.proyecto_id));
+          const opt = document.createElement('option');
+          opt.value = e.proyecto_id;
+          opt.textContent = e.proyectoNombre || e.proyecto_id;
+          selProy.appendChild(opt);
+        }
+      });
+
+      renderEntregables();
+    } catch (err) {
+      document.getElementById('e-tbody').innerHTML =
+        `<tr><td colspan="11" class="td-center">Error al cargar: ${esc(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderEntregables() {
+    const año   = document.getElementById('e-año').value;
+    const proy  = document.getElementById('e-proyecto').value;
+
+    let data = allEntregables;
+    if (año)  data = data.filter(e => String(e.año) === año);
+    if (proy) data = data.filter(e => String(e.proyecto_id) === proy);
+
+    // KPIs
+    let total = 0, done = 0, prog = 0, noinit = 0;
+    data.forEach(e => {
+      (e.items || []).forEach(it => {
+        const p = calcProgress(it.etapas);
+        total++;
+        if (p === 100) done++;
+        else if (p > 0 || hasStarted(it.etapas)) prog++;
+        else noinit++;
+      });
+    });
+    document.getElementById('kpi-total').textContent   = total;
+    document.getElementById('kpi-done').textContent    = done;
+    document.getElementById('kpi-done-pct').textContent = total ? Math.round(done/total*100)+'% del total' : '—';
+    document.getElementById('kpi-prog').textContent    = prog;
+    document.getElementById('kpi-noinit').textContent  = noinit;
+
+    // Tabla
+    const tbody = document.getElementById('e-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="18" class="td-center">Sin datos para los filtros seleccionados.</td></tr>';
+      return;
+    }
+    const MESES_COLS = [
+      {num:3,ab:'Mar'},{num:4,ab:'Abr'},{num:5,ab:'May'},{num:6,ab:'Jun'},
+      {num:7,ab:'Jul'},{num:8,ab:'Ago'},{num:9,ab:'Sep'},{num:10,ab:'Oct'},
+      {num:11,ab:'Nov'},{num:12,ab:'Dic'}
+    ];
+    tbody.innerHTML = data.map(e => {
+      const items     = e.items || [];
+      const nItems    = items.length;
+      const avgProg   = nItems ? Math.round(items.reduce((s,it) => s + calcProgress(it.etapas), 0) / nItems) : 0;
+      const cls       = progClass(avgProg);
+      const proy      = proyMap[e.proyecto_id] || {};
+      const proc      = esc(proy.procedimiento || '—');
+      const eid       = esc(e.id);
+      const contrato  = esc(proy.contrato || '—');
+      const fmtD      = d => d ? new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : null;
+      const vi        = fmtD(proy.vigencia_inicio);
+      const vf        = fmtD(proy.vigencia_fin);
+      const vigencia  = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
+      const fc        = e.fianza_cumplimiento ? 'checked' : '';
+      const fa        = e.fianza_anticipo     ? 'checked' : '';
+      const fv        = e.fianza_vicios       ? 'checked' : '';
+      const mesCols   = MESES_COLS.map(m => {
+        if (Number(e.mes) === m.num) {
+          const cell = avgProg === 100
+            ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#D1FAE5;border-radius:50%;font-size:14px">✅</span>`
+            : `<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${avgProg>0?'#FEF3C7':'#F3F4F6'};color:${avgProg>0?'#92400E':'#9CA3AF'}">${avgProg}%</span>`;
+          return `<td style="text-align:center;white-space:nowrap">${cell}</td>`;
+        }
+        const nota = (e.meses_nota || {})[m.num] || '';
+        return `<td style="text-align:center">
+          <input type="text" maxlength="1" placeholder="·"
+            style="width:24px;text-align:center;border:none;background:transparent;
+                   font-size:13px;font-weight:700;color:#9CA3AF;outline:none;cursor:text"
+            value="${esc(nota)}"
+            data-id="${eid}" data-mes="${m.num}"
+            oninput="this.value=this.value.replace(/[^\/]/g,'')"
+            onblur="saveMonthNota(this)" />
+        </td>`;
+      }).join('');
+      return `<tr>
+        <td>
+          <div class="td-bold">${esc(e.proyectoNombre || e.id)}</div>
+        </td>
+        <td style="font-size:12px;color:#374151;max-width:140px">${proc}</td>
+        <td style="font-size:12px;color:#374151">${contrato}</td>
+        <td style="font-size:12px;white-space:nowrap;color:#374151">${vigencia}</td>
+        ${mesCols}
+        <td>
+          <div class="prog-wrap">
+            <div class="prog-bar"><div class="prog-fill ${cls}" style="width:${avgProg}%"></div></div>
+            <span class="prog-pct">${avgProg}%</span>
+          </div>
+        </td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fc} data-id="${eid}" data-field="fianza_cumplimiento" onchange="saveExtra(this)"></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fa} data-id="${eid}" data-field="fianza_anticipo"     onchange="saveExtra(this)"></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fv} data-id="${eid}" data-field="fianza_vicios"       onchange="saveExtra(this)"></td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('e-año').addEventListener('change', renderEntregables);
+  document.getElementById('e-proyecto').addEventListener('change', renderEntregables);
+
+  async function saveExtra(input) {
+    const id    = input.dataset.id;
+    const field = input.dataset.field;
+    const value = input.type === 'checkbox' ? input.checked : input.value;
+    try {
+      const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/extra`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      });
+      if (!(await r.json()).success) throw new Error();
+      // Actualizar cache local
+      const e = allEntregables.find(e => e.id === id);
+      if (e) e[field] = value;
+      input.style.borderColor = '#059669';
+      setTimeout(() => input.style.borderColor = '', 1200);
+    } catch {
+      input.style.borderColor = '#EF4444';
+    }
+  }
+
+  async function saveMonthNota(input) {
+    const id  = input.dataset.id;
+    const mes = input.dataset.mes;
+    const val = input.value.trim();
+    try {
+      const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/extra`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meses_nota: { [mes]: val } })
+      });
+      if (!(await r.json()).success) throw new Error();
+      const e = allEntregables.find(e => e.id === id);
+      if (e) { e.meses_nota = e.meses_nota || {}; e.meses_nota[mes] = val; }
+    } catch {
+      input.style.color = '#EF4444';
+      setTimeout(() => input.style.color = '#9CA3AF', 1200);
+    }
+  }
+
+  /* ══ TAREAS ══ */
+  let allTareas = [];
+
+  async function loadTareas() {
+    try {
+      const r = await fetch(`${API}/api/admin/tareas`);
+      const d = await r.json();
+      allTareas = d.tareas || [];
+
+      // Poblar selector de usuarios
+      const usrMap = {};
+      allTareas.forEach(t => { usrMap[t.usuario_id] = t.usuario_nombre; });
+      const sel = document.getElementById('t-usuario');
+      Object.entries(usrMap).forEach(([id, nombre]) => {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = nombre;
+        sel.appendChild(opt);
+      });
+
+      renderTareas();
+    } catch (err) {
+      document.getElementById('t-tbody').innerHTML =
+        `<tr><td colspan="6" class="td-center">Error al cargar: ${esc(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderTareas() {
+    const filtEst = document.getElementById('t-estatus').value;
+    const filtUsr = document.getElementById('t-usuario').value;
+
+    let data = allTareas;
+    if (filtEst) data = data.filter(t => t.estatus === filtEst);
+    if (filtUsr) data = data.filter(t => String(t.usuario_id) === filtUsr);
+
+    // KPIs (sobre total sin filtro de estatus)
+    const t = allTareas;
+    document.getElementById('kpi-t-total').textContent = t.length;
+    document.getElementById('kpi-t-prog').textContent  = t.filter(x => ['iniciada','en desarrollo','en pruebas'].includes(x.estatus)).length;
+    document.getElementById('kpi-t-done').textContent  = t.filter(x => ['terminada','liberado'].includes(x.estatus)).length;
+    document.getElementById('kpi-t-lib').textContent   = t.filter(x => x.estatus === 'liberado').length;
+
+    const ESTATUS_CLS = {
+      'iniciada':      'est-iniciada',
+      'en desarrollo': 'est-en-desarrollo',
+      'en pruebas':    'est-en-pruebas',
+      'terminada':     'est-terminada',
+      'liberado':      'est-liberado',
+    };
+
+    const tbody = document.getElementById('t-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="td-center">Sin tareas que mostrar.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(t => {
+      const cls = ESTATUS_CLS[t.estatus] || '';
+      const proy = t.proyecto_nombre
+        ? `<span style="background:#EFF6FF;color:#1D4ED8;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">${esc(t.proyecto_nombre)}</span>`
+        : '<span style="color:#9CA3AF;font-size:12px">—</span>';
+      return `<tr>
+        <td class="td-bold">${esc(t.usuario_nombre)}</td>
+        <td>${esc(t.tarea)}</td>
+        <td>${proy}</td>
+        <td><span class="est-badge ${cls}">${t.estatus}</span></td>
+        <td class="td-sub">${fmtDate(t.fecha_inicio)}</td>
+        <td class="td-sub">${fmtDate(t.fecha_fin)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('t-estatus').addEventListener('change', renderTareas);
+  document.getElementById('t-usuario').addEventListener('change', renderTareas);
+
+  /* ── Init ── */
+  loadEntregables();
+  loadTareas();
+</script>
 </body>
 </html>
