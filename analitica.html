@@ -452,44 +452,56 @@
       {num:7,ab:'Jul'},{num:8,ab:'Ago'},{num:9,ab:'Sep'},{num:10,ab:'Oct'},
       {num:11,ab:'Nov'},{num:12,ab:'Dic'}
     ];
-    tbody.innerHTML = data.map(e => {
-      const items     = e.items || [];
-      const nItems    = items.length;
-      const avgProg   = nItems ? Math.round(items.reduce((s,it) => s + calcProgress(it.etapas), 0) / nItems) : 0;
-      const cls       = progClass(avgProg);
-      const proy      = proyMap[e.proyecto_id] || {};
-      const proc      = esc(proy.procedimiento || '—');
-      const eid       = esc(e.id);
-      const contrato  = esc(proy.contrato || '—');
-      const fmtD      = d => d ? new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : null;
-      const vi        = fmtD(proy.vigencia_inicio);
-      const vf        = fmtD(proy.vigencia_fin);
-      const vigencia  = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
-      const fc        = e.fianza_cumplimiento ? 'checked' : '';
-      const fa        = e.fianza_anticipo     ? 'checked' : '';
-      const fv        = e.fianza_vicios       ? 'checked' : '';
-      const mesCols   = MESES_COLS.map(m => {
-        if (Number(e.mes) === m.num) {
-          const cell = avgProg === 100
+    const fmtD = d => d ? new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : null;
+
+    // Agrupar por proyecto
+    const gruposMap = new Map();
+    data.forEach(e => {
+      const key = String(e.proyecto_id || e.id);
+      if (!gruposMap.has(key)) gruposMap.set(key, []);
+      gruposMap.get(key).push(e);
+    });
+
+    tbody.innerHTML = [...gruposMap.values()].map(entList => {
+      const first    = entList[0];
+      const proy     = proyMap[first.proyecto_id] || {};
+      const proc     = esc(proy.procedimiento || '—');
+      const contrato = esc(proy.contrato || '—');
+      const vi       = fmtD(proy.vigencia_inicio);
+      const vf       = fmtD(proy.vigencia_fin);
+      const vigencia = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
+      const allItems = entList.flatMap(e => e.items || []);
+      const avgProg  = allItems.length ? Math.round(allItems.reduce((s,it) => s + calcProgress(it.etapas), 0) / allItems.length) : 0;
+      const cls      = progClass(avgProg);
+      const fc       = entList.some(e => e.fianza_cumplimiento) ? 'checked' : '';
+      const fa       = entList.some(e => e.fianza_anticipo)     ? 'checked' : '';
+      const fv       = entList.some(e => e.fianza_vicios)       ? 'checked' : '';
+      const allIds   = entList.map(e => e.id).join(',');
+
+      const mesCols = MESES_COLS.map(m => {
+        const ent = entList.find(e => Number(e.mes) === m.num);
+        if (ent) {
+          const entItems = ent.items || [];
+          const entProg  = entItems.length ? Math.round(entItems.reduce((s,it) => s + calcProgress(it.etapas), 0) / entItems.length) : 0;
+          const cell = entProg === 100
             ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#D1FAE5;border-radius:50%;font-size:14px">✅</span>`
-            : `<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${avgProg>0?'#FEF3C7':'#F3F4F6'};color:${avgProg>0?'#92400E':'#9CA3AF'}">${avgProg}%</span>`;
+            : `<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${entProg>0?'#FEF3C7':'#F3F4F6'};color:${entProg>0?'#92400E':'#9CA3AF'}">${entProg}%</span>`;
           return `<td style="text-align:center;white-space:nowrap">${cell}</td>`;
         }
-        const nota = (e.meses_nota || {})[m.num] || '';
+        const nota = (first.meses_nota || {})[m.num] || '';
         return `<td style="text-align:center">
           <input type="text" maxlength="1" placeholder="·"
             style="width:24px;text-align:center;border:none;background:transparent;
                    font-size:13px;font-weight:700;color:#9CA3AF;outline:none;cursor:text"
             value="${esc(nota)}"
-            data-id="${eid}" data-mes="${m.num}"
+            data-id="${esc(first.id)}" data-mes="${m.num}"
             oninput="this.value=this.value.replace(/[^\/]/g,'')"
             onblur="saveMonthNota(this)" />
         </td>`;
       }).join('');
+
       return `<tr>
-        <td>
-          <div class="td-bold">${esc(e.proyectoNombre || e.id)}</div>
-        </td>
+        <td><div class="td-bold">${esc(first.proyectoNombre || first.id)}</div></td>
         <td style="font-size:12px;color:#374151;max-width:140px">${proc}</td>
         <td style="font-size:12px;color:#374151">${contrato}</td>
         <td style="font-size:12px;white-space:nowrap;color:#374151">${vigencia}</td>
@@ -500,9 +512,9 @@
             <span class="prog-pct">${avgProg}%</span>
           </div>
         </td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fc} data-id="${eid}" data-field="fianza_cumplimiento" onchange="saveExtra(this)"></td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fa} data-id="${eid}" data-field="fianza_anticipo"     onchange="saveExtra(this)"></td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fv} data-id="${eid}" data-field="fianza_vicios"       onchange="saveExtra(this)"></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fc} data-ids="${allIds}" data-field="fianza_cumplimiento" onchange="saveExtraGroup(this)"></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fa} data-ids="${allIds}" data-field="fianza_anticipo"     onchange="saveExtraGroup(this)"></td>
+        <td class="check-cell"><input type="checkbox" class="inline-check" ${fv} data-ids="${allIds}" data-field="fianza_vicios"       onchange="saveExtraGroup(this)"></td>
       </tr>`;
     }).join('');
   }
@@ -527,6 +539,26 @@
       setTimeout(() => input.style.borderColor = '', 1200);
     } catch {
       input.style.borderColor = '#EF4444';
+    }
+  }
+
+  async function saveExtraGroup(input) {
+    const ids   = input.dataset.ids.split(',');
+    const field = input.dataset.field;
+    const value = input.checked;
+    try {
+      await Promise.all(ids.map(id =>
+        fetch(`${API}/api/entregables/${encodeURIComponent(id)}/extra`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value })
+        })
+      ));
+      ids.forEach(id => {
+        const e = allEntregables.find(e => e.id === id);
+        if (e) e[field] = value;
+      });
+    } catch {
+      input.checked = !value;
     }
   }
 
