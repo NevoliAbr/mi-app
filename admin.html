@@ -136,8 +136,8 @@
     }
     .badge-super   { background:#E0F0FF; color:#003E66; }
     .badge-usuario { background:#EFF6FF; color:#005D97; }
-    .badge-pmo     { background:#F5F3FF; color:#6D28D9; }
-    .badge-admin-r { background:#FFF7ED; color:#C2410C; }
+    .badge-operacional    { background:#F5F3FF; color:#6D28D9; }
+    .badge-desarrollolead { background:#FFF7ED; color:#C2410C; }
     .badge-activo  { background:#D1FAE5; color:#065F46; }
     .badge-inactivo{ background:#F3F4F6; color:#6B7280; }
 
@@ -571,8 +571,8 @@
         <label for="role-select">Nuevo rol</label>
         <select id="role-select">
           <option value="usuario">👤 Usuario</option>
-          <option value="pmo">📊 PMO</option>
-          <option value="administracion">🏢 Administración</option>
+          <option value="operacional">📊 Operacional</option>
+          <option value="desarrollolead">💻 DesarrolloLead</option>
           <option value="superusuario">⭐ Superusuario</option>
         </select>
       </div>
@@ -748,8 +748,8 @@
       const rolBadge = rol => {
         const map = {
           superusuario:  ['badge-super',   '⭐ Superusuario'],
-          pmo:           ['badge-pmo',     '📊 PMO'],
-          administracion:['badge-admin-r', '🏢 Administración'],
+          operacional:   ['badge-operacional',    '📊 Operacional'],
+          desarrollolead:['badge-desarrollolead', '💻 DesarrolloLead'],
           usuario:       ['badge-usuario', '👤 Usuario'],
         };
         const [cls, lbl] = map[rol] || ['badge-usuario', `👤 ${rol}`];

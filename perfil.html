@@ -68,8 +68,8 @@
     }
     .badge-super    { background:#E0F0FF; color:#003E66; }
     .badge-usuario  { background:#EFF6FF; color:#005D97; }
-    .badge-pmo      { background:#F5F3FF; color:#6D28D9; }
-    .badge-admin-r  { background:#FFF7ED; color:#C2410C; }
+    .badge-operacional    { background:#F5F3FF; color:#6D28D9; }
+    .badge-desarrollolead { background:#FFF7ED; color:#C2410C; }
 
     .proyectos-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
     .proy-chip {
@@ -77,85 +77,45 @@
       font-size:11px; font-weight:800; background:#E0F0FF; color:#003E66; letter-spacing:.2px;
     }
 
-    /* ── TAREAS ── */
-    .tareas-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
-    .btn-nueva-tarea {
-      padding:9px 20px; background:#005D97; color:white; border:none; border-radius:8px;
-      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer;
-      transition:background .15s; display:flex; align-items:center; gap:7px;
-    }
-    .btn-nueva-tarea:hover { background:#003E66; }
+    /* ── MIS TAREAS (kanban) ── */
+    .kt-wrap { overflow-x:auto; }
+    .kt-table { width:100%; border-collapse:collapse; }
+    .kt-table thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    .kt-table th { padding:9px 12px; text-align:left; font-size:10px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; }
+    .kt-table tbody tr { border-bottom:1px solid #F3F4F6; cursor:pointer; transition:background .1s; }
+    .kt-table tbody tr:hover { background:#F0F6FF; }
+    .kt-table tbody tr:last-child { border-bottom:none; }
+    .kt-table td { padding:10px 12px; font-size:12px; color:#374151; vertical-align:middle; }
+    .kt-empty { text-align:center; padding:40px; color:#9CA3AF; font-size:13px; }
 
-    .tareas-table-wrap { overflow-x:auto; }
-    table { width:100%; border-collapse:collapse; }
-    thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
-    th { padding:10px 14px; text-align:left; font-size:10px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; }
-    tbody tr { border-bottom:1px solid #F3F4F6; transition:background .1s; }
-    tbody tr:hover { background:#F9FAFB; }
-    tbody tr:last-child { border-bottom:none; }
-    td { padding:12px 14px; font-size:13px; color:#374151; vertical-align:middle; }
-    .td-tarea { font-weight:700; color:#1A1A1A; max-width:220px; }
-    .td-obs   { font-size:12px; color:#6B7280; max-width:180px; white-space:pre-wrap; word-break:break-word; }
-    .td-date  { font-size:12px; color:#9CA3AF; white-space:nowrap; }
-    .td-center { text-align:center; padding:36px; color:#9CA3AF; font-size:13px; }
+    /* módulo mini-badge */
+    .kt-mod { display:inline-block; padding:2px 8px; border-radius:5px; font-size:9px; font-weight:900; color:white; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+    .mod-caja              { background:linear-gradient(90deg,#0F766E,#2DD4BF); }
+    .mod-recaudacion       { background:linear-gradient(90deg,#1D4ED8,#60A5FA); }
+    .mod-predio            { background:linear-gradient(90deg,#7C3AED,#C084FC); }
+    .mod-catastro          { background:linear-gradient(90deg,#B45309,#FCD34D); }
+    .mod-control_vehicular { background:linear-gradient(90deg,#0369A1,#38BDF8); }
+    .mod-adquisiciones     { background:linear-gradient(90deg,#BE185D,#F472B6); }
+    .mod-presupuestos      { background:linear-gradient(90deg,#065F46,#34D399); }
+    .mod-generales         { background:linear-gradient(90deg,#374151,#9CA3AF); }
+    .mod-tramites          { background:linear-gradient(90deg,#92400E,#FBBF24); }
+    .mod-nr_web            { background:linear-gradient(90deg,#1E3A5F,#3B82F6); }
+    .mod-nr_escritorio     { background:linear-gradient(90deg,#3B0764,#A855F7); }
+    .mod-predio_web        { background:linear-gradient(90deg,#0F766E,#34D399); }
+    .mod-obra_publica      { background:linear-gradient(90deg,#C2410C,#FB923C); }
+    .mod-tesoreria         { background:linear-gradient(90deg,#1E40AF,#3B82F6); }
 
-    /* Estatus badge */
-    .est-badge {
-      display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px;
-      font-size:10px; font-weight:800; letter-spacing:.3px; white-space:nowrap;
-    }
-    .est-iniciada      { background:#EFF6FF; color:#005D97; }
-    .est-en-desarrollo { background:#FEF3C7; color:#92400E; }
-    .est-en-pruebas    { background:#F5F3FF; color:#6D28D9; }
-    .est-terminada     { background:#D1FAE5; color:#065F46; }
-    .est-liberado      { background:#ECFDF5; color:#047857; border:1px solid #6EE7B7; }
+    /* prioridad */
+    .pri-badge { display:inline-flex; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:800; white-space:nowrap; }
+    .pri-baja    { background:#F1F5F9; color:#64748B; }
+    .pri-media   { background:#EFF6FF; color:#2563EB; }
+    .pri-alta    { background:#FFFBEB; color:#D97706; }
+    .pri-critica { background:#FEF2F2; color:#EF4444; }
 
-    /* Estatus select inline */
-    .est-select {
-      padding:4px 8px; border:1.5px solid #E5E7EB; border-radius:8px;
-      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:#1A1A1A;
-      background:#FAFAFA; outline:none; cursor:pointer; transition:border-color .15s;
-    }
-    .est-select:focus { border-color:#005D97; background:#fff; }
-
-    /* ── MODAL ── */
-    .modal-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
-      z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px);
-    }
-    .modal-overlay.active { display:flex; }
-    .modal-card {
-      background:white; border-radius:16px; width:100%; max-width:520px;
-      overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.4); animation:modalIn .2s ease;
-    }
-    @keyframes modalIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
-    .modal-header {
-      background:linear-gradient(135deg,#003E66 0%,#005D97 100%);
-      padding:20px 24px; display:flex; align-items:center; justify-content:space-between; color:white;
-    }
-    .modal-header h2 { font-size:16px; font-weight:800; }
-    .modal-close { background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity:.65; transition:opacity .15s; }
-    .modal-close:hover { opacity:1; }
-    .modal-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
-    .modal-body { padding:24px; display:flex; flex-direction:column; gap:16px; }
-    .modal-alert { padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; display:none; }
-    .modal-alert.error { display:block; background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; }
-    .form-group { display:flex; flex-direction:column; gap:6px; }
-    .form-group label { font-size:10px; font-weight:800; color:#374151; letter-spacing:.7px; text-transform:uppercase; }
-    .form-group input, .form-group select, .form-group textarea {
-      padding:10px 13px; border:2px solid #E5E7EB; border-radius:8px;
-      font-family:'Montserrat',sans-serif; font-size:13px; color:#1A1A1A;
-      background:#FAFAFA; outline:none; transition:border-color .15s;
-    }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#005D97; background:#fff; }
-    .form-group textarea { resize:vertical; min-height:80px; line-height:1.5; }
-    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-    .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
-    .btn-cancel { padding:9px 20px; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
-    .btn-cancel:hover { background:#E5E7EB; }
-    .btn-save { padding:9px 24px; background:#005D97; color:white; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer; transition:background .15s; }
-    .btn-save:hover { background:#003E66; }
-    .btn-save:disabled { background:#93C5FD; cursor:not-allowed; }
+    .kt-title { font-weight:700; color:#1A1A1A; max-width:200px; }
+    .kt-date  { white-space:nowrap; color:#6B7280; }
+    .kt-link  { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#EFF6FF; color:#1D4ED8; border-radius:20px; font-size:11px; font-weight:800; text-decoration:none; transition:background .15s; }
+    .kt-link:hover { background:#DBEAFE; }
 
     /* ── TOAST ── */
     #toast { position:fixed; bottom:24px; right:24px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:700; color:white; box-shadow:0 6px 24px rgba(0,0,0,.2); display:none; animation:fadeUp .2s ease; }
@@ -226,31 +186,31 @@
     </div>
   </div>
 
-  <!-- ── Módulo 2: Tareas ── -->
+  <!-- ── Módulo 2: Mis Tareas del Board ── -->
   <div class="card">
-    <div class="card-header">
-      <span class="card-header-icon">✅</span>
-      <h2>Tareas</h2>
+    <div class="card-header" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="card-header-icon">📋</span>
+        <h2>Mis Tareas</h2>
+      </div>
+      <a href="task.html" class="kt-link">Ver board completo →</a>
     </div>
     <div class="card-stripe"></div>
-    <div class="card-body">
-      <div class="tareas-toolbar">
-        <button class="btn-nueva-tarea" id="btn-nueva-tarea">＋ Nueva tarea</button>
-      </div>
-      <div class="tareas-table-wrap">
-        <table>
+    <div class="card-body" style="padding:0">
+      <div class="kt-wrap">
+        <table class="kt-table">
           <thead>
             <tr>
-              <th>Tarea</th>
+              <th>Módulo</th>
+              <th>Título</th>
+              <th>Stage</th>
+              <th>Prioridad</th>
+              <th>Fecha límite</th>
               <th>Proyecto</th>
-              <th>Estatus</th>
-              <th>Fecha inicio</th>
-              <th>Fecha fin</th>
-              <th>Observaciones</th>
             </tr>
           </thead>
-          <tbody id="tareas-tbody">
-            <tr><td colspan="6" class="td-center">Cargando…</td></tr>
+          <tbody id="kt-tbody">
+            <tr><td colspan="6" class="kt-empty">Cargando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -258,58 +218,6 @@
   </div>
 
 </main>
-
-<!-- ── Modal nueva tarea ── -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h2>Nueva Tarea</h2>
-      <button class="modal-close" id="modal-close">✕</button>
-    </div>
-    <div class="modal-stripe"></div>
-    <div class="modal-body">
-      <div class="modal-alert" id="modal-alert"></div>
-      <div class="form-group">
-        <label for="f-tarea">Tarea <span style="color:#C41010">*</span></label>
-        <input type="text" id="f-tarea" maxlength="500" placeholder="Descripción de la tarea…" />
-      </div>
-      <div class="form-group">
-        <label for="f-proyecto">Proyecto</label>
-        <select id="f-proyecto">
-          <option value="">— Sin proyecto —</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="f-estatus">Estatus</label>
-        <select id="f-estatus">
-          <option value="iniciada">Iniciada</option>
-          <option value="en desarrollo">En desarrollo</option>
-          <option value="en pruebas">En pruebas</option>
-          <option value="terminada">Terminada</option>
-          <option value="liberado">Liberado</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="f-finicio">Fecha inicio</label>
-          <input type="date" id="f-finicio" />
-        </div>
-        <div class="form-group">
-          <label for="f-ffin">Fecha fin</label>
-          <input type="date" id="f-ffin" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="f-obs">Observaciones</label>
-        <textarea id="f-obs" placeholder="Notas adicionales…"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" id="modal-cancel">Cancelar</button>
-      <button class="btn-save"   id="modal-save">Guardar</button>
-    </div>
-  </div>
-</div>
 
 <div id="toast"></div>
 
@@ -324,8 +232,8 @@
   /* ── Info básica ── */
   const ROL_MAP = {
     superusuario:   ['badge-super',   '⭐ Superusuario'],
-    pmo:            ['badge-pmo',     '📊 PMO'],
-    administracion: ['badge-admin-r', '🏢 Administración'],
+    operacional:    ['badge-operacional',    '📊 Operacional'],
+    desarrollolead: ['badge-desarrollolead', '💻 DesarrolloLead'],
     usuario:        ['badge-usuario', '👤 Usuario'],
   };
   document.getElementById('info-nombre').textContent = session.nombre || '—';
@@ -376,132 +284,57 @@
     clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 2800);
   }
 
-  const ESTATUS_CLS = {
-    'iniciada':      'est-iniciada',
-    'en desarrollo': 'est-en-desarrollo',
-    'en pruebas':    'est-en-pruebas',
-    'terminada':     'est-terminada',
-    'liberado':      'est-liberado',
+  /* ── Constantes kanban ── */
+  const MODULO_LABELS = {
+    caja:'Caja', recaudacion:'Recaudación', predio:'Predio', catastro:'Catastro',
+    control_vehicular:'Control Vehicular', adquisiciones:'Adquisiciones',
+    presupuestos:'Presupuestos', generales:'Generales', tramites:'Trámites',
+    nr_web:'Nic. Romero Web', nr_escritorio:'Nic. Romero Escritorio',
+    predio_web:'Predio Web', obra_publica:'Obra Pública', tesoreria:'Tesorería',
   };
-  const ESTATUS_OPTS = ['iniciada','en desarrollo','en pruebas','terminada','liberado'];
+  const PRI_LABELS = { baja:'↓ Baja', media:'→ Media', alta:'↑ Alta', critica:'🔥 Crítica' };
 
-  /* ── Tareas ── */
-  let tareas = [];
-
-  async function loadTareas() {
+  /* ── Mis Tareas del Board ── */
+  async function loadKanbanTasks() {
+    const tbody = document.getElementById('kt-tbody');
     try {
-      const res  = await fetch(`${API}/api/usuarios/${session.id}/tareas`);
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      tareas = data.tareas;
-      renderTareas();
-    } catch (err) {
-      document.getElementById('tareas-tbody').innerHTML =
-        `<tr><td colspan="5" class="td-center" style="color:#C41010">Error: ${esc(err.message)}</td></tr>`;
-    }
-  }
+      const data = await fetch(`${API}/api/kanban/tasks`).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Error al cargar tareas');
 
-  function renderTareas() {
-    const tbody = document.getElementById('tareas-tbody');
-    if (!tareas.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="td-center">Sin tareas aún. ¡Agrega la primera!</td></tr>';
-      return;
-    }
-    tbody.innerHTML = tareas.map(t => {
-      const cls  = ESTATUS_CLS[t.estatus] || 'est-iniciada';
-      const opts = ESTATUS_OPTS.map(s =>
-        `<option value="${s}" ${s === t.estatus ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
-      ).join('');
-      const proyChip = t.proyecto_nombre
-        ? `<span class="proy-chip">${esc(t.proyecto_nombre)}</span>`
-        : '<span style="color:#9CA3AF;font-size:12px">—</span>';
-      return `<tr>
-        <td class="td-tarea">${esc(t.tarea)}</td>
-        <td>${proyChip}</td>
-        <td>
-          <select class="est-select" data-id="${t.id}">
-            ${opts}
-          </select>
-        </td>
-        <td class="td-date">${fmtDate(t.fecha_inicio)}</td>
-        <td class="td-date">${fmtDate(t.fecha_fin)}</td>
-        <td class="td-obs">${esc(t.observaciones || '—')}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  /* Cambio de estatus inline */
-  document.getElementById('tareas-tbody').addEventListener('change', async e => {
-    const sel = e.target.closest('.est-select');
-    if (!sel) return;
-    const id      = parseInt(sel.dataset.id);
-    const estatus = sel.value;
-    try {
-      const res  = await fetch(`${API}/api/tareas/${id}/estatus`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estatus })
+      const uid = Number(session.id);
+      const mine = (data.tasks || []).filter(t => {
+        const ids = t.involucrados_ids
+          ? String(t.involucrados_ids).split(',').map(Number).filter(Boolean) : [];
+        return ids.includes(uid) || Number(t.asignado_a) === uid;
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      const t = tareas.find(t => t.id === id);
-      if (t) t.estatus = estatus;
-      showToast('Estatus actualizado.');
-    } catch (err) { showToast(err.message, 'error'); await loadTareas(); }
-  });
 
-  /* ── Modal ── */
-  function openModal() {
-    document.getElementById('f-tarea').value    = '';
-    document.getElementById('f-proyecto').value = '';
-    document.getElementById('f-estatus').value  = 'iniciada';
-    document.getElementById('f-finicio').value  = '';
-    document.getElementById('f-ffin').value     = '';
-    document.getElementById('f-obs').value      = '';
-    document.getElementById('modal-alert').className = 'modal-alert';
-    document.getElementById('modal-alert').textContent = '';
-    document.getElementById('modal-overlay').classList.add('active');
-    setTimeout(() => document.getElementById('f-tarea').focus(), 50);
-  }
-  function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+      if (!mine.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="kt-empty">No tienes tareas asignadas aún.</td></tr>';
+        return;
+      }
 
-  document.getElementById('btn-nueva-tarea').addEventListener('click', openModal);
-  document.getElementById('modal-close').addEventListener('click',  closeModal);
-  document.getElementById('modal-cancel').addEventListener('click', closeModal);
-  document.getElementById('modal-overlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-overlay')) closeModal();
-  });
-
-  document.getElementById('modal-save').addEventListener('click', async () => {
-    const tarea         = document.getElementById('f-tarea').value.trim();
-    const proyecto_id   = document.getElementById('f-proyecto').value || null;
-    const estatus       = document.getElementById('f-estatus').value;
-    const fecha_inicio  = document.getElementById('f-finicio').value;
-    const fecha_fin     = document.getElementById('f-ffin').value;
-    const observaciones = document.getElementById('f-obs').value.trim();
-    const al  = document.getElementById('modal-alert');
-    const btn = document.getElementById('modal-save');
-
-    if (!tarea) { al.textContent = 'La tarea es requerida.'; al.className = 'modal-alert error'; return; }
-
-    btn.disabled = true; btn.textContent = 'Guardando…';
-    try {
-      const res  = await fetch(`${API}/api/usuarios/${session.id}/tareas`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tarea, proyecto_id, estatus, fecha_inicio, fecha_fin, observaciones })
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      showToast('Tarea creada correctamente.');
-      closeModal();
-      await loadTareas();
+      tbody.innerHTML = mine.map(t => {
+        const stageColor = t.stage_color || '#94A3B8';
+        const dueDate    = t.fecha_limite ? new Date(t.fecha_limite) : null;
+        const isOverdue  = dueDate && dueDate < new Date();
+        const dueColor   = isOverdue ? '#DC2626' : '#6B7280';
+        return `<tr onclick="window.location.href='task.html'">
+          <td>${t.modulo
+            ? `<span class="kt-mod mod-${t.modulo}">${esc(MODULO_LABELS[t.modulo]||t.modulo)}</span>`
+            : '<span style="color:#CBD5E1;font-size:11px">—</span>'}</td>
+          <td class="kt-title">${esc(t.titulo)}</td>
+          <td><span style="background:${stageColor}22;color:${stageColor};border:1px solid ${stageColor}55;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap">${esc(t.stage_nombre||'—')}</span></td>
+          <td><span class="pri-badge pri-${t.prioridad||'media'}">${PRI_LABELS[t.prioridad]||'—'}</span></td>
+          <td class="kt-date" style="color:${dueColor}">${t.fecha_limite ? fmtDate(t.fecha_limite) : '<span style="color:#CBD5E1">—</span>'}</td>
+          <td>${t.proyecto_nombre ? `<span class="proy-chip">${esc(t.proyecto_nombre)}</span>` : '<span style="color:#CBD5E1;font-size:11px">—</span>'}</td>
+        </tr>`;
+      }).join('');
     } catch (err) {
-      al.textContent = err.message; al.className = 'modal-alert error';
-    } finally {
-      btn.disabled = false; btn.textContent = 'Guardar';
+      tbody.innerHTML = `<tr><td colspan="6" class="kt-empty" style="color:#C41010">Error: ${esc(err.message)}</td></tr>`;
     }
-  });
+  }
 
-  loadTareas();
+  loadKanbanTasks();
 </script>
 </body>
 </html>

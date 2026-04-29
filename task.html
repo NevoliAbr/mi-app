@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F0F2F5; overflow-x:hidden; }
+
+    /* ── NAV ── */
+    nav {
+      background:#005D97; padding:0 40px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:200;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .nav-left  { display:flex; align-items:center; gap:16px; }
+    .nav-right { display:flex; align-items:center; gap:10px; }
+    .logo-img  { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
+    .nav-title { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.45); color:white;
+      padding:6px 16px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.12); }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      background:linear-gradient(135deg,#003E66 0%,#003E66 45%,#005D97 100%);
+      padding:20px 40px; color:white;
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    }
+    .page-header h1 { font-size:22px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { font-size:12px; color:rgba(255,255,255,.6); font-weight:600; margin-top:2px; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+    .header-kpis    { display:flex; gap:10px; flex-wrap:wrap; }
+    .kpi-chip {
+      background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2);
+      border-radius:20px; padding:5px 14px; font-size:12px; font-weight:700; color:white;
+      display:flex; align-items:center; gap:6px;
+    }
+    .kpi-chip .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+    /* ── TOOLBAR ── */
+    .toolbar-bar {
+      background:white; padding:12px 40px;
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      border-bottom:1px solid #E5E7EB;
+      box-shadow:0 1px 4px rgba(0,0,0,.05);
+      position:sticky; top:64px; z-index:100;
+    }
+    .toolbar-bar input[type=text] {
+      padding:8px 14px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      outline:none; transition:border-color .15s; width:190px; background:#FAFAFA;
+    }
+    .toolbar-bar input[type=text]:focus { border-color:#005D97; background:#fff; }
+    .toolbar-bar select {
+      padding:8px 12px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      outline:none; background:#FAFAFA; cursor:pointer; transition:border-color .15s;
+    }
+    .toolbar-bar select:focus { border-color:#005D97; }
+    .toolbar-sep { flex:1; }
+    .btn-create {
+      background:#005D97; border:none; color:white; padding:9px 22px;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; gap:7px;
+    }
+    .btn-create:hover { background:#003E66; }
+
+    /* ── BOARD ── */
+    .board-wrap {
+      padding:20px 24px 40px;
+      display:flex; gap:14px; align-items:flex-start;
+      min-height:calc(100vh - 220px);
+    }
+
+    /* ── COLUMN ── */
+    .column {
+      flex:1 1 0;
+      min-width:200px;
+      align-self:flex-start;
+      border-radius:14px; overflow:hidden;
+      box-shadow:0 1px 8px rgba(0,0,0,.09);
+      display:flex; flex-direction:column;
+    }
+    .column-header {
+      padding:13px 16px 12px;
+      display:flex; align-items:center; gap:8px;
+      font-size:11px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+    }
+    .column-count {
+      margin-left:auto; background:rgba(255,255,255,.3);
+      border-radius:20px; padding:1px 9px; font-size:11px; font-weight:800;
+      min-width:22px; text-align:center;
+    }
+    .col-backlog    .column-header { background:#475569; color:white; }
+    .col-progreso   .column-header { background:#2563EB; color:white; }
+    .col-revision   .column-header { background:#D97706; color:white; }
+    .col-completado .column-header { background:#059669; color:white; }
+
+    .column-body {
+      background:#F8FAFC; padding:10px;
+      display:flex; flex-direction:column; gap:12px;
+      min-height:160px;
+    }
+    .column-body.drag-over {
+      background:#DBEAFE; outline:2px dashed #3B82F6; outline-offset:-4px;
+    }
+
+    .col-add-wrap { padding:8px 10px 12px; background:#F8FAFC; }
+    .col-add-btn {
+      width:100%; padding:9px; background:transparent;
+      border:1.5px dashed #CBD5E1; border-radius:8px;
+      color:#94A3B8; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:5px;
+      transition:border-color .15s, color .15s, background .15s;
+    }
+    .col-add-btn:hover { border-color:#005D97; color:#005D97; background:#EFF6FF; }
+
+    /* ── CARD ── */
+    .card {
+      background:white; border-radius:10px; padding:14px 14px 12px;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);
+      border-left:3px solid #E5E7EB;
+      cursor:grab; transition:box-shadow .15s, transform .1s;
+      overflow:hidden;
+    }
+    .card-module-banner {
+      font-size:10px; font-weight:900; letter-spacing:.6px; text-transform:uppercase;
+      padding:5px 8px; margin:-14px -14px 10px;
+      border-radius:7px 7px 0 0; color:white;
+      display:flex; align-items:center; justify-content:space-between;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .mod-caja           { background:linear-gradient(90deg,#0F766E,#14B8A6); }
+    .mod-recaudacion    { background:linear-gradient(90deg,#0369A1,#0EA5E9); }
+    .mod-predio         { background:linear-gradient(90deg,#7C3AED,#A855F7); }
+    .mod-catastro       { background:linear-gradient(90deg,#B45309,#F59E0B); }
+    .mod-control_vehicular { background:linear-gradient(90deg,#DC2626,#F87171); }
+    .mod-adquisiciones  { background:linear-gradient(90deg,#065F46,#10B981); }
+    .mod-presupuestos   { background:linear-gradient(90deg,#1D4ED8,#60A5FA); }
+    .mod-generales      { background:linear-gradient(90deg,#374151,#9CA3AF); }
+    .mod-tramites       { background:linear-gradient(90deg,#BE185D,#EC4899); }
+    .mod-nr_web         { background:linear-gradient(90deg,#5B21B6,#8B5CF6); }
+    .mod-nr_escritorio  { background:linear-gradient(90deg,#92400E,#D97706); }
+    .mod-predio_web     { background:linear-gradient(90deg,#0F766E,#34D399); }
+    .mod-obra_publica   { background:linear-gradient(90deg,#C2410C,#FB923C); }
+    .mod-tesoreria      { background:linear-gradient(90deg,#1E40AF,#3B82F6); }
+    .stage-arrow {
+      background:rgba(255,255,255,.22); border:none; color:white; cursor:pointer;
+      border-radius:4px; padding:2px 7px; font-size:11px; line-height:1;
+      flex-shrink:0; transition:background .15s;
+    }
+    .stage-arrow:hover { background:rgba(255,255,255,.45); }
+    .stage-arrow:disabled { opacity:0; pointer-events:none; }
+    .card-no-mod-nav {
+      display:flex; justify-content:space-between; align-items:center;
+      margin:-14px -14px 10px; padding:3px 8px; background:#F1F5F9;
+      border-radius:7px 7px 0 0;
+    }
+    .card-no-mod-nav .stage-arrow { background:rgba(0,0,0,.08); color:#64748B; }
+    .card-no-mod-nav .stage-arrow:hover { background:rgba(0,0,0,.15); }
+    .card:hover { box-shadow:0 4px 18px rgba(0,0,0,.12); transform:translateY(-1px); }
+    .card.dragging { opacity:.45; cursor:grabbing; transform:scale(.98); }
+
+    .card.pri-baja    { border-left-color:#94A3B8; }
+    .card.pri-media   { border-left-color:#3B82F6; }
+    .card.pri-alta    { border-left-color:#F59E0B; }
+    .card.pri-critica { border-left-color:#EF4444; }
+
+    .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:6px; margin-bottom:6px; }
+    .card-badges { display:flex; gap:5px; flex-wrap:wrap; flex:1; }
+
+    .pri-badge {
+      display:inline-flex; align-items:center; gap:3px;
+      font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px;
+    }
+    .pri-badge.baja    { background:#F1F5F9; color:#475569; }
+    .pri-badge.media   { background:#EFF6FF; color:#1D4ED8; }
+    .pri-badge.alta    { background:#FFFBEB; color:#B45309; }
+    .pri-badge.critica { background:#FEF2F2; color:#DC2626; }
+
+    /* CATEGORIA */
+    .cat-badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; }
+    .cat-oficio  { background:#E0E7FF; color:#3730A3; }
+    .cat-anexo   { background:#D1FAE5; color:#065F46; }
+    .cat-sm      { background:#FEF3C7; color:#92400E; }
+    .cat-ticket  { background:#DBEAFE; color:#1E40AF; }
+    .cat-bug     { background:#FEE2E2; color:#991B1B; }
+
+    .card-actions { display:flex; gap:2px; opacity:0; transition:opacity .15s; flex-shrink:0; }
+    .card:hover .card-actions { opacity:1; }
+    .card-btn {
+      background:none; border:none; cursor:pointer; padding:3px 6px;
+      color:#9CA3AF; font-size:13px; border-radius:5px;
+      transition:color .1s, background .1s; line-height:1;
+    }
+    .card-btn:hover { color:#005D97; background:#EFF6FF; }
+
+    .card-title { font-size:13px; font-weight:800; color:#1F2937; line-height:1.4; margin-bottom:3px; }
+    .card-espec { font-size:11px; font-weight:700; color:#6B7280; margin-bottom:5px; }
+    .card-desc  {
+      font-size:12px; color:#9CA3AF; font-weight:600; line-height:1.5; margin-bottom:8px;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .card-tags { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+    .card-tag  { font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; }
+
+    .tag-0 { background:#E0E7FF; color:#3730A3; }
+    .tag-1 { background:#D1FAE5; color:#065F46; }
+    .tag-2 { background:#FCE7F3; color:#9D174D; }
+    .tag-3 { background:#FEF3C7; color:#92400E; }
+    .tag-4 { background:#DBEAFE; color:#1E40AF; }
+    .tag-5 { background:#FEE2E2; color:#991B1B; }
+    .tag-6 { background:#F3E8FF; color:#6B21A8; }
+    .tag-7 { background:#ECFDF5; color:#065F46; }
+
+    .card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:8px; flex-wrap:wrap; gap:4px; }
+    .card-assignee { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#374151; }
+    .avatar {
+      width:22px; height:22px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:9px; font-weight:800; color:white; flex-shrink:0;
+    }
+    .card-right { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .card-proj { font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; background:#EFF6FF; color:#1D4ED8; }
+    .card-due { font-size:10px; font-weight:700; color:#9CA3AF; display:flex; align-items:center; gap:3px; }
+    .card-due.overdue { color:#DC2626; }
+    .card-due.soon    { color:#D97706; }
+    .card-pdf { font-size:10px; font-weight:800; color:#005D97; text-decoration:none;
+      background:#EFF6FF; padding:2px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:3px; }
+    .card-pdf:hover { background:#DBEAFE; }
+
+    .empty-col { text-align:center; color:#CBD5E1; font-size:12px; font-weight:700; padding:24px 10px; }
+
+    /* ── MODAL ── */
+    .overlay {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      z-index:500; display:flex; align-items:center; justify-content:center;
+      opacity:0; visibility:hidden; transition:opacity .2s, visibility .2s;
+      padding:16px;
+    }
+    .overlay.open { opacity:1; visibility:visible; }
+    .modal {
+      background:white; border-radius:16px; width:640px; max-width:100%;
+      max-height:92vh; overflow-y:auto;
+      box-shadow:0 24px 64px rgba(0,0,0,.3);
+      transform:translateY(24px) scale(.98); transition:transform .22s;
+    }
+    .overlay.open .modal { transform:translateY(0) scale(1); }
+
+    .modal-header {
+      padding:22px 26px 18px; display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid #F3F4F6; position:sticky; top:0; background:white; z-index:10;
+    }
+    .modal-header h2 { font-size:17px; font-weight:900; color:#1F2937; }
+    .modal-close {
+      background:none; border:none; cursor:pointer; font-size:22px; color:#9CA3AF;
+      line-height:1; transition:color .1s; padding:2px 6px; border-radius:6px;
+    }
+    .modal-close:hover { color:#1F2937; background:#F3F4F6; }
+
+    .modal-body { padding:20px 26px 8px; }
+    .field { margin-bottom:16px; }
+    .field label {
+      display:block; font-size:11px; font-weight:800; color:#6B7280;
+      margin-bottom:5px; letter-spacing:.4px; text-transform:uppercase;
+    }
+    .field input, .field textarea, .field select {
+      width:100%; padding:10px 13px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      outline:none; transition:border-color .15s; background:#FAFAFA;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color:#005D97; background:#fff; }
+    .field textarea { resize:vertical; min-height:80px; line-height:1.6; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+    /* PDF Upload */
+    .pdf-upload-area {
+      border:1.5px dashed #CBD5E1; border-radius:8px; padding:12px 14px;
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      transition:border-color .15s, background .15s; background:#FAFAFA;
+    }
+    .pdf-upload-area:hover { border-color:#005D97; background:#EFF6FF; }
+    .pdf-upload-area.has-file { border-color:#059669; background:#F0FDF4; }
+    .pdf-upload-icon { font-size:20px; flex-shrink:0; }
+    .pdf-upload-text { font-size:12px; font-weight:700; color:#6B7280; }
+    .pdf-upload-name { font-size:12px; font-weight:800; color:#059669; }
+    .pdf-current-link {
+      font-size:12px; font-weight:800; color:#005D97; text-decoration:none;
+      display:inline-flex; align-items:center; gap:5px;
+    }
+    .pdf-current-link:hover { color:#003E66; }
+
+    .modal-footer {
+      padding:16px 26px 22px; display:flex; gap:10px; justify-content:flex-end;
+      border-top:1px solid #F3F4F6; margin-top:8px;
+    }
+    .btn-save {
+      background:#005D97; border:none; color:white; padding:10px 26px;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; transition:background .15s;
+    }
+    .btn-save:hover { background:#003E66; }
+    .btn-cancel {
+      background:white; border:2px solid #E5E7EB; color:#374151; padding:10px 20px;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700;
+      cursor:pointer; transition:border-color .15s;
+    }
+    .btn-cancel:hover { border-color:#9CA3AF; }
+
+    /* ── DETAIL PANEL ── */
+    .detail-overlay {
+      position:fixed; inset:0; background:rgba(15,23,42,.45);
+      z-index:400; display:flex; align-items:stretch; justify-content:flex-end;
+      opacity:0; visibility:hidden; transition:opacity .2s, visibility .2s;
+    }
+    .detail-overlay.open { opacity:1; visibility:visible; }
+    .detail-panel {
+      width:480px; max-width:100%; background:white;
+      box-shadow:-8px 0 40px rgba(0,0,0,.15);
+      display:flex; flex-direction:column;
+      transform:translateX(40px); transition:transform .22s;
+      overflow-y:auto;
+    }
+    .detail-overlay.open .detail-panel { transform:translateX(0); }
+    .detail-header {
+      padding:20px 24px; border-bottom:1px solid #F3F4F6;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      position:sticky; top:0; background:white; z-index:10;
+    }
+    .detail-header h3 { font-size:15px; font-weight:900; color:#1F2937; line-height:1.4; }
+    .detail-body { padding:20px 24px; flex:1; }
+    .detail-section { margin-bottom:18px; }
+    .detail-label { font-size:10px; font-weight:800; color:#9CA3AF; letter-spacing:.6px; text-transform:uppercase; margin-bottom:5px; }
+    .detail-val { font-size:13px; font-weight:600; color:#374151; line-height:1.6; }
+    .detail-desc { font-size:13px; color:#6B7280; line-height:1.7; font-weight:600; white-space:pre-wrap; }
+    .detail-actions { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; gap:10px; flex-wrap:wrap; }
+
+    .history-list { display:flex; flex-direction:column; gap:6px; }
+    .history-item {
+      font-size:12px; color:#6B7280; font-weight:600;
+      padding:8px 12px; background:#F8FAFC; border-radius:8px;
+      border-left:2px solid #E5E7EB;
+    }
+    .history-item time { color:#9CA3AF; font-size:11px; display:block; margin-top:2px; }
+    .comment-form { display:flex; gap:8px; margin-top:10px; }
+    .comment-form input {
+      flex:1; padding:8px 12px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:12px; outline:none; background:#FAFAFA;
+    }
+    .comment-form input:focus { border-color:#005D97; background:#fff; }
+    .comment-form button {
+      background:#005D97; border:none; color:white; padding:8px 16px;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800;
+      cursor:pointer;
+    }
+    .comment-form button:hover { background:#003E66; }
+
+    /* ── VIEW TABS ── */
+    .view-tabs {
+      background:white; padding:0 40px; border-bottom:2px solid #E5E7EB;
+      display:flex; gap:0; position:sticky; top:117px; z-index:99;
+    }
+    .view-tab {
+      padding:12px 24px; font-size:13px; font-weight:800; color:#6B7280;
+      border:none; background:none; cursor:pointer; border-bottom:3px solid transparent;
+      font-family:'Montserrat',sans-serif; letter-spacing:.3px; margin-bottom:-2px;
+      transition:color .15s, border-color .15s; text-decoration:none;
+      display:inline-flex; align-items:center; gap:7px;
+    }
+    .view-tab.active { color:#005D97; border-bottom-color:#005D97; }
+    .view-tab:hover:not(.active) { color:#374151; border-bottom-color:#CBD5E1; }
+
+    /* ── TASK TABLE VIEW ── */
+    .table-section { padding:24px 40px 0; }
+    .table-card2 { background:white; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden; }
+    .table-card2 table { width:100%; border-collapse:collapse; }
+    .table-card2 thead tr { background:#F9FAFB; border-bottom:2px solid #E5E7EB; }
+    .table-card2 th { padding:11px 14px; font-size:11px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; white-space:nowrap; text-align:left; }
+    .table-card2 tbody tr { border-bottom:1px solid #F3F4F6; transition:background .1s; cursor:pointer; }
+    .table-card2 tbody tr:hover { background:#F0F9FF; }
+    .table-card2 tbody tr.row-selected { background:#EFF6FF; outline:2px solid #BFDBFE inset; }
+    .table-card2 tbody tr:last-child { border-bottom:none; }
+    .table-card2 td { padding:10px 14px; font-size:13px; color:#374151; vertical-align:middle; }
+    .td-title2 { font-weight:800; color:#1F2937; }
+    .td-sub2 { font-size:11px; color:#9CA3AF; font-weight:600; }
+    .col-badge { font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; white-space:nowrap; display:inline-block; }
+    .col-badge.backlog     { background:#F1F5F9; color:#475569; }
+    .col-badge.en_progreso { background:#DBEAFE; color:#1E40AF; }
+    .col-badge.en_revision { background:#FEF3C7; color:#92400E; }
+    .col-badge.completado  { background:#D1FAE5; color:#065F46; }
+
+    /* ── SESSIONS ── */
+    .sessions-section { padding:20px 40px 40px; }
+    .sessions-card { background:white; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden; }
+    .sessions-hdr {
+      padding:16px 24px; border-bottom:1px solid #F3F4F6;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      background:linear-gradient(135deg,#003E66 0%,#005D97 100%);
+    }
+    .sessions-hdr-left h3 { font-size:15px; font-weight:900; color:white; }
+    .sessions-hdr-left p  { font-size:12px; color:rgba(255,255,255,.65); font-weight:600; margin-top:2px; }
+    .sessions-task-pill {
+      background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.3);
+      border-radius:20px; padding:6px 16px; font-size:13px; font-weight:800; color:white;
+      max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .sessions-body { padding:20px 24px; }
+
+    .sessions-list { display:flex; flex-direction:column; gap:12px; margin-bottom:20px; }
+    .session-item {
+      border:1px solid #E5E7EB; border-radius:10px; padding:14px 16px;
+      border-left:4px solid #005D97; transition:box-shadow .15s;
+    }
+    .session-item:hover { box-shadow:0 2px 10px rgba(0,0,0,.07); }
+    .session-item-hdr { display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+    .session-num  { font-size:13px; font-weight:900; color:#005D97; }
+    .session-date { font-size:12px; font-weight:700; color:#6B7280; background:#F3F4F6; padding:2px 10px; border-radius:20px; }
+    .session-text { font-size:13px; color:#374151; font-weight:600; line-height:1.7; white-space:pre-wrap; }
+    .sessions-empty { text-align:center; color:#CBD5E1; font-size:13px; font-weight:700; padding:32px 16px; }
+    .sessions-placeholder { text-align:center; color:#CBD5E1; font-size:13px; font-weight:700; padding:40px 16px; }
+
+    .add-session-box {
+      border:1.5px solid #E5E7EB; border-radius:12px; padding:18px 20px; background:#FAFAFA;
+    }
+    .add-session-box.locked { background:#FEF2F2; border-color:#FECACA; }
+    .add-session-title { font-size:12px; font-weight:900; color:#374151; letter-spacing:.3px; margin-bottom:14px; }
+    .add-session-title.locked { color:#DC2626; }
+    .add-session-grid { display:grid; grid-template-columns:180px 1fr; gap:12px; align-items:end; }
+    .add-session-field label { font-size:10px; font-weight:800; color:#9CA3AF; letter-spacing:.4px; text-transform:uppercase; display:block; margin-bottom:5px; }
+    .add-session-field input, .add-session-field textarea {
+      width:100%; padding:9px 12px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; color:#374151;
+      outline:none; transition:border-color .15s; background:white;
+    }
+    .add-session-field input:focus, .add-session-field textarea:focus { border-color:#005D97; }
+    .add-session-field textarea { resize:vertical; min-height:76px; line-height:1.6; }
+    .add-session-actions { display:flex; justify-content:flex-end; margin-top:12px; }
+    .btn-add-session {
+      background:#005D97; border:none; color:white; padding:10px 22px;
+      border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; transition:background .15s;
+    }
+    .btn-add-session:hover { background:#003E66; }
+
+    /* ── BOARD BAR ── */
+    .board-bar {
+      background:white; border-bottom:1px solid #E5E7EB;
+      padding:10px 40px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .board-select {
+      padding:7px 12px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:#1F2937;
+      background:white; cursor:pointer; outline:none; min-width:200px;
+      transition:border-color .15s;
+    }
+    .board-select:focus { border-color:#005D97; }
+    .board-label { font-size:11px; font-weight:800; color:#9CA3AF; letter-spacing:.4px; }
+    .btn-board {
+      padding:7px 14px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:800; cursor:pointer; transition:background .15s; border:none;
+    }
+    .btn-board-create { background:#EFF6FF; color:#1D4ED8; }
+    .btn-board-create:hover { background:#DBEAFE; }
+    .btn-board-stages { background:#F0FDF4; color:#065F46; }
+    .btn-board-stages:hover { background:#DCFCE7; }
+    .btn-board-rename { background:#F9FAFB; color:#374151; border:1.5px solid #E5E7EB !important; }
+    .btn-board-rename:hover { background:#F3F4F6; }
+
+    /* ── STAGE MANAGER MODAL ── */
+    .stage-row {
+      display:flex; align-items:center; gap:8px; padding:8px 0;
+      border-bottom:1px solid #F3F4F6;
+    }
+    .stage-row:last-child { border-bottom:none; }
+    .stage-color-input {
+      width:32px; height:32px; border:none; cursor:pointer; border-radius:6px;
+      padding:2px; flex-shrink:0; background:none;
+    }
+    .stage-name-input {
+      flex:1; padding:7px 10px; border:1.5px solid #E5E7EB; border-radius:8px;
+      font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; outline:none;
+      transition:border-color .15s;
+    }
+    .stage-name-input:focus { border-color:#005D97; }
+    .stage-final-label { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:800; color:#374151; cursor:pointer; white-space:nowrap; }
+    .stage-final-label input { accent-color:#005D97; width:14px; height:14px; }
+    .btn-stage-move { width:26px; height:26px; border:none; border-radius:6px; background:#F3F4F6; color:#374151; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .1s; }
+    .btn-stage-move:hover { background:#E5E7EB; }
+    .btn-stage-del { width:26px; height:26px; border:none; border-radius:6px; background:#FEE2E2; color:#DC2626; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .1s; }
+    .btn-stage-del:hover { background:#FECACA; }
+    .add-stage-bar { display:flex; gap:8px; align-items:center; margin-top:14px; padding-top:14px; border-top:2px solid #F3F4F6; flex-wrap:wrap; }
+    .add-stage-bar input[type=text] { flex:1; min-width:140px; padding:8px 12px; border:1.5px solid #E5E7EB; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; outline:none; transition:border-color .15s; }
+    .add-stage-bar input[type=text]:focus { border-color:#005D97; }
+
+    /* ── PDF PREVIEW HOVER ── */
+    .pdf-cell { display:inline-block; }
+    .pdf-cell-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      background:#EFF6FF; color:#1D4ED8; border-radius:20px;
+      padding:3px 10px; font-size:11px; font-weight:800;
+      text-decoration:none; cursor:pointer; border:none;
+      transition:background .15s;
+    }
+    .pdf-cell-btn:hover { background:#DBEAFE; }
+    /* Left-side fixed overlay */
+    #pdf-preview-overlay {
+      display:none; position:fixed; left:0; top:0;
+      width:42vw; min-width:300px; max-width:580px; height:100vh;
+      z-index:9500; background:white;
+      box-shadow:6px 0 40px rgba(0,0,0,.28);
+      flex-direction:column;
+    }
+    #pdf-preview-overlay.active { display:flex; }
+    .pdf-overlay-header {
+      background:#005D97; padding:10px 16px;
+      display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+    }
+    .pdf-overlay-title { color:white; font-size:13px; font-weight:800; }
+    .pdf-overlay-dl {
+      display:inline-flex; align-items:center; gap:6px;
+      color:white; font-size:12px; font-weight:800; text-decoration:none;
+      background:rgba(255,255,255,.22); padding:5px 14px; border-radius:20px;
+      transition:background .15s;
+    }
+    .pdf-overlay-dl:hover { background:rgba(255,255,255,.38); }
+    #pdf-overlay-frame { flex:1; border:none; width:100%; }
+    .pdf-upload-btn {
+      display:inline-flex; align-items:center; gap:4px;
+      background:#F9FAFB; color:#9CA3AF; border:1.5px dashed #D1D5DB;
+      border-radius:20px; padding:3px 10px; font-size:11px; font-weight:800;
+      cursor:pointer; transition:all .15s;
+    }
+    .pdf-upload-btn:hover { border-color:#005D97; color:#005D97; background:#EFF6FF; }
+    .btn-add-stage { background:#005D97; color:white; border:none; padding:8px 16px; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800; cursor:pointer; white-space:nowrap; transition:background .15s; }
+    .btn-add-stage:hover { background:#003E66; }
+
+    /* ── MULTI-SELECT INVOLUCRADOS ── */
+    .ms-wrap { position:relative; }
+    .ms-trigger {
+      border:1.5px solid #E5E7EB; border-radius:8px; padding:7px 12px;
+      cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+      background:white; min-height:38px; font-size:13px; font-weight:600; color:#1F2937;
+      transition:border-color .15s; user-select:none;
+    }
+    .ms-trigger:hover, .ms-trigger.open { border-color:#005D97; }
+    .ms-arrow { color:#9CA3AF; font-size:11px; margin-left:8px; flex-shrink:0; }
+    .ms-dropdown {
+      display:none; position:absolute; top:calc(100% + 2px); left:0; right:0;
+      background:white; border:1.5px solid #005D97; border-radius:8px;
+      box-shadow:0 8px 24px rgba(0,0,0,.15); z-index:600;
+      max-height:190px; overflow-y:auto;
+    }
+    .ms-dropdown.open { display:block; }
+    .ms-option {
+      display:flex; align-items:center; gap:8px; padding:8px 14px;
+      cursor:pointer; font-size:13px; font-weight:600; color:#1F2937;
+      transition:background .1s;
+    }
+    .ms-option:hover { background:#F0F6FF; }
+    .ms-option input[type=checkbox] { width:15px; height:15px; cursor:pointer; accent-color:#005D97; flex-shrink:0; }
+    .ms-chips { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+    .ms-chip { background:#EFF6FF; color:#1D4ED8; border-radius:20px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .inv-avatars { display:flex; align-items:center; }
+    .inv-avatars .avatar { margin-right:-5px; border:2px solid white; }
+    .av-more { width:22px; height:22px; border-radius:50%; background:#E5E7EB; color:#6B7280; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; border:2px solid white; margin-right:-5px; }
+
+    @media(max-width:900px) {
+      nav, .page-header, .toolbar-bar, .view-tabs { padding-left:16px; padding-right:16px; }
+      .board-wrap { padding:14px 16px 32px; overflow-x:auto; }
+      .column { flex:0 0 240px; }
+      .field-row { grid-template-columns:1fr; }
+      .table-section, .sessions-section { padding-left:16px; padding-right:16px; }
+      .add-session-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="index.html">
+      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
+    </a>
+    <span class="nav-title">TASK BOARD</span>
+  </div>
+  <div class="nav-right">
+    <a href="index.html" class="btn-nav">← Inicio</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div>
+    <h1>📋 Task Board</h1>
+    <p>Gestión de tareas del equipo de desarrollo</p>
+  </div>
+  <div class="header-kpis" id="header-kpis"></div>
+</div>
+<div class="header-stripe"></div>
+
+<!-- ── BOARD BAR ── -->
+<div class="board-bar">
+  <span class="board-label">TABLERO</span>
+  <select class="board-select" id="board-select" onchange="switchBoard(parseInt(this.value))"></select>
+  <button class="btn-board btn-board-create" onclick="createBoard()">➕ Nuevo tablero</button>
+  <button class="btn-board btn-board-rename" onclick="renameBoard()">✏️ Renombrar</button>
+  <button class="btn-board btn-board-stages" onclick="openStageManager()">⚙️ Gestionar etapas</button>
+</div>
+
+<div class="view-tabs">
+  <button class="view-tab active" id="vtab-tablero" onclick="setView('tablero')">📋 Tablero Kanban</button>
+  <button class="view-tab"        id="vtab-tabla"   onclick="setView('tabla')">📊 Tabla + Sesiones</button>
+</div>
+
+<div class="toolbar-bar">
+  <input type="text" id="q-search" placeholder="🔍  Buscar tarea…" oninput="render()" />
+  <select id="fil-mod" onchange="render()">
+    <option value="">Todos los módulos</option>
+    <option value="caja">Caja</option>
+    <option value="recaudacion">Recaudación</option>
+    <option value="predio">Predio</option>
+    <option value="catastro">Catastro</option>
+    <option value="control_vehicular">Control Vehicular</option>
+    <option value="adquisiciones">Adquisiciones</option>
+    <option value="presupuestos">Presupuestos</option>
+    <option value="generales">Generales</option>
+    <option value="tramites">Trámites</option>
+    <option value="nr_web">Nic. Romero Web</option>
+    <option value="nr_escritorio">Nic. Romero Escritorio</option>
+    <option value="predio_web">Predio Web</option>
+    <option value="obra_publica">Obra Pública</option>
+    <option value="tesoreria">Tesorería</option>
+  </select>
+  <select id="fil-cat" onchange="render()">
+    <option value="">Todas las categorías</option>
+    <option value="oficio">📄 Oficio</option>
+    <option value="anexo">📎 Anexo</option>
+    <option value="sm">💬 SM</option>
+    <option value="ticket">🎫 Ticket</option>
+    <option value="bug">🐛 Bug</option>
+  </select>
+  <select id="fil-proy" onchange="render()"><option value="">Todos los proyectos</option></select>
+  <select id="fil-user" onchange="render()"><option value="">Todos los miembros</option></select>
+  <select id="fil-pri" onchange="render()">
+    <option value="">Todas las prioridades</option>
+    <option value="critica">🔥 Crítica</option>
+    <option value="alta">↑ Alta</option>
+    <option value="media">→ Media</option>
+    <option value="baja">↓ Baja</option>
+  </select>
+  <div class="toolbar-sep"></div>
+  <button class="btn-create" onclick="openModal()">+ Nueva tarea</button>
+</div>
+
+<div id="view-tablero">
+<div class="board-wrap" id="board-wrap"></div>
+</div> <!-- end view-tablero -->
+
+<!-- ══ VISTA TABLA + SESIONES ══ -->
+<div id="view-tabla" style="display:none">
+
+  <div class="table-section">
+    <div class="table-card2">
+      <table>
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th>Tarea</th>
+            <th>Categoría</th>
+            <th>Especificación</th>
+            <th>Involucrados</th>
+            <th>Proyecto</th>
+            <th>Estado</th>
+            <th>Prioridad</th>
+            <th>F. Categoría</th>
+            <th>F. Inicio</th>
+            <th>F. Fin</th>
+                <th>PDF</th>
+          </tr>
+        </thead>
+        <tbody id="task-table-body">
+          <tr><td colspan="12" style="text-align:center;color:#CBD5E1;padding:28px;font-size:13px;font-weight:600">Cargando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sessions-section">
+    <div class="sessions-card">
+      <div class="sessions-hdr">
+        <div class="sessions-hdr-left">
+          <h3>🗂 Sesión de Comentarios</h3>
+          <p id="sessions-subtitle">Selecciona una tarea de la tabla para ver sus sesiones</p>
+        </div>
+        <div id="sessions-task-pill-wrap" style="display:none">
+          <div class="sessions-task-pill" id="sessions-task-pill"></div>
+        </div>
+      </div>
+      <div class="sessions-body" id="sessions-body">
+        <div class="sessions-placeholder">👆 Haz clic en una fila de la tabla para ver y agregar sesiones.</div>
+      </div>
+    </div>
+  </div>
+
+</div> <!-- end view-tabla -->
+
+<!-- ── MODAL GESTIÓN DE ETAPAS ── -->
+<div class="overlay" id="stage-overlay" onclick="if(event.target.id==='stage-overlay')closeStageManager()">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <h2>⚙️ Gestionar Etapas</h2>
+      <button class="modal-close" onclick="closeStageManager()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="stage-list-wrap"></div>
+      <div class="add-stage-bar">
+        <input type="color" id="new-stage-color" value="#94A3B8" title="Color" style="width:36px;height:36px;border:none;cursor:pointer;border-radius:6px;padding:2px;background:none;flex-shrink:0">
+        <input type="text"  id="new-stage-nombre" placeholder="Nombre de la nueva etapa…" onkeydown="if(event.key==='Enter')addStage()">
+        <label class="stage-final-label" title="Las etapas finales bloquean agregar sesiones">
+          <input type="checkbox" id="new-stage-final"> Final
+        </label>
+        <button class="btn-add-stage" onclick="addStage()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL CREAR / EDITAR ── -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Nueva Tarea</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field">
+        <label>Módulo *</label>
+        <select id="f-mod" style="font-weight:700">
+          <option value="">— Selecciona un módulo —</option>
+          <option value="caja">Caja</option>
+          <option value="recaudacion">Recaudación</option>
+          <option value="predio">Predio</option>
+          <option value="catastro">Catastro</option>
+          <option value="control_vehicular">Control Vehicular</option>
+          <option value="adquisiciones">Adquisiciones</option>
+          <option value="presupuestos">Presupuestos</option>
+          <option value="generales">Generales</option>
+          <option value="tramites">Trámites</option>
+          <option value="nr_web">Nicolás Romero Web</option>
+          <option value="nr_escritorio">Nicolás Romero Escritorio</option>
+          <option value="predio_web">Predio Web</option>
+          <option value="obra_publica">Obra Pública</option>
+          <option value="tesoreria">Tesorería</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Título *</label>
+        <input type="text" id="f-titulo" placeholder="Ej: Implementar login con 2FA…" />
+      </div>
+
+      <div class="field">
+        <label>Descripción</label>
+        <textarea id="f-desc" placeholder="Contexto, criterios de aceptación, notas técnicas…"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Etapa</label>
+          <select id="f-stage"></select>
+        </div>
+        <div class="field">
+          <label>Prioridad</label>
+          <select id="f-pri">
+            <option value="baja">↓ Baja</option>
+            <option value="media">→ Media</option>
+            <option value="alta">↑ Alta</option>
+            <option value="critica">🔥 Crítica</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Categoría</label>
+          <select id="f-cat">
+            <option value="">Sin categoría</option>
+            <option value="oficio">📄 Oficio</option>
+            <option value="anexo">📎 Anexo</option>
+            <option value="sm">💬 SM</option>
+            <option value="ticket">🎫 Ticket</option>
+            <option value="bug">🐛 Bug</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Especificación</label>
+          <input type="text" id="f-espec" placeholder="Ej: OF-2026-001, TKT-456, SM-89…" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Proyecto</label>
+          <select id="f-proy"><option value="">Sin proyecto</option></select>
+        </div>
+        <div class="field">
+          <label>Involucrados</label>
+          <div class="ms-wrap" id="ms-involucrados">
+            <div class="ms-trigger" id="ms-trigger" onclick="toggleMsDrop(event)">
+              <span id="ms-display" style="color:#9CA3AF">Sin asignar</span>
+              <span class="ms-arrow">▾</span>
+            </div>
+            <div class="ms-dropdown" id="ms-dropdown"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Fecha de categoría — llegada del oficio, hallazgo del bug, etc.</label>
+        <input type="date" id="f-fecha-cat" />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Fecha inicio — asignación</label>
+          <input type="date" id="f-fecha" />
+        </div>
+        <div class="field">
+          <label>Fecha fin</label>
+          <input type="date" id="f-due" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Etiquetas (separadas por coma)</label>
+        <input type="text" id="f-tags" placeholder="Ej: frontend, refactor, urgente" />
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" id="btn-save" onclick="saveTask()">Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL DETALLE / ACTIVIDAD ── -->
+<div class="detail-overlay" id="detailOverlay" onclick="detailOverlayClick(event)">
+  <div class="detail-panel">
+    <div class="detail-header">
+      <h3 id="dp-titulo">—</h3>
+      <button class="modal-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="detail-body">
+
+      <div class="detail-section">
+        <div class="detail-label">Estado · Prioridad · Categoría</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;" id="dp-badges"></div>
+      </div>
+
+      <div class="detail-section" id="dp-espec-sec" style="display:none">
+        <div class="detail-label">Especificación</div>
+        <div class="detail-val" id="dp-espec">—</div>
+      </div>
+
+      <div class="detail-section" id="dp-desc-sec">
+        <div class="detail-label">Descripción</div>
+        <div class="detail-desc" id="dp-desc">—</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Asignado · Proyecto · Fecha · Fecha límite</div>
+        <div class="detail-val" id="dp-meta">—</div>
+      </div>
+
+      <div class="detail-section" id="dp-tags-sec">
+        <div class="detail-label">Etiquetas</div>
+        <div class="card-tags" id="dp-tags"></div>
+      </div>
+
+      <div class="detail-section" id="dp-pdf-sec" style="display:none">
+        <div class="detail-label">Archivo PDF</div>
+        <a id="dp-pdf-link" class="pdf-current-link" href="#" target="_blank">📄 Ver PDF</a>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Actividad</div>
+        <div class="history-list" id="dp-history"></div>
+        <div class="comment-form">
+          <input type="text" id="dp-comment" placeholder="Agregar comentario…" onkeydown="if(event.key==='Enter')addComment()" />
+          <button onclick="addComment()">Enviar</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="detail-actions">
+      <button class="btn-save" onclick="editFromDetail()">✏️ Editar</button>
+      <button class="btn-cancel" onclick="deleteFromDetail()">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API  = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+  const _session = (() => { try { return JSON.parse(localStorage.getItem('session')); } catch { return null; } })();
+  const _uid  = _session?.id  || null;
+  const _rol  = _session?.rol || '';
+  let boards = [], stages = [], currentBoardId = null;
+  const PRI_LABELS = { baja:'↓ Baja', media:'→ Media', alta:'↑ Alta', critica:'🔥 Crítica' };
+  const CAT_LABELS = { oficio:'📄 Oficio', anexo:'📎 Anexo', sm:'💬 SM', ticket:'🎫 Ticket', bug:'🐛 Bug' };
+  const MODULO_LABELS = {
+    caja:'Caja', recaudacion:'Recaudación', predio:'Predio', catastro:'Catastro',
+    control_vehicular:'Control Vehicular', adquisiciones:'Adquisiciones', presupuestos:'Presupuestos',
+    generales:'Generales', tramites:'Trámites', nr_web:'Nic. Romero Web',
+    nr_escritorio:'Nic. Romero Escritorio', predio_web:'Predio Web',
+    obra_publica:'Obra Pública', tesoreria:'Tesorería',
+  };
+  const AV_COLORS  = ['#005D97','#059669','#7C3AED','#DB2777','#D97706','#0891B2','#DC2626'];
+  const TAG_CLS    = ['tag-0','tag-1','tag-2','tag-3','tag-4','tag-5','tag-6','tag-7'];
+
+  let tasks = [], proyectos = [], usuarios = [];
+  let editId = null, detailId = null, dragTaskId = null;
+  const tagColorMap = {}; let tagColorIdx = 0;
+
+  function tagCls(t) {
+    if (!tagColorMap[t]) tagColorMap[t] = TAG_CLS[tagColorIdx++ % TAG_CLS.length];
+    return tagColorMap[t];
+  }
+  function avColor(name) {
+    let h = 0; for (let i=0;i<name.length;i++) h=((h<<5)-h)+name.charCodeAt(i);
+    return AV_COLORS[Math.abs(h)%AV_COLORS.length];
+  }
+  function initials(name) { return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    return new Date(d.includes('T')?d:d+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+  }
+  function fmtDateTime(d) {
+    if (!d) return '';
+    return new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  }
+  function dueCls(d) {
+    if (!d) return '';
+    const dt = new Date(d.includes('T')?d:d+'T00:00:00');
+    const now = new Date(); now.setHours(0,0,0,0);
+    const diff = (dt-now)/86400000;
+    if (diff<0)  return 'overdue';
+    if (diff<=3) return 'soon';
+    return '';
+  }
+
+  /* ── LOAD ── */
+  async function load() {
+    try {
+      const [br, pr, ur] = await Promise.all([
+        fetch(`${API}/api/kanban/boards?${_uid ? `usuario_id=${_uid}&` : ''}rol=${_rol}`).then(r=>r.json()).catch(()=>({success:false,boards:[]})),
+        fetch(`${API}/api/proyectos`).then(r=>r.json()).catch(()=>({success:false,proyectos:[]})),
+        fetch(`${API}/api/usuarios`).then(r=>r.json()).catch(()=>({success:false,usuarios:[]})),
+      ]);
+      boards    = br.success ? (br.boards||[]) : [];
+      proyectos = pr.success ? (pr.proyectos||[]) : [];
+      usuarios  = ur.success ? (ur.usuarios||[]) : [];
+      populateSelects();
+      if (boards.length) {
+        currentBoardId = boards[0].id;
+        await loadBoardData();
+      } else {
+        renderBoardBar();
+        renderBoardColumns();
+      }
+    } catch (err) { console.error('Error cargando datos:', err); }
+  }
+
+  async function loadBoardData() {
+    const sr = await fetch(`${API}/api/kanban/boards/${currentBoardId}/stages`).then(r=>r.json()).catch(()=>({success:false}));
+    stages = sr.success ? (sr.stages||[]) : [];
+    const tr = await fetch(`${API}/api/kanban/tasks?board_id=${currentBoardId}`).then(r=>r.json()).catch(()=>({success:false}));
+    tasks = tr.success ? (tr.tasks||[]) : [];
+    renderBoardBar();
+    renderBoardColumns();
+    populateStageSelect();
+    render();
+  }
+
+  async function switchBoard(id) {
+    if (!id || id === currentBoardId) return;
+    currentBoardId = id;
+    tasks = []; stages = [];
+    render();
+    await loadBoardData();
+  }
+
+  function populateSelects() {
+    [['fil-proy','Todos los proyectos'],['f-proy','Sin proyecto']].forEach(([id,blank]) => {
+      const el=document.getElementById(id); const cur=el.value;
+      el.innerHTML=`<option value="">${blank}</option>`;
+      proyectos.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nombre;el.appendChild(o);});
+      el.value=cur;
+    });
+    const filUser=document.getElementById('fil-user'); const curFU=filUser.value;
+    filUser.innerHTML=`<option value="">Todos los miembros</option>`;
+    usuarios.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nombre;filUser.appendChild(o);});
+    filUser.value=curFU;
+    buildMsDrop();
+  }
+
+  function populateStageSelect() {
+    const sel = document.getElementById('f-stage');
+    const cur = sel.value;
+    sel.innerHTML = stages.map(s=>`<option value="${s.id}">${esc(s.nombre)}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+
+  function renderBoardBar() {
+    const sel = document.getElementById('board-select');
+    sel.innerHTML = boards.map(b=>`<option value="${b.id}" ${b.id===currentBoardId?'selected':''}>${b.privado ? '🔒 ' : ''}${esc(b.nombre)}</option>`).join('') || '<option value="">Sin tableros</option>';
+  }
+
+  function renderBoardColumns() {
+    const wrap = document.getElementById('board-wrap');
+    if (!stages.length) {
+      wrap.innerHTML = `<div style="text-align:center;padding:60px;color:#9CA3AF;font-size:14px;font-weight:700;width:100%">${boards.length ? 'Este tablero no tiene etapas. Usa ⚙️ Gestionar etapas para agregar.' : 'Crea tu primer tablero con ➕ Nuevo tablero.'}</div>`;
+      return;
+    }
+    wrap.innerHTML = stages.map(s => `
+      <div class="column" id="col-wrap-${s.id}" style="border-top:3px solid ${s.color}">
+        <div class="column-header" style="border-bottom:2px solid ${s.color}22">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px;flex-shrink:0"></span>
+          ${esc(s.nombre)} <span class="column-count" id="cnt-${s.id}">0</span>
+        </div>
+        <div class="column-body" id="col-${s.id}"
+          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,${s.id})"></div>
+        <div class="col-add-wrap"><button class="col-add-btn" onclick="openModal(${s.id})">+ Agregar tarea</button></div>
+      </div>`).join('');
+
+    // KPI chips
+    const kpis = document.getElementById('header-kpis');
+    kpis.innerHTML = stages.map(s => `
+      <div class="kpi-chip">
+        <span class="dot" style="background:${s.color}"></span>
+        <span id="kpi-${s.id}">0</span>&nbsp;${esc(s.nombre)}
+      </div>`).join('');
+  }
+
+  /* ── BOARD MANAGEMENT ── */
+  async function createBoard() {
+    const { value: formValues, isConfirmed } = await Swal.fire({
+      title: 'Nuevo tablero',
+      html: `
+        <div style="text-align:left;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:11px;font-weight:800;color:#6B7280;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px">Nombre del tablero</label>
+            <input id="swal-board-name" class="swal2-input" placeholder="Ej: Proyecto Alpha…" style="margin:0;width:100%">
+          </div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;background:#F9FAFB;border-radius:8px;border:1.5px solid #E5E7EB">
+            <input type="checkbox" id="swal-board-private" style="width:16px;height:16px;accent-color:#005D97;cursor:pointer;flex-shrink:0">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1F2937">🔒 Tablero privado</div>
+              <div style="font-size:11px;color:#9CA3AF;margin-top:2px">Solo tú podrás verlo</div>
+            </div>
+          </label>
+        </div>`,
+      confirmButtonColor: '#005D97',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Crear tablero',
+      focusConfirm: false,
+      preConfirm: () => {
+        const nombre = document.getElementById('swal-board-name').value.trim();
+        if (!nombre) { Swal.showValidationMessage('El nombre es requerido'); return false; }
+        return { nombre, privado: document.getElementById('swal-board-private').checked };
+      }
+    });
+    if (!isConfirmed || !formValues) return;
+    const r = await fetch(`${API}/api/kanban/boards`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ nombre: formValues.nombre, privado: formValues.privado, usuario_id: _uid })
+    }).then(r=>r.json());
+    if (!r.success) { Swal.fire({icon:'error',title:'Error',text:r.error,confirmButtonColor:'#005D97'}); return; }
+    const br = await fetch(`${API}/api/kanban/boards?${_uid ? `usuario_id=${_uid}&` : ''}rol=${_rol}`).then(r=>r.json());
+    boards = br.boards || [];
+    currentBoardId = r.id;
+    await loadBoardData();
+  }
+
+  async function renameBoard() {
+    if (!currentBoardId) return;
+    const cur = boards.find(b=>b.id===currentBoardId);
+    const { value: nombre } = await Swal.fire({
+      title:'Renombrar tablero', input:'text', inputValue:cur?.nombre||'',
+      confirmButtonColor:'#005D97', showCancelButton:true, cancelButtonText:'Cancelar', confirmButtonText:'Guardar'
+    });
+    if (!nombre?.trim()) return;
+    const r = await fetch(`${API}/api/kanban/boards/${currentBoardId}`,{
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nombre:nombre.trim()})
+    }).then(r=>r.json());
+    if (r.success) { const b=boards.find(b=>b.id===currentBoardId); if(b) b.nombre=nombre.trim(); renderBoardBar(); }
+  }
+
+  /* ── STAGE MANAGER ── */
+  function openStageManager() {
+    renderStageList();
+    document.getElementById('stage-overlay').classList.add('open');
+  }
+  function closeStageManager() {
+    document.getElementById('stage-overlay').classList.remove('open');
+  }
+
+  function renderStageList() {
+    document.getElementById('stage-list-wrap').innerHTML = stages.length
+      ? stages.map((s,i) => `
+        <div class="stage-row" id="sm-row-${s.id}">
+          <input type="color" class="stage-color-input" value="${s.color}" onchange="patchStage(${s.id},{color:this.value})">
+          <input type="text" class="stage-name-input" value="${esc(s.nombre)}" onblur="patchStage(${s.id},{nombre:this.value})">
+          <label class="stage-final-label" title="Bloquea agregar sesiones">
+            <input type="checkbox" ${s.es_final?'checked':''} onchange="patchStage(${s.id},{es_final:this.checked})"> Final
+          </label>
+          <button class="btn-stage-move" onclick="moveStage(${s.id},-1)" ${i===0?'disabled':''} title="Subir">↑</button>
+          <button class="btn-stage-move" onclick="moveStage(${s.id},1)" ${i===stages.length-1?'disabled':''} title="Bajar">↓</button>
+          <button class="btn-stage-del" onclick="deleteStage(${s.id})" title="Eliminar">🗑</button>
+        </div>`).join('')
+      : '<p style="color:#9CA3AF;font-size:13px;font-weight:600;text-align:center;padding:20px 0">Sin etapas. Agrega una abajo.</p>';
+  }
+
+  async function patchStage(id, body) {
+    const r = await fetch(`${API}/api/kanban/stages/${id}`,{
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    }).then(r=>r.json());
+    if (!r.success) { Swal.fire({icon:'error',title:'Error',text:r.error,confirmButtonColor:'#005D97'}); return; }
+    const s = stages.find(s=>s.id===id);
+    if (s) Object.assign(s, body);
+    renderBoardColumns();
+    populateStageSelect();
+    renderStageList();
+  }
+
+  async function moveStage(id, dir) {
+    const idx = stages.findIndex(s=>s.id===id);
+    const other = stages[idx+dir];
+    if (!other) return;
+    // swap orden
+    await patchStage(id, {orden: other.orden});
+    await patchStage(other.id, {orden: stages[idx].orden});
+    // swap in array
+    [stages[idx], stages[idx+dir]] = [stages[idx+dir], stages[idx]];
+    renderBoardColumns();
+    populateStageSelect();
+    renderStageList();
+    render();
+  }
+
+  async function addStage() {
+    const nombre = document.getElementById('new-stage-nombre').value.trim();
+    if (!nombre) { Swal.fire({icon:'warning',title:'Escribe el nombre',confirmButtonColor:'#005D97'}); return; }
+    const color   = document.getElementById('new-stage-color').value;
+    const es_final = document.getElementById('new-stage-final').checked;
+    const r = await fetch(`${API}/api/kanban/boards/${currentBoardId}/stages`,{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nombre,color,es_final})
+    }).then(r=>r.json());
+    if (!r.success) { Swal.fire({icon:'error',title:'Error',text:r.error,confirmButtonColor:'#005D97'}); return; }
+    stages.push({id:r.id, board_id:currentBoardId, nombre, color, orden:stages.length, es_final:es_final?1:0, activo:1});
+    document.getElementById('new-stage-nombre').value = '';
+    document.getElementById('new-stage-color').value = '#94A3B8';
+    document.getElementById('new-stage-final').checked = false;
+    renderBoardColumns();
+    populateStageSelect();
+    renderStageList();
+    render();
+  }
+
+  async function deleteStage(id) {
+    const s = stages.find(s=>s.id===id);
+    const conf = await Swal.fire({
+      icon:'warning', title:`¿Eliminar "${s?.nombre}"?`,
+      text:'Solo se puede eliminar si no tiene tareas asignadas.',
+      showCancelButton:true, confirmButtonColor:'#DC2626',
+      cancelButtonText:'Cancelar', confirmButtonText:'Eliminar'
+    });
+    if (!conf.isConfirmed) return;
+    const r = await fetch(`${API}/api/kanban/stages/${id}`,{method:'DELETE'}).then(r=>r.json());
+    if (!r.success) { Swal.fire({icon:'error',title:'No se pudo eliminar',text:r.error,confirmButtonColor:'#005D97'}); return; }
+    stages = stages.filter(s=>s.id!==id);
+    renderBoardColumns();
+    populateStageSelect();
+    renderStageList();
+    render();
+  }
+
+  /* ── VIEW TOGGLE ── */
+  let currentView = 'tablero';
+  function setView(v) {
+    currentView = v;
+    document.getElementById('view-tablero').style.display = v === 'tablero' ? '' : 'none';
+    document.getElementById('view-tabla').style.display   = v === 'tabla'   ? '' : 'none';
+    document.querySelectorAll('.view-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(`vtab-${v}`).classList.add('active');
+    if (v === 'tabla') renderTable();
+  }
+
+  /* ── RENDER ── */
+  function render() {
+    const q    = document.getElementById('q-search').value.toLowerCase();
+    const fMod = document.getElementById('fil-mod').value;
+    const fCat = document.getElementById('fil-cat').value;
+    const fPr  = document.getElementById('fil-proy').value;
+    const fUs  = document.getElementById('fil-user').value;
+    const fPi  = document.getElementById('fil-pri').value;
+
+    const filtered = tasks.filter(t => {
+      if (q  && !t.titulo.toLowerCase().includes(q) && !(t.descripcion||'').toLowerCase().includes(q) && !(t.especificacion||'').toLowerCase().includes(q)) return false;
+      if (fMod && t.modulo !== fMod)                 return false;
+      if (fCat && t.categoria !== fCat)              return false;
+      if (fPr  && String(t.proyecto_id) !== fPr)     return false;
+      if (fUs) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(parseInt(fUs))) return false; }
+      if (fPi  && t.prioridad !== fPi)               return false;
+      if (_rol === 'operacional' && _uid) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(Number(_uid)) && Number(t.asignado_a)!==Number(_uid)) return false; }
+      return true;
+    });
+
+    stages.forEach(s => {
+      const body = document.getElementById(`col-${s.id}`); if (!body) return;
+      const colTasks = filtered.filter(t=>t.stage_id===s.id).sort((a,b)=>(a.orden||0)-(b.orden||0));
+      const cnt = document.getElementById(`cnt-${s.id}`); if (cnt) cnt.textContent = colTasks.length;
+      const kpi = document.getElementById(`kpi-${s.id}`); if (kpi) kpi.textContent = colTasks.length;
+      body.innerHTML = colTasks.length ? colTasks.map(t=>cardHTML(t)).join('') : '<div class="empty-col">Sin tareas</div>';
+    });
+    if (currentView === 'tabla') renderTable();
+  }
+
+  function cardHTML(t) {
+    const priCls   = t.prioridad || 'media';
+    const catCls   = t.categoria ? `cat-${t.categoria}` : '';
+    const tags     = (t.etiquetas||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const invIds   = t.involucrados_ids ? String(t.involucrados_ids).split(',').map(Number).filter(Boolean) : [];
+    const invUsers = invIds.map(id=>usuarios.find(u=>Number(u.id)===id)).filter(Boolean);
+    const proj     = proyectos.find(p=>p.id==t.proyecto_id);
+    const dCls     = dueCls(t.fecha_limite);
+    const hasPdf   = !!t.pdf_url;
+
+    return `<div class="card pri-${priCls}"
+              draggable="true"
+              ondragstart="onDragStart(event,${t.id})"
+              ondragend="onDragEnd(event)"
+              ondblclick="openDetail(${t.id})">
+      ${(()=>{
+        const si = stages.findIndex(s=>s.id===t.stage_id);
+        const hasPrev = si > 0;
+        const boardPrivado = !!(boards.find(b=>b.id===currentBoardId)?.privado);
+        const hasNext = si >= 0 && si < stages.length - 1 && !(_rol === 'operacional' && !boardPrivado && stages[si+1]?.es_final);
+        const arrows = (cls) =>
+          `<button class="stage-arrow ${cls}" onclick="event.stopPropagation();moveTaskStage(${t.id},-1)" ${hasPrev?'':'disabled'}>◀</button>` +
+          `<button class="stage-arrow ${cls}" onclick="event.stopPropagation();moveTaskStage(${t.id},1)"  ${hasNext?'':'disabled'}>▶</button>`;
+        if (t.modulo) return `<div class="card-module-banner mod-${t.modulo}">
+          <button class="stage-arrow" onclick="event.stopPropagation();moveTaskStage(${t.id},-1)" ${hasPrev?'':'disabled'}>◀</button>
+          <span>${esc(MODULO_LABELS[t.modulo]||t.modulo)}</span>
+          <button class="stage-arrow" onclick="event.stopPropagation();moveTaskStage(${t.id},1)"  ${hasNext?'':'disabled'}>▶</button>
+        </div>`;
+        return `<div class="card-no-mod-nav">
+          <button class="stage-arrow" onclick="event.stopPropagation();moveTaskStage(${t.id},-1)" ${hasPrev?'':'disabled'}>◀</button>
+          <button class="stage-arrow" onclick="event.stopPropagation();moveTaskStage(${t.id},1)"  ${hasNext?'':'disabled'}>▶</button>
+        </div>`;
+      })()}
+      <div class="card-top">
+        <div class="card-badges">
+          <span class="pri-badge ${priCls}">${PRI_LABELS[t.prioridad]||'—'}</span>
+          ${t.categoria ? `<span class="cat-badge cat-${t.categoria}">${CAT_LABELS[t.categoria]||t.categoria}</span>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="card-btn" title="Ver detalle" onclick="event.stopPropagation();openDetail(${t.id})">👁</button>
+          <button class="card-btn" title="Editar"      onclick="event.stopPropagation();openModal(null,${t.id})">✏️</button>
+          <button class="card-btn" title="Eliminar"    onclick="event.stopPropagation();deleteTask(${t.id})">🗑️</button>
+        </div>
+      </div>
+      <div class="card-title">${esc(t.titulo)}</div>
+      ${t.especificacion ? `<div class="card-espec">🔖 ${esc(t.especificacion)}</div>` : ''}
+      ${t.descripcion    ? `<div class="card-desc">${esc(t.descripcion)}</div>` : ''}
+      ${tags.length ? `<div class="card-tags">${tags.map(tag=>`<span class="card-tag ${tagCls(tag)}">${esc(tag)}</span>`).join('')}</div>` : ''}
+      <div class="card-footer">
+        <div class="card-assignee">
+          ${invUsers.length
+            ? `<div class="inv-avatars">${invUsers.slice(0,3).map(u=>`<div class="avatar" title="${esc(u.nombre)}" style="background:${avColor(u.nombre)}">${initials(u.nombre)}</div>`).join('')}${invUsers.length>3?`<div class="av-more">+${invUsers.length-3}</div>`:''}</div><span>${esc(invUsers[0].nombre.split(' ')[0])}${invUsers.length>1?` +${invUsers.length-1}`:''}</span>`
+            : '<span style="font-size:11px;color:#CBD5E1;font-weight:600">Sin asignar</span>'}
+        </div>
+        <div class="card-right">
+          ${proj  ? `<span class="card-proj">${esc(proj.nombre)}</span>` : ''}
+          ${hasPdf ? `<a class="card-pdf" href="${API}${esc(t.pdf_url)}" target="_blank" onclick="event.stopPropagation()">📄 PDF</a>` : ''}
+          ${t.fecha_limite ? `<span class="card-due ${dCls}">📅 ${fmtDate(t.fecha_limite)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ── DRAG & DROP ── */
+  function onDragStart(e, id) {
+    dragTaskId = id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.classList.add('dragging');
+  }
+  function onDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    document.querySelectorAll('.column-body').forEach(c=>c.classList.remove('drag-over'));
+    dragTaskId = null;
+  }
+  function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-over');
+  }
+  function onDragLeave(e) {
+    if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('drag-over');
+  }
+  function onDrop(e, stageId) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if (!dragTaskId) return;
+    const task = tasks.find(t=>t.id===dragTaskId);
+    if (!task || task.stage_id===stageId) return;
+    const prev = task.stage_id;
+    task.stage_id = stageId; render();
+    fetch(`${API}/api/kanban/tasks/${dragTaskId}`,{
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stage_id:stageId})
+    }).then(r=>r.json()).then(r=>{
+      if (!r.success) { task.stage_id=prev; render(); }
+      else addHistory(task, `Movida a "${stages.find(s=>s.id===stageId)?.nombre||stageId}"`);
+    }).catch(()=>{ task.stage_id=prev; render(); });
+  }
+
+  function moveTaskStage(taskId, dir) {
+    const task = tasks.find(t=>t.id===taskId); if (!task) return;
+    const idx = stages.findIndex(s=>s.id===task.stage_id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= stages.length) return;
+    const newStage = stages[newIdx];
+    const boardPrivado = !!(boards.find(b=>b.id===currentBoardId)?.privado);
+    if (_rol === 'operacional' && newStage.es_final && !boardPrivado) {
+      Swal.fire({icon:'warning', title:'Sin permiso', text:'No puedes mover una tarea a la etapa final en tableros públicos.', confirmButtonColor:'#005D97'});
+      return;
+    }
+    const prev = task.stage_id;
+    task.stage_id = newStage.id;
+    task.stage_nombre = newStage.nombre;
+    task.stage_color  = newStage.color;
+    task.stage_es_final = newStage.es_final;
+    render();
+    fetch(`${API}/api/kanban/tasks/${taskId}`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({stage_id: newStage.id})
+    }).then(r=>r.json()).then(r=>{
+      if (!r.success) { task.stage_id=prev; render(); }
+      else addHistory(task, `Movida a "${newStage.nombre}"`);
+    }).catch(()=>{ task.stage_id=prev; render(); });
+  }
+
+  /* ── MULTI-SELECT INVOLUCRADOS ── */
+  function buildMsDrop() {
+    document.getElementById('ms-dropdown').innerHTML = usuarios.map(u =>
+      `<label class="ms-option">
+        <input type="checkbox" value="${u.id}" onchange="updateMsDisplay()">
+        <div class="avatar" style="width:22px;height:22px;font-size:10px;background:${avColor(u.nombre)}">${initials(u.nombre)}</div>
+        ${esc(u.nombre)}
+      </label>`
+    ).join('');
+  }
+  function toggleMsDrop(e) {
+    e.stopPropagation();
+    document.getElementById('ms-trigger').classList.toggle('open');
+    document.getElementById('ms-dropdown').classList.toggle('open');
+  }
+  function getSelInv() {
+    return [...document.querySelectorAll('#ms-dropdown input[type=checkbox]:checked')].map(cb=>parseInt(cb.value));
+  }
+  function setSelInv(ids) {
+    document.querySelectorAll('#ms-dropdown input[type=checkbox]').forEach(cb=>{
+      cb.checked = ids.includes(parseInt(cb.value));
+    });
+    updateMsDisplay();
+  }
+  function updateMsDisplay() {
+    const ids = getSelInv();
+    const el = document.getElementById('ms-display');
+    if (!ids.length) { el.innerHTML='<span style="color:#9CA3AF">Sin asignar</span>'; return; }
+    const names = ids.map(id=>usuarios.find(u=>u.id===id)?.nombre).filter(Boolean);
+    el.innerHTML = `<div class="ms-chips">${names.map(n=>`<span class="ms-chip">${esc(n.split(' ')[0])}</span>`).join('')}</div>`;
+  }
+  document.addEventListener('click', function() {
+    document.getElementById('ms-trigger')?.classList.remove('open');
+    document.getElementById('ms-dropdown')?.classList.remove('open');
+  });
+
+  /* ── MODAL ── */
+  function openModal(defaultCol, id) {
+    editId = id || null;
+    const task = id ? tasks.find(t=>t.id===id) : null;
+    document.getElementById('modal-title').textContent = id ? 'Editar Tarea' : 'Nueva Tarea';
+    document.getElementById('f-mod').value    = task?.modulo || '';
+    document.getElementById('f-titulo').value = task?.titulo || '';
+    document.getElementById('f-desc').value   = task?.descripcion || '';
+    document.getElementById('f-stage').value  = task?.stage_id || defaultCol || (stages[0]?.id||'');
+    document.getElementById('f-pri').value    = task?.prioridad || 'media';
+    document.getElementById('f-cat').value    = task?.categoria || '';
+    document.getElementById('f-espec').value  = task?.especificacion || '';
+    document.getElementById('f-proy').value   = task?.proyecto_id || '';
+    const invIds = task?.involucrados_ids ? String(task.involucrados_ids).split(',').map(Number).filter(Boolean) : [];
+    setSelInv(invIds);
+    document.getElementById('f-fecha-cat').value = (task?.fecha_categoria||'').split('T')[0];
+    document.getElementById('f-fecha').value      = (task?.fecha||'').split('T')[0];
+    document.getElementById('f-due').value        = (task?.fecha_limite||'').split('T')[0];
+    document.getElementById('f-tags').value   = task?.etiquetas || '';
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(()=>document.getElementById('f-titulo').focus(), 80);
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    editId = null;
+  }
+  function overlayClick(e) { if (e.target.id==='overlay') closeModal(); }
+
+  async function saveTask() {
+    const titulo = document.getElementById('f-titulo').value.trim();
+    if (!titulo) { Swal.fire({icon:'warning',title:'Título requerido',confirmButtonColor:'#005D97'}); return; }
+
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+
+    const body = {
+      titulo,
+      board_id:       currentBoardId,
+      stage_id:       parseInt(document.getElementById('f-stage').value) || null,
+      modulo:         document.getElementById('f-mod').value             || null,
+      descripcion:    document.getElementById('f-desc').value.trim()   || null,
+      prioridad:      document.getElementById('f-pri').value,
+      categoria:        document.getElementById('f-cat').value              || null,
+      especificacion:   document.getElementById('f-espec').value.trim()    || null,
+      proyecto_id:      document.getElementById('f-proy').value             || null,
+      involucrados:     getSelInv(),
+      fecha_categoria:  document.getElementById('f-fecha-cat').value        || null,
+      fecha:            document.getElementById('f-fecha').value            || null,
+      fecha_limite:     document.getElementById('f-due').value              || null,
+      etiquetas:      document.getElementById('f-tags').value.trim()    || null,
+    };
+
+    try {
+      let taskId = editId;
+
+      if (editId) {
+        const r = await fetch(`${API}/api/kanban/tasks/${editId}`,{
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+        }).then(r=>r.json());
+        if (!r.success) throw new Error(r.error);
+        const idx = tasks.findIndex(t=>t.id===editId);
+        if (idx>=0) {
+          const invArr = body.involucrados || [];
+          tasks[idx] = { ...tasks[idx], ...body,
+            asignado_a: invArr[0] || null,
+            involucrados_ids: invArr.join(','),
+            involucrados_nombres: invArr.map(id=>usuarios.find(u=>u.id===id)?.nombre||'').filter(Boolean).join('||'),
+            asignado_nombre: invArr[0] ? usuarios.find(u=>u.id===invArr[0])?.nombre||null : null,
+            proyecto_nombre: proyectos.find(p=>p.id==body.proyecto_id)?.nombre||null,
+            stage_nombre: stages.find(s=>s.id===body.stage_id)?.nombre||null,
+            stage_color: stages.find(s=>s.id===body.stage_id)?.color||null,
+            stage_es_final: stages.find(s=>s.id===body.stage_id)?.es_final||0,
+          };
+          addHistory(tasks[idx],'Tarea editada');
+        }
+      } else {
+        const r = await fetch(`${API}/api/kanban/tasks`,{
+          method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+        }).then(r=>r.json());
+        if (!r.success) throw new Error(r.error);
+        taskId = r.id;
+        const invArr = body.involucrados || [];
+        tasks.push({ id:taskId, ...body, orden:0,
+          asignado_a: invArr[0] || null,
+          involucrados_ids: invArr.join(','),
+          involucrados_nombres: invArr.map(id=>usuarios.find(u=>u.id===id)?.nombre||'').filter(Boolean).join('||'),
+          asignado_nombre: invArr[0] ? usuarios.find(u=>u.id===invArr[0])?.nombre||null : null,
+          proyecto_nombre: proyectos.find(p=>p.id==body.proyecto_id)?.nombre||null,
+          stage_nombre: stages.find(s=>s.id===body.stage_id)?.nombre||null,
+          stage_color: stages.find(s=>s.id===body.stage_id)?.color||null,
+          stage_es_final: stages.find(s=>s.id===body.stage_id)?.es_final||0,
+          _history:[{texto:'Tarea creada',fecha:new Date().toISOString()}],
+        });
+      }
+
+      closeModal();
+      render();
+      if (detailId===editId) openDetail(editId);
+    } catch (err) {
+      Swal.fire({icon:'error',title:'Error',text:err.message,confirmButtonColor:'#005D97'});
+    } finally {
+      btn.disabled=false; btn.textContent='Guardar tarea';
+    }
+  }
+
+  async function deleteTask(id) {
+    const ok = await Swal.fire({
+      icon:'warning',title:'¿Eliminar tarea?',text:'Esta acción no se puede deshacer.',
+      showCancelButton:true,confirmButtonColor:'#EF4444',
+      cancelButtonText:'Cancelar',confirmButtonText:'Eliminar'
+    });
+    if (!ok.isConfirmed) return;
+    try {
+      const r = await fetch(`${API}/api/kanban/tasks/${id}`,{method:'DELETE'}).then(r=>r.json());
+      if (!r.success) throw new Error(r.error);
+      tasks = tasks.filter(t=>t.id!==id);
+      if (detailId===id) closeDetail();
+      render();
+    } catch (err) { Swal.fire({icon:'error',title:'Error',text:err.message,confirmButtonColor:'#005D97'}); }
+  }
+
+  /* ── DETAIL PANEL ── */
+  function openDetail(id) {
+    const task = tasks.find(t=>t.id===id); if (!task) return;
+    detailId = id;
+    const dpInvIds = task.involucrados_ids ? String(task.involucrados_ids).split(',').map(Number).filter(Boolean) : [];
+    const dpInvUsers = dpInvIds.map(id=>usuarios.find(u=>Number(u.id)===id)).filter(Boolean);
+    const proj = proyectos.find(p=>p.id==task.proyecto_id);
+    const tags = (task.etiquetas||'').split(',').map(s=>s.trim()).filter(Boolean);
+
+    document.getElementById('dp-titulo').textContent = task.titulo;
+
+    const modBadge = task.modulo ? `<span class="card-module-banner mod-${task.modulo}" style="display:inline-block;border-radius:6px;padding:3px 10px;font-size:10px;margin:0">${esc(MODULO_LABELS[task.modulo]||task.modulo)}</span>` : '';
+    const stageName = task.stage_nombre || stages.find(s=>s.id===task.stage_id)?.nombre || '—';
+    const stageColor = task.stage_color || stages.find(s=>s.id===task.stage_id)?.color || '#94A3B8';
+    const colBadge = `<span style="background:${stageColor}22;color:${stageColor};border:1px solid ${stageColor}44;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">${esc(stageName)}</span>`;
+    const priBadge = `<span class="pri-badge ${task.prioridad||'media'}">${PRI_LABELS[task.prioridad]||'—'}</span>`;
+    const catBadge = task.categoria ? `<span class="cat-badge cat-${task.categoria}">${CAT_LABELS[task.categoria]}</span>` : '';
+    document.getElementById('dp-badges').innerHTML = modBadge + colBadge + priBadge + catBadge;
+
+    const especSec = document.getElementById('dp-espec-sec');
+    if (task.especificacion) { especSec.style.display=''; document.getElementById('dp-espec').textContent=task.especificacion; }
+    else especSec.style.display='none';
+
+    document.getElementById('dp-desc').textContent = task.descripcion || '(Sin descripción)';
+
+    const metaParts = [];
+    if (dpInvUsers.length)     metaParts.push(`👥 ${dpInvUsers.map(u=>esc(u.nombre)).join(', ')}`);
+    if (proj)                  metaParts.push(`📁 ${esc(proj.nombre)}`);
+    if (task.fecha_categoria)  metaParts.push(`📋 Categoría: ${fmtDate(task.fecha_categoria)}`);
+    if (task.fecha)            metaParts.push(`▶ Inicio: ${fmtDate(task.fecha)}`);
+    if (task.fecha_limite)     metaParts.push(`⏹ Fin: ${fmtDate(task.fecha_limite)}`);
+    document.getElementById('dp-meta').innerHTML = metaParts.join('&nbsp;&nbsp;·&nbsp;&nbsp;') || '—';
+
+    document.getElementById('dp-tags').innerHTML = tags.map(tag=>`<span class="card-tag ${tagCls(tag)}">${esc(tag)}</span>`).join('');
+    document.getElementById('dp-tags-sec').style.display = tags.length ? '' : 'none';
+
+    const pdfSec  = document.getElementById('dp-pdf-sec');
+    const pdfLink = document.getElementById('dp-pdf-link');
+    if (task.pdf_url) { pdfSec.style.display=''; pdfLink.href=`${API}${task.pdf_url}`; }
+    else pdfSec.style.display='none';
+
+    renderHistory(task);
+    document.getElementById('dp-comment').value='';
+    document.getElementById('detailOverlay').classList.add('open');
+  }
+  function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); detailId=null; }
+  function detailOverlayClick(e) { if (e.target.id==='detailOverlay') closeDetail(); }
+  function editFromDetail()   { const id=detailId; closeDetail(); openModal(null,id); }
+  function deleteFromDetail() { const id=detailId; closeDetail(); deleteTask(id); }
+
+  /* ── HISTORY / COMENTARIOS (client-side) ── */
+  function addHistory(task, texto) {
+    if (!task._history) task._history=[];
+    task._history.push({texto,fecha:new Date().toISOString()});
+    if (detailId===task.id) renderHistory(task);
+  }
+  function renderHistory(task) {
+    const list = document.getElementById('dp-history');
+    const h = task._history||[];
+    list.innerHTML = h.length
+      ? [...h].reverse().map(e=>`<div class="history-item">${esc(e.texto)}<time>${fmtDateTime(e.fecha)}</time></div>`).join('')
+      : '<div class="history-item">Sin actividad registrada.</div>';
+  }
+  function addComment() {
+    const inp=document.getElementById('dp-comment');
+    const txt=inp.value.trim(); if(!txt||!detailId) return;
+    const task=tasks.find(t=>t.id===detailId); if(!task) return;
+    addHistory(task,`💬 ${txt}`); inp.value='';
+  }
+
+  /* ── TABLE VIEW ── */
+  function renderTable() {
+    const q    = document.getElementById('q-search').value.toLowerCase();
+    const fMod = document.getElementById('fil-mod').value;
+    const fCat = document.getElementById('fil-cat').value;
+    const fPr  = document.getElementById('fil-proy').value;
+    const fUs  = document.getElementById('fil-user').value;
+    const fPi  = document.getElementById('fil-pri').value;
+
+    const filtered = tasks.filter(t => {
+      if (q   && !t.titulo.toLowerCase().includes(q) && !(t.descripcion||'').toLowerCase().includes(q) && !(t.especificacion||'').toLowerCase().includes(q)) return false;
+      if (fMod && t.modulo !== fMod)                 return false;
+      if (fCat && t.categoria !== fCat)              return false;
+      if (fPr  && String(t.proyecto_id) !== fPr)     return false;
+      if (fUs) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(parseInt(fUs))) return false; }
+      if (fPi  && t.prioridad !== fPi)               return false;
+      if (_rol === 'operacional' && _uid) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(Number(_uid)) && Number(t.asignado_a)!==Number(_uid)) return false; }
+      return true;
+    });
+
+    const tbody = document.getElementById('task-table-body');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:#CBD5E1;padding:28px;font-size:13px;font-weight:600">Sin tareas que mostrar.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = filtered.map(t => {
+      const tInvIds = t.involucrados_ids ? String(t.involucrados_ids).split(',').map(Number).filter(Boolean) : [];
+      const tInvUsers = tInvIds.map(id=>usuarios.find(u=>Number(u.id)===id)).filter(Boolean);
+      const proj = proyectos.find(p=>p.id==t.proyecto_id);
+      const dCls = dueCls(t.fecha_limite);
+      const dueColor = dCls==='overdue' ? '#DC2626' : dCls==='soon' ? '#D97706' : '#6B7280';
+      const isSel = selectedTaskId === t.id;
+      return `<tr onclick="selectTaskRow(${t.id})" id="task-row-${t.id}" ${isSel ? 'class="row-selected"' : ''}>
+        <td>${t.modulo ? `<span class="card-module-banner mod-${t.modulo}" style="display:inline-block;border-radius:6px;padding:3px 8px;font-size:10px;margin:0">${esc(MODULO_LABELS[t.modulo]||t.modulo)}</span>` : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td>
+          <div class="td-title2">${esc(t.titulo)}</div>
+          ${t.descripcion ? `<div class="td-sub2">${esc(t.descripcion.slice(0,60))}${t.descripcion.length>60?'…':''}</div>` : ''}
+        </td>
+        <td>${t.categoria ? `<span class="cat-badge cat-${t.categoria}">${CAT_LABELS[t.categoria]}</span>` : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td style="font-size:12px;font-weight:700;color:#374151">${t.especificacion ? esc(t.especificacion) : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td>
+          ${tInvUsers.length
+            ? `<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><div class="inv-avatars">${tInvUsers.slice(0,3).map(u=>`<div class="avatar" title="${esc(u.nombre)}" style="width:22px;height:22px;font-size:9px;background:${avColor(u.nombre)}">${initials(u.nombre)}</div>`).join('')}${tInvUsers.length>3?`<div class="av-more">+${tInvUsers.length-3}</div>`:''}</div><span style="font-size:12px;font-weight:700">${tInvUsers.map(u=>esc(u.nombre.split(' ')[0])).join(', ')}</span></div>`
+            : '<span style="color:#CBD5E1;font-size:12px">Sin asignar</span>'}
+        </td>
+        <td>${proj ? `<span class="card-proj">${esc(proj.nombre)}</span>` : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td><span style="background:${(t.stage_color||'#94A3B8')}22;color:${t.stage_color||'#94A3B8'};border:1px solid ${(t.stage_color||'#94A3B8')}55;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800">${esc(t.stage_nombre||'—')}</span></td>
+        <td><span class="pri-badge ${t.prioridad||'media'}">${PRI_LABELS[t.prioridad]||'—'}</span></td>
+        <td style="font-size:12px;font-weight:700;color:#6B7280">${t.fecha_categoria ? fmtDate(t.fecha_categoria) : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td style="font-size:12px;font-weight:700;color:#6B7280">${t.fecha ? fmtDate(t.fecha) : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td style="font-size:12px;font-weight:700;color:${dueColor}">${t.fecha_limite ? fmtDate(t.fecha_limite) : '<span style="color:#CBD5E1">—</span>'}</td>
+        <td onclick="event.stopPropagation()">
+          ${t.pdf_url
+            ? `<div class="pdf-cell"
+                  onmouseenter="showPdfOverlay('${API}${esc(t.pdf_url)}')"
+                  onmouseleave="schedulePdfHide()">
+                <a class="pdf-cell-btn" href="${API}${esc(t.pdf_url)}" download
+                   onclick="event.stopPropagation()" title="Clic para descargar">📄 PDF</a>
+               </div>`
+            : `<label class="pdf-upload-btn" title="Subir PDF">
+                 📎 Subir
+                 <input type="file" accept=".pdf" style="display:none"
+                   onchange="uploadTablePdf(event,${t.id})">
+               </label>`}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ── SESSIONS ── */
+  let selectedTaskId = null;
+  const sessionsCache = {};
+
+  async function selectTaskRow(id) {
+    document.querySelectorAll('#task-table-body tr').forEach(r => r.classList.remove('row-selected'));
+    const row = document.getElementById(`task-row-${id}`);
+    if (row) row.classList.add('row-selected');
+    selectedTaskId = id;
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    document.getElementById('sessions-task-pill').textContent = task.titulo;
+    document.getElementById('sessions-task-pill-wrap').style.display = '';
+    document.getElementById('sessions-subtitle').textContent = 'Sesiones de trabajo registradas';
+    if (!sessionsCache[id]) {
+      document.getElementById('sessions-body').innerHTML = '<div class="sessions-placeholder">Cargando sesiones…</div>';
+      try {
+        const r = await fetch(`${API}/api/kanban/tasks/${id}/sessions`).then(r=>r.json());
+        sessionsCache[id] = r.success ? r.sessions : [];
+      } catch { sessionsCache[id] = []; }
+    }
+    renderSessions(task);
+  }
+
+  function renderSessions(task) {
+    const sessions    = sessionsCache[task.id] || [];
+    const isCompleted = !!(task.stage_es_final || stages.find(s=>s.id===task.stage_id)?.es_final);
+    const today       = new Date().toISOString().split('T')[0];
+    const nextNum     = sessions.length ? Math.max(...sessions.map(s=>s.numero)) + 1 : 1;
+
+    const listHTML = sessions.length
+      ? `<div class="sessions-list">${sessions.map(s => `
+          <div class="session-item">
+            <div class="session-item-hdr">
+              <span class="session-num">Sesión ${s.numero}</span>
+              <span class="session-date">📅 ${fmtDate(s.fecha)}</span>
+              ${s.subido_nombre ? `<span class="session-date">👤 ${esc(s.subido_nombre)}</span>` : ''}
+            </div>
+            <div class="session-text">${esc(s.comentario)}</div>
+          </div>`).join('')}</div>`
+      : '<div class="sessions-empty">Aún no hay sesiones. Registra la primera abajo.</div>';
+
+    const formHTML = isCompleted
+      ? `<div class="add-session-box locked">
+          <div class="add-session-title locked">🔒 Tarea completada — no se pueden agregar más sesiones</div>
+        </div>`
+      : `<div class="add-session-box">
+          <div class="add-session-title">+ Agregar Sesión ${nextNum}</div>
+          <div class="add-session-grid">
+            <div class="add-session-field">
+              <label>Fecha de la sesión</label>
+              <input type="date" id="ses-fecha" value="${today}" />
+            </div>
+            <div class="add-session-field">
+              <label>Comentario / Resumen</label>
+              <textarea id="ses-comentario" placeholder="Describe lo trabajado en esta sesión…"></textarea>
+            </div>
+          </div>
+          <div class="add-session-actions">
+            <button class="btn-add-session" onclick="addSession(${task.id})">Guardar sesión</button>
+          </div>
+        </div>`;
+
+    document.getElementById('sessions-body').innerHTML = listHTML + formHTML;
+  }
+
+  async function addSession(taskId) {
+    const fecha      = (document.getElementById('ses-fecha')?.value || '').trim();
+    const comentario = (document.getElementById('ses-comentario')?.value || '').trim();
+    if (!fecha)      { Swal.fire({icon:'warning',title:'Fecha requerida',confirmButtonColor:'#005D97'}); return; }
+    if (!comentario) { Swal.fire({icon:'warning',title:'Escribe el comentario',confirmButtonColor:'#005D97'}); return; }
+    try {
+      const r = await fetch(`${API}/api/kanban/tasks/${taskId}/sessions`,{
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fecha, comentario, usuario_id: _uid})
+      }).then(r=>r.json());
+      if (!r.success) throw new Error(r.error);
+      if (!sessionsCache[taskId]) sessionsCache[taskId] = [];
+      sessionsCache[taskId].push({id:r.id, task_id:taskId, numero:r.numero, fecha, comentario, subido_nombre: _session?.nombre || null});
+      const task = tasks.find(t=>t.id===taskId);
+      if (task) renderSessions(task);
+    } catch (err) {
+      Swal.fire({icon:'error',title:'Error',text:err.message,confirmButtonColor:'#005D97'});
+    }
+  }
+
+  async function uploadTablePdf(event, taskId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const label = event.target.closest('label');
+    label.innerHTML = '⏳ Subiendo…';
+    try {
+      const fd = new FormData();
+      fd.append('pdf', file);
+      const r = await fetch(`${API}/api/kanban/tasks/${taskId}/pdf`, { method:'POST', body:fd }).then(r=>r.json());
+      if (!r.success) throw new Error(r.error);
+      const task = tasks.find(t=>t.id===taskId);
+      if (task) task.pdf_url = r.pdf_url;
+      renderTable();
+    } catch (err) {
+      Swal.fire({ icon:'error', title:'Error al subir', text:err.message, confirmButtonColor:'#005D97' });
+      renderTable();
+    }
+  }
+
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();closeDetail();} });
+
+  /* ── PDF left-side overlay ── */
+  let _pdfHideTimer = null;
+  function showPdfOverlay(url) {
+    clearTimeout(_pdfHideTimer);
+    const overlay = document.getElementById('pdf-preview-overlay');
+    const frame   = document.getElementById('pdf-overlay-frame');
+    const dl      = document.getElementById('pdf-overlay-dl');
+    const fullUrl = url + '#toolbar=0&navpanes=0&scrollbar=0';
+    if (frame.src !== fullUrl) frame.src = fullUrl;
+    dl.href = url;
+    overlay.classList.add('active');
+  }
+  function schedulePdfHide() {
+    _pdfHideTimer = setTimeout(() => {
+      const overlay = document.getElementById('pdf-preview-overlay');
+      overlay.classList.remove('active');
+      document.getElementById('pdf-overlay-frame').src = '';
+    }, 180);
+  }
+
+  load();
+</script>
+
+<!-- PDF left-side preview overlay -->
+<div id="pdf-preview-overlay"
+  onmouseenter="clearTimeout(_pdfHideTimer)"
+  onmouseleave="schedulePdfHide()">
+  <div class="pdf-overlay-header">
+    <span class="pdf-overlay-title">📄 Vista previa PDF</span>
+    <a id="pdf-overlay-dl" href="" download class="pdf-overlay-dl">⬇ Descargar</a>
+  </div>
+  <iframe id="pdf-overlay-frame" src=""></iframe>
+</div>
+</body>
+</html>

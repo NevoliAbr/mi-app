@@ -1149,6 +1149,7 @@
       <li id="nav-btn-entregables" style="display:none"><a href="entregables.html" id="btn-entregables">Carga de entregables</a></li>
       <li id="nav-btn-perfil"    style="display:none"><a href="perfil.html">Perfil</a></li>
       <li id="nav-btn-analitica" style="display:none"><a href="analitica.html">Dashboard de Entregables</a></li>
+      <li id="nav-btn-task"     style="display:none"><a href="task.html">📋 Tasks</a></li>
       <li id="nav-btn3" style="display:none"><a href="#" id="btn3">Descargar</a></li>
       <li id="auth-sep"><span id="btn4">|</span></li>
       <li id="auth-reg"><a href="#" id="btn5">Regístrate</a></li>
@@ -1497,16 +1498,17 @@
       if (user) document.getElementById('user-greeting').textContent = `Hola, ${user.nombre}`;
 
       // btn1, btn2 y btn-entregables: solo superusuario
-      const esSuperusuario = loggedIn && user.rol === 'superusuario';
+      const esSuperusuario  = loggedIn && user.rol === 'superusuario';
+      const esUsuario       = loggedIn && user.rol === 'usuario';
+      const esRestringido   = loggedIn && (user.rol === 'desarrollolead' || user.rol === 'operacional');
       document.getElementById('nav-btn1').style.display            = esSuperusuario ? '' : 'none';
       document.getElementById('nav-btn2').style.display            = esSuperusuario ? '' : 'none';
       document.getElementById('nav-btn-entregables').style.display = esSuperusuario ? '' : 'none';
 
-      // btn3: oculto sin sesión o para rol usuario, "Descargar" para otros, "Administración" para superusuario
-      const esUsuario = loggedIn && user.rol === 'usuario';
+      // btn3: solo superusuario (Admin) o roles intermedios sin restricción (Descargar)
       const navBtn3 = document.getElementById('nav-btn3');
       const btn3    = document.getElementById('btn3');
-      navBtn3.style.display = (loggedIn && !esUsuario) ? '' : 'none';
+      navBtn3.style.display = (loggedIn && !esUsuario && !esRestringido) ? '' : 'none';
       if (loggedIn && user.rol === 'superusuario') {
         btn3.textContent = 'Administración';
         btn3.href = 'admin.html';
@@ -1515,14 +1517,17 @@
         btn3.href = '#';
       }
 
-      document.getElementById('nav-btn-analitica').style.display = (loggedIn && !esUsuario) ? '' : 'none';
+      // Analítica: oculta para usuario y roles restringidos
+      document.getElementById('nav-btn-analitica').style.display = (loggedIn && !esUsuario && !esRestringido) ? '' : 'none';
+      // Task y Perfil: visibles para todos los roles (menos usuario base)
+      document.getElementById('nav-btn-task').style.display      = (loggedIn && !esUsuario) ? '' : 'none';
       document.getElementById('nav-btn-perfil').style.display    = loggedIn ? '' : 'none';
 
-      // Mostrar/ocultar módulos según sesión y rol
-      document.getElementById('modulo-seguimiento').style.display = (loggedIn && !esUsuario) ? '' : 'none';
-      document.getElementById('modulo-entregables').style.display = loggedIn ? '' : 'none';
+      // Módulos de contenido en home
+      document.getElementById('modulo-seguimiento').style.display = (loggedIn && !esUsuario && !esRestringido) ? '' : 'none';
+      document.getElementById('modulo-entregables').style.display = (loggedIn && !esRestringido) ? '' : 'none';
 
-      if (loggedIn) { if (!esUsuario) loadDashboard(); loadEntregables(); }
+      if (loggedIn) { if (!esUsuario && !esRestringido) loadDashboard(); if (!esRestringido) loadEntregables(); }
     }
 
     function setSession(user) {

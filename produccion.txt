@@ -1,0 +1,176 @@
+═══════════════════════════════════════════════════════════════
+  CHECKLIST DE DEPLOY A PRODUCCIÓN (Plesk + MySQL)
+  Actualizar este archivo cada vez que se suba un cambio
+═══════════════════════════════════════════════════════════════
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PASOS FIJOS EN CADA DEPLOY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 1. Subir archivos al servidor (git push / FTP)
+[ ] 2. En Plesk: correr "npm install" si hubo cambios en package.json
+[ ] 3. Ejecutar los queries de phpMyAdmin de este deploy (sección abajo)
+[ ] 4. En Plesk: reiniciar la aplicación Node.js
+[ ] 5. Verificar en producción que la app carga y el login funciona
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  .env EN PLESK (variables de entorno requeridas)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DB_TYPE=mysql
+
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=<usuario_mysql_plesk>
+MYSQL_PASSWORD=<password_mysql_plesk>
+MYSQL_DATABASE=<nombre_base_datos_plesk>
+
+PORT=3001
+
+SMTP_HOST=mail.pmo.lcg.mx
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=Services@pmo.lcg.mx
+SMTP_PASS=41_0xmwE6
+SMTP_FROM=Services@pmo.lcg.mx
+APP_URL=https://<tu-dominio>
+
+NOTA: El archivo .env local usa SQL Server. En Plesk NUNCA
+      copiar el .env local — usar solo las variables de arriba.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  HISTORIAL DE QUERIES POR DEPLOY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ejecutar SOLO los queries del deploy actual, no los anteriores.
+
+──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-04-29  (primer deploy completo del kanban)
+──────────────────────────────────────────────────────────────
+
+-- 1. Tableros (con privacidad)
+CREATE TABLE IF NOT EXISTS kanban_boards (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  nombre         VARCHAR(100) NOT NULL,
+  descripcion    VARCHAR(300) NULL,
+  activo         TINYINT      NOT NULL DEFAULT 1,
+  privado        TINYINT      NOT NULL DEFAULT 0,
+  creado_por     INT          NULL,
+  fecha_creacion DATETIME     DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Etapas
+CREATE TABLE IF NOT EXISTS kanban_stages (
+  id       INT AUTO_INCREMENT PRIMARY KEY,
+  board_id INT         NOT NULL,
+  nombre   VARCHAR(100) NOT NULL,
+  color    VARCHAR(20)  NOT NULL DEFAULT '#94A3B8',
+  orden    INT          NOT NULL DEFAULT 0,
+  es_final TINYINT      NOT NULL DEFAULT 0,
+  activo   TINYINT      NOT NULL DEFAULT 1
+);
+
+-- 3. Tareas (completa)
+CREATE TABLE IF NOT EXISTS kanban_tasks (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  titulo          VARCHAR(200) NOT NULL,
+  descripcion     TEXT         NULL,
+  columna         VARCHAR(30)  NOT NULL DEFAULT 'backlog',
+  prioridad       VARCHAR(20)  NOT NULL DEFAULT 'media',
+  asignado_a      INT          NULL,
+  proyecto_id     INT          NULL,
+  fecha_limite    DATE         NULL,
+  etiquetas       VARCHAR(500) NULL,
+  orden           INT          NOT NULL DEFAULT 0,
+  fecha_creacion  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  activo          TINYINT      NOT NULL DEFAULT 1,
+  board_id        INT          NULL,
+  stage_id        INT          NULL,
+  modulo          VARCHAR(50)  NULL,
+  categoria       VARCHAR(50)  NULL,
+  especificacion  VARCHAR(500) NULL,
+  fecha           DATE         NULL,
+  pdf_url         VARCHAR(500) NULL,
+  fecha_categoria DATE         NULL
+);
+
+-- 4. Involucrados por tarea
+CREATE TABLE IF NOT EXISTS kanban_task_involucrados (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  task_id    INT NOT NULL,
+  usuario_id INT NOT NULL,
+  UNIQUE KEY uq_task_user (task_id, usuario_id)
+);
+
+-- 5. Sesiones de comentarios (con quien la subió)
+CREATE TABLE IF NOT EXISTS kanban_sessions (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  task_id        INT      NOT NULL,
+  numero         INT      NOT NULL,
+  fecha          DATE     NOT NULL,
+  comentario     TEXT     NOT NULL,
+  subido_por     INT      NULL,
+  fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Board y etapas por defecto
+INSERT INTO kanban_boards (nombre) VALUES ('Principal');
+
+INSERT INTO kanban_stages (board_id, nombre, color, orden, es_final) VALUES
+  (1, 'Backlog',     '#94A3B8', 0, 0),
+  (1, 'En Progreso', '#3B82F6', 1, 0),
+  (1, 'Revisión',    '#F59E0B', 2, 0),
+  (1, 'Pruebas',     '#8B5CF6', 3, 0),
+  (1, 'Producción',  '#10B981', 4, 0),
+  (1, 'Completado',  '#059669', 5, 1);
+
+-- 7. Migrar tareas existentes al board principal
+UPDATE kanban_tasks SET
+  board_id = 1,
+  stage_id = (
+    SELECT id FROM kanban_stages
+    WHERE board_id = 1
+      AND nombre = CASE kanban_tasks.columna
+        WHEN 'backlog'     THEN 'Backlog'
+        WHEN 'en_progreso' THEN 'En Progreso'
+        WHEN 'en_revision' THEN 'Revisión'
+        WHEN 'completado'  THEN 'Completado'
+        ELSE 'Backlog'
+      END
+    LIMIT 1
+  )
+WHERE activo = 1 AND board_id IS NULL;
+
+-- 8. Renombrar roles viejos
+UPDATE usuarios SET rol = 'operacional'    WHERE rol = 'pmo';
+UPDATE usuarios SET rol = 'desarrollolead' WHERE rol = 'administracion';
+
+-- 9. Limpieza de involucrados corruptos
+DELETE FROM kanban_task_involucrados WHERE task_id = 0;
+
+
+──────────────────────────────────────────────────────────────
+  DEPLOY: AAAA-MM-DD  <- copiar este bloque para futuros deploys
+──────────────────────────────────────────────────────────────
+
+-- (pegar aquí los queries nuevos de ese deploy)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DIFERENCIAS LOCAL vs PRODUCCIÓN (referencia)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Local                         Producción
+──────────────────────────    ──────────────────────────
+SQL Server (puerto 1433)      MySQL (phpMyAdmin / Plesk)
+DB_TYPE no definido / mssql   DB_TYPE=mysql
+NVARCHAR / IDENTITY           VARCHAR / AUTO_INCREMENT
+SCOPE_IDENTITY()              LAST_INSERT_ID()  ← manejado en db.js
+GETDATE()                     CURRENT_TIMESTAMP ← manejado en db.js
+TOP 1                         LIMIT 1           ← manejado en db.js
+
+El código detecta el motor con getDBType() y ajusta
+automáticamente. NO tocar la lógica de db.js al hacer deploy.
