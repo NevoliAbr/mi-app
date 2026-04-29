@@ -2,6 +2,10 @@
 .env
 server/.env
 
+# Archivos subidos en runtime (no van a producción)
+server/entregables/
+server/kanban-pdfs/
+
 # Logs
 logs
 *.log
