@@ -153,6 +153,22 @@ DELETE FROM kanban_task_involucrados WHERE task_id = 0;
 
 
 ──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-04-30
+──────────────────────────────────────────────────────────────
+
+Sin queries. Todos los cambios son de código:
+  - Rol "sinrol" asignado al registrarse (no requiere ALTER, rol es VARCHAR)
+  - Columna subido_por en kanban_sessions → la agrega ensureColumns() al iniciar
+  - Restricciones de rol operacional en task board (solo ve sus tareas,
+    no puede mover a etapa final en tableros públicos)
+  - Tableros: superusuario y desarrollolead ven todos los tableros
+  - Botón Dashboard eliminado de task.html
+  - server/entregables/ y server/kanban-pdfs/ excluidos de git
+
+ACCIÓN: solo reiniciar la app en Plesk después del push.
+
+
+──────────────────────────────────────────────────────────────
   DEPLOY: AAAA-MM-DD  <- copiar este bloque para futuros deploys
 ──────────────────────────────────────────────────────────────
 
