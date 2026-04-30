@@ -218,8 +218,8 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     const [result] = await pool.execute(
-      'INSERT INTO usuarios (nombre, email, password_hash) VALUES (?, ?, ?)',
-      [nombre.trim(), email.toLowerCase().trim(), hash]
+      'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)',
+      [nombre.trim(), email.toLowerCase().trim(), hash, 'sinrol']
     );
 
     res.status(201).json({ success: true, message: 'Cuenta creada correctamente.', userId: result.insertId });
@@ -349,7 +349,7 @@ app.get('/api/admin/usuarios', async (_req, res) => {
 
 /* ── Admin: Cambiar rol (solo superusuarios) ── */
 app.patch('/api/admin/usuarios/:id/rol', async (req, res) => {
-  const ROLES_VALIDOS = ['superusuario', 'usuario', 'operacional', 'desarrollolead'];
+  const ROLES_VALIDOS = ['superusuario', 'usuario', 'operacional', 'desarrollolead', 'sinrol'];
   const { rol } = req.body;
   if (!ROLES_VALIDOS.includes(rol))
     return res.status(400).json({ success: false, error: 'Rol no válido.' });

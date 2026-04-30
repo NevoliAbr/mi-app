@@ -1501,6 +1501,7 @@
       const esSuperusuario  = loggedIn && user.rol === 'superusuario';
       const esUsuario       = loggedIn && user.rol === 'usuario';
       const esRestringido   = loggedIn && (user.rol === 'desarrollolead' || user.rol === 'operacional');
+      const esSinRol        = loggedIn && user.rol === 'sinrol';
       document.getElementById('nav-btn1').style.display            = esSuperusuario ? '' : 'none';
       document.getElementById('nav-btn2').style.display            = esSuperusuario ? '' : 'none';
       document.getElementById('nav-btn-entregables').style.display = esSuperusuario ? '' : 'none';
@@ -1508,7 +1509,7 @@
       // btn3: solo superusuario (Admin) o roles intermedios sin restricción (Descargar)
       const navBtn3 = document.getElementById('nav-btn3');
       const btn3    = document.getElementById('btn3');
-      navBtn3.style.display = (loggedIn && !esUsuario && !esRestringido) ? '' : 'none';
+      navBtn3.style.display = (loggedIn && !esUsuario && !esRestringido && !esSinRol) ? '' : 'none';
       if (loggedIn && user.rol === 'superusuario') {
         btn3.textContent = 'Administración';
         btn3.href = 'admin.html';
@@ -1517,17 +1518,17 @@
         btn3.href = '#';
       }
 
-      // Analítica: oculta para usuario y roles restringidos
-      document.getElementById('nav-btn-analitica').style.display = (loggedIn && !esUsuario && !esRestringido) ? '' : 'none';
-      // Task y Perfil: visibles para todos los roles (menos usuario base)
-      document.getElementById('nav-btn-task').style.display      = (loggedIn && !esUsuario) ? '' : 'none';
-      document.getElementById('nav-btn-perfil').style.display    = loggedIn ? '' : 'none';
+      // Analítica: oculta para usuario, roles restringidos y sinrol
+      document.getElementById('nav-btn-analitica').style.display = (loggedIn && !esUsuario && !esRestringido && !esSinRol) ? '' : 'none';
+      // Task y Perfil: ocultos para sinrol
+      document.getElementById('nav-btn-task').style.display      = (loggedIn && !esUsuario && !esSinRol) ? '' : 'none';
+      document.getElementById('nav-btn-perfil').style.display    = (loggedIn && !esSinRol) ? '' : 'none';
 
       // Módulos de contenido en home
-      document.getElementById('modulo-seguimiento').style.display = (loggedIn && !esUsuario && !esRestringido) ? '' : 'none';
-      document.getElementById('modulo-entregables').style.display = (loggedIn && !esRestringido) ? '' : 'none';
+      document.getElementById('modulo-seguimiento').style.display = (loggedIn && !esUsuario && !esRestringido && !esSinRol) ? '' : 'none';
+      document.getElementById('modulo-entregables').style.display = (loggedIn && !esRestringido && !esSinRol) ? '' : 'none';
 
-      if (loggedIn) { if (!esUsuario && !esRestringido) loadDashboard(); if (!esRestringido) loadEntregables(); }
+      if (loggedIn && !esSinRol) { if (!esUsuario && !esRestringido) loadDashboard(); if (!esRestringido) loadEntregables(); }
     }
 
     function setSession(user) {

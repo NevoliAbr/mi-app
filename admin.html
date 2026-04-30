@@ -138,6 +138,7 @@
     .badge-usuario { background:#EFF6FF; color:#005D97; }
     .badge-operacional    { background:#F5F3FF; color:#6D28D9; }
     .badge-desarrollolead { background:#FFF7ED; color:#C2410C; }
+    .badge-sinrol  { background:#F3F4F6; color:#9CA3AF; }
     .badge-activo  { background:#D1FAE5; color:#065F46; }
     .badge-inactivo{ background:#F3F4F6; color:#6B7280; }
 
@@ -570,6 +571,7 @@
       <div class="role-body">
         <label for="role-select">Nuevo rol</label>
         <select id="role-select">
+          <option value="sinrol">⛔ Sin rol</option>
           <option value="usuario">👤 Usuario</option>
           <option value="operacional">📊 Operacional</option>
           <option value="desarrollolead">💻 DesarrolloLead</option>
@@ -747,10 +749,11 @@
 
       const rolBadge = rol => {
         const map = {
-          superusuario:  ['badge-super',   '⭐ Superusuario'],
+          superusuario:  ['badge-super',         '⭐ Superusuario'],
           operacional:   ['badge-operacional',    '📊 Operacional'],
           desarrollolead:['badge-desarrollolead', '💻 DesarrolloLead'],
-          usuario:       ['badge-usuario', '👤 Usuario'],
+          usuario:       ['badge-usuario',        '👤 Usuario'],
+          sinrol:        ['badge-sinrol',         '⛔ Sin rol'],
         };
         const [cls, lbl] = map[rol] || ['badge-usuario', `👤 ${rol}`];
         return `<span class="badge ${cls}">${lbl}</span>`;
