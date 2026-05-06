@@ -183,7 +183,8 @@
 </div>
 <div class="tabs-bar">
   <button class="tab-btn active" id="tab-entregables" onclick="setVista('entregables')">📄 Entregables</button>
-  <a href="task.html" class="tab-btn" style="text-decoration:none">📋 Tasks</a>
+  <button class="tab-btn"        id="tab-kanban"      onclick="setVista('kanban')">📋 Informe Kanban</button>
+  <a href="task.html" class="tab-btn" style="text-decoration:none">🗂 Tasks</a>
 </div>
 <div class="header-stripe"></div>
 
@@ -322,7 +323,30 @@
     </div>
   </div>
 
+  <!-- ══ VISTA: INFORME KANBAN ══ -->
+  <div class="vista" id="vista-kanban">
+    <div id="kanban-informe-body" style="padding:28px 40px 60px">
+      <div style="text-align:center;padding:40px;color:#CBD5E1;font-size:14px;font-weight:700">Cargando informe…</div>
+    </div>
+  </div>
+
 </main>
+
+<style>
+  .k-user-block  { border-bottom:1px solid #F3F4F6; }
+  .k-user-block:last-child { border-bottom:none; }
+  .k-user-hdr    { display:flex; align-items:center; gap:10px; padding:14px 24px; }
+  .k-user-dot    { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
+  .k-user-name   { font-size:14px; font-weight:900; color:#1A1A1A; }
+  .k-user-count  { font-size:11px; font-weight:700; color:#9CA3AF; margin-left:auto; }
+  .k-tasks-list  { padding:0 24px 16px 46px; display:flex; flex-direction:column; gap:6px; }
+  .k-task-row    { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:8px; flex-wrap:wrap; }
+  .k-task-status { font-size:10px; font-weight:800; padding:2px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+  .k-task-titulo { font-size:13px; font-weight:700; color:#1A1A1A; flex:1; min-width:120px; }
+  .k-task-stage  { font-size:11px; color:#9CA3AF; font-weight:600; white-space:nowrap; }
+  .k-task-date   { font-size:11px; color:#6B7280; font-weight:600; white-space:nowrap; margin-left:auto; }
+  .k-empty       { text-align:center; padding:60px; color:#CBD5E1; font-size:14px; font-weight:700; }
+</style>
 
 <script>
   const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
@@ -366,12 +390,88 @@
 
   /* ── Tabs ── */
   let vistaActual = 'entregables';
+  let kanbanLoaded = false;
   function setVista(v) {
     vistaActual = v;
     document.querySelectorAll('.vista').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(`vista-${v}`).classList.add('active');
     document.getElementById(`tab-${v}`).classList.add('active');
+    if (v === 'kanban' && !kanbanLoaded) { loadKanbanInforme(); kanbanLoaded = true; }
+  }
+
+  /* ── Informe Kanban ── */
+  async function loadKanbanInforme() {
+    const body = document.getElementById('kanban-informe-body');
+    try {
+      const data = await fetch(`${API}/api/kanban/informe`).then(r => r.json());
+      if (!data.success) throw new Error(data.error);
+      const { tasks, users, involucrados, stages } = data;
+
+      const firstByBoard = {};
+      stages.forEach(s => {
+        if (!firstByBoard[s.board_id] || s.orden < firstByBoard[s.board_id].orden)
+          firstByBoard[s.board_id] = s;
+      });
+
+      const invMap = {};
+      involucrados.forEach(i => {
+        if (!invMap[i.usuario_id]) invMap[i.usuario_id] = [];
+        invMap[i.usuario_id].push(Number(i.task_id));
+      });
+
+      const today = new Date().toISOString().split('T')[0];
+
+      function statusInfo(t) {
+        const isFirst = firstByBoard[t.board_id]?.id === t.stage_id;
+        if (isFirst) return { bg:'#F3F4F6', border:'#9CA3AF', tc:'#6B7280', label: t.stage_nombre || 'Inicio' };
+        if (t.es_final) {
+          const lim  = t.fecha_limite  ? String(t.fecha_limite).split('T')[0]  : null;
+          const comp = t.completado_en ? String(t.completado_en).split('T')[0] : null;
+          if (lim && comp && comp < lim)  return { bg:'#14532D', border:'#16A34A', tc:'#fff',    label:'Antes de tiempo' };
+          if (lim && comp && comp === lim) return { bg:'#DCFCE7', border:'#16A34A', tc:'#166534', label:'A tiempo' };
+          return { bg:'#DCFCE7', border:'#16A34A', tc:'#166534', label:'Completada' };
+        }
+        if (t.fecha_limite && String(t.fecha_limite).split('T')[0] < today)
+          return { bg:'#FEE2E2', border:'#DC2626', tc:'#991B1B', label:'Vencida' };
+        return { bg:'#FEF9C3', border:'#F59E0B', tc:'#92400E', label:'En progreso' };
+      }
+
+      function fmtD(d) {
+        if (!d) return '';
+        return new Date(d).toLocaleDateString('es-MX', {day:'2-digit', month:'short', year:'numeric'});
+      }
+      function escH(s) { return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+      const html = users.map(u => {
+        const tids   = invMap[u.id] || [];
+        const utasks = tids.map(id => tasks.find(t => t.id === id)).filter(Boolean);
+        if (!utasks.length) return '';
+        const uc = u.color || '#3B82F6';
+        return `<div class="k-user-block">
+          <div class="k-user-hdr" style="border-left:5px solid ${uc};background:${uc}18">
+            <span class="k-user-dot" style="background:${uc}"></span>
+            <span class="k-user-name">${escH(u.nombre)}</span>
+            <span class="k-user-count">${utasks.length} tarea${utasks.length!==1?'s':''}</span>
+          </div>
+          <div class="k-tasks-list">
+            ${utasks.map(t => {
+              const st = statusInfo(t);
+              return `<div class="k-task-row" style="background:${st.bg};border-left:4px solid ${st.border}">
+                <span class="k-task-status" style="color:${st.tc};background:${st.border}33;border:1px solid ${st.border}66">${escH(st.label)}</span>
+                <span class="k-task-titulo">${escH(t.titulo)}</span>
+                <span class="k-task-stage">${escH(t.stage_nombre||'—')}</span>
+                ${t.fecha_limite ? `<span class="k-task-date">📅 ${fmtD(t.fecha_limite)}</span>` : ''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).filter(Boolean).join('');
+
+      body.innerHTML = html || '<div class="k-empty">No hay actividad registrada en el kanban.</div>';
+    } catch (err) {
+      body.innerHTML = `<div class="k-empty" style="color:#DC2626">Error: ${err.message}</div>`;
+    }
   }
 
   /* ══ ENTREGABLES ══ */

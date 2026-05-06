@@ -117,6 +117,14 @@
     .kt-link  { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#EFF6FF; color:#1D4ED8; border-radius:20px; font-size:11px; font-weight:800; text-decoration:none; transition:background .15s; }
     .kt-link:hover { background:#DBEAFE; }
 
+    /* ── COLOR PICKER ── */
+    .color-picker-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .color-swatch { width:36px; height:36px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 2px #E5E7EB; cursor:pointer; transition:transform .15s, box-shadow .15s; flex-shrink:0; }
+    .color-swatch:hover { transform:scale(1.12); }
+    .color-swatch.selected { box-shadow:0 0 0 3px #005D97; }
+    .btn-save-color { background:#005D97; color:white; border:none; padding:9px 20px; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer; transition:background .15s; }
+    .btn-save-color:hover { background:#003E66; }
+
     /* ── TOAST ── */
     #toast { position:fixed; bottom:24px; right:24px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:700; color:white; box-shadow:0 6px 24px rgba(0,0,0,.2); display:none; animation:fadeUp .2s ease; }
     #toast.success { background:#16A34A; }
@@ -186,7 +194,27 @@
     </div>
   </div>
 
-  <!-- ── Módulo 2: Mis Tareas del Board ── -->
+  <!-- ── Módulo 2: Color de perfil ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">🎨</span>
+      <h2>Color de perfil</h2>
+    </div>
+    <div class="card-stripe"></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:#6B7280;font-weight:600;margin-bottom:16px">Tu color aparece en los informes del kanban para identificar tu actividad.</p>
+      <div class="color-picker-row" id="color-swatches">
+        <!-- generados por JS -->
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+        <label style="font-size:12px;font-weight:700;color:#6B7280">Personalizado:</label>
+        <input type="color" id="color-custom" style="width:44px;height:44px;border:2px solid #E5E7EB;border-radius:50%;cursor:pointer;padding:2px;background:none;" />
+        <button class="btn-save-color" onclick="saveColor()">Guardar color</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Módulo 3: Mis Tareas del Board ── -->
   <div class="card">
     <div class="card-header" style="justify-content:space-between">
       <div style="display:flex;align-items:center;gap:12px">
@@ -226,8 +254,55 @@
 
   /* ── Sesión ── */
   let session = null;
+
+  /* ── Color de perfil ── */
+  const PRESET_COLORS = ['#3B82F6','#005D97','#10B981','#8B5CF6','#F59E0B','#EF4444','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#06B6D4'];
+  let selectedColor = '#3B82F6';
+  let takenColors   = new Set();
+
+  async function initColorPicker() {
+    selectedColor = session?.color || '#3B82F6';
+    try {
+      const data = await fetch(`${API}/api/usuarios/colores`).then(r => r.json());
+      takenColors = new Set((data.colores || []).filter(u => u.id !== session.id).map(u => u.color?.toLowerCase()));
+    } catch {}
+    renderSwatches();
+    document.getElementById('color-custom').value = selectedColor;
+    document.getElementById('color-custom').addEventListener('input', e => pickColor(e.target.value));
+  }
+
+  function renderSwatches() {
+    const wrap = document.getElementById('color-swatches');
+    const available = PRESET_COLORS.filter(c => !takenColors.has(c.toLowerCase()) || c === selectedColor);
+    wrap.innerHTML = available.map(c => {
+      const sel = c === selectedColor;
+      return `<div class="color-swatch ${sel?'selected':''}" style="background:${c}" data-color="${c}" onclick="pickColor('${c}')"></div>`;
+    }).join('');
+    if (!available.length) wrap.innerHTML = '<span style="font-size:12px;color:#9CA3AF;font-weight:600">Todos los colores preset están en uso. Usa el selector personalizado.</span>';
+  }
+
+  function pickColor(c) {
+    if (takenColors.has(c.toLowerCase())) { showToast('Ese color ya está en uso','error'); return; }
+    selectedColor = c;
+    renderSwatches();
+    document.getElementById('color-custom').value = c;
+  }
+
+  async function saveColor() {
+    if (takenColors.has(selectedColor.toLowerCase())) { showToast('Ese color ya está en uso por otro usuario','error'); return; }
+    try {
+      const r = await fetch(`${API}/api/usuarios/${session.id}/color`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:selectedColor})
+      }).then(r=>r.json());
+      if (!r.success) throw new Error(r.error);
+      session.color = selectedColor;
+      localStorage.setItem('session', JSON.stringify(session));
+      showToast('Color guardado');
+    } catch (err) { showToast(err.message,'error'); }
+  }
   try { session = JSON.parse(localStorage.getItem('session')); } catch {}
   if (!session) { window.location.href = 'index.html'; }
+  initColorPicker();
 
   /* ── Info básica ── */
   const ROL_MAP = {

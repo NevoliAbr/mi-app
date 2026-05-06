@@ -841,6 +841,20 @@
     .ep-nombre-delete { color:rgba(248,113,113,.5); margin-left:4px; } .ep-nombre-delete:hover { color:#F87171; }
     .ep-add-row td { padding:6px 6px 14px; }
     .ep-add-wrap { display:flex; align-items:center; gap:6px; }
+    .ep-num-input {
+      width:52px; background:rgba(255,255,255,.07); border:1px solid rgba(0,174,239,.5);
+      border-radius:6px; color:#fff; font-family:'Montserrat',sans-serif;
+      font-size:11px; font-weight:700; padding:4px 6px; outline:none; text-align:center; flex-shrink:0;
+    }
+    .ep-num-input:focus { border-color:#00AEEF; background:rgba(255,255,255,.1); }
+    .ep-add-num {
+      width:52px; background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.15);
+      border-radius:6px; color:#fff; font-family:'Montserrat',sans-serif;
+      font-size:11px; font-weight:700; padding:6px 6px; outline:none; text-align:center; flex-shrink:0;
+      transition:border-color .15s, background .15s;
+    }
+    .ep-add-num:focus { border-color:rgba(0,174,239,.5); background:rgba(255,255,255,.08); border-style:solid; }
+    .ep-add-num::placeholder { color:rgba(255,255,255,.25); }
     .ep-add-input {
       flex:1; background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.15);
       border-radius:6px; color:#fff; font-family:'Montserrat',sans-serif;
@@ -1034,26 +1048,27 @@
     }
     .informe-stat-val  { font-size:28px; font-weight:900; color:#fff; line-height:1; }
     .informe-stat-lbl  { font-size:10px; font-weight:800; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.7px; margin-top:6px; }
-    .informe-mes-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
-    .informe-mes-card  {
+    .inf-stage-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+    .inf-mes-card   {
       background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-      border-radius:14px; padding:20px 22px; display:flex; flex-direction:column; gap:14px;
+      border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:12px;
     }
-    .imc-header { display:flex; align-items:center; justify-content:space-between; }
-    .imc-mes    { font-size:16px; font-weight:900; color:#fff; }
-    .imc-pct    { font-size:24px; font-weight:900; color:#00AEEF; }
-    .imc-bar-wrap { height:6px; background:rgba(255,255,255,.08); border-radius:3px; }
-    .imc-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#005D97,#00AEEF); transition:width .4s; }
-    .imc-stats  { display:flex; gap:16px; }
-    .imc-stat   { font-size:11px; font-weight:700; color:rgba(255,255,255,.5); }
-    .imc-stat strong { color:#fff; font-size:13px; }
-    .imc-etapas { display:flex; flex-direction:column; gap:7px; }
-    .imc-etapa-row { display:grid; grid-template-columns:110px 1fr 30px; align-items:center; gap:8px; }
-    .imc-etapa-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.4px; }
-    .imc-etapa-bar { height:4px; background:rgba(255,255,255,.08); border-radius:2px; }
-    .imc-etapa-fill{ height:100%; border-radius:2px; background:#005D97; transition:width .3s; }
-    .imc-etapa-val { font-size:10px; font-weight:800; color:rgba(255,255,255,.5); text-align:right; }
-    .informe-footer{ font-size:10px; color:rgba(255,255,255,.2); font-weight:600; text-align:right; padding:0 2px; }
+    .inf-mes-hdr    { display:flex; align-items:center; justify-content:space-between; }
+    .inf-mes-lbl    { font-size:15px; font-weight:900; color:#fff; display:block; }
+    .inf-mes-sub    { font-size:10px; font-weight:700; color:rgba(255,255,255,.35); display:block; margin-top:2px; }
+    .inf-mes-total  { font-size:22px; font-weight:900; color:#00AEEF; }
+    .inf-proj       { font-size:10px; font-weight:600; opacity:.5; }
+    .inf-mes-rows   { display:flex; flex-direction:column; gap:5px; }
+    .inf-row        { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:rgba(255,255,255,.04); border-radius:7px; }
+    .inf-row-done    { background:rgba(16,185,129,.1); }
+    .inf-row-pending { background:rgba(253,224,71,.1); }
+    .inf-row-pending .inf-row-lbl { color:#FDE047; }
+    .inf-row-pending .inf-row-cnt { color:#FDE047; }
+    .inf-row-lbl    { font-size:11px; font-weight:700; color:rgba(255,255,255,.6); }
+    .inf-row-cnt    { font-size:14px; font-weight:900; color:#fff; }
+    .inf-row-done .inf-row-lbl { color:#34D399; }
+    .inf-row-done .inf-row-cnt { color:#34D399; }
+    .informe-footer { font-size:10px; color:rgba(255,255,255,.2); font-weight:600; text-align:right; padding:0 2px; }
 
     /* ── Vista presentación ── */
     .pres-wrap {
@@ -1114,6 +1129,24 @@
       .proj-summary { flex-wrap:wrap; }
       .proj-stat { flex:1 1 45%; }
     }
+
+    /* ── INFORME KANBAN ─────────────────────── */
+    .informe-user-block { border-bottom:1px solid #F3F4F6; }
+    .informe-user-block:last-child { border-bottom:none; }
+    .informe-user-hdr { display:flex; align-items:center; gap:10px; padding:12px 24px; }
+    .informe-user-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .informe-user-name { font-size:14px; font-weight:900; color:#1A1A1A; }
+    .informe-user-count { font-size:11px; font-weight:700; color:#9CA3AF; margin-left:auto; }
+    .informe-tasks-list { padding:0 24px 14px 40px; display:flex; flex-direction:column; gap:6px; }
+    .informe-task-row {
+      display:flex; align-items:center; gap:10px; padding:8px 14px;
+      border-radius:8px; flex-wrap:wrap;
+    }
+    .informe-task-status { font-size:10px; font-weight:800; padding:2px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+    .informe-task-titulo { font-size:13px; font-weight:700; color:#1A1A1A; flex:1; min-width:120px; }
+    .informe-task-stage  { font-size:11px; color:#9CA3AF; font-weight:600; white-space:nowrap; }
+    .informe-task-date   { font-size:11px; color:#6B7280; font-weight:600; white-space:nowrap; margin-left:auto; }
+    .informe-empty { text-align:center; padding:40px; color:#CBD5E1; font-size:14px; font-weight:700; }
 
     /* ── RESPONSIVE ─────────────────────────── */
     @media (max-width:1100px) {
@@ -1459,6 +1492,15 @@
                 </div>
               </div>
             </div>
+            <div class="form-group full">
+              <label>Color de perfil</label>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px" id="reg-color-swatches"></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+                <label style="font-size:11px;font-weight:700;color:#9CA3AF">Personalizado:</label>
+                <input type="color" id="reg-color-custom" value="#3B82F6" style="width:32px;height:32px;border:2px solid #E5E7EB;border-radius:50%;cursor:pointer;padding:1px;background:none;" oninput="regPickColor(null,this.value)" />
+              </div>
+              <input type="hidden" id="reg-color" value="#3B82F6" />
+            </div>
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="reg-fnac">Fecha de nacimiento</label>
@@ -1527,8 +1569,10 @@
       // Módulos de contenido en home
       document.getElementById('modulo-seguimiento').style.display = (loggedIn && !esUsuario && !esRestringido && !esSinRol) ? '' : 'none';
       document.getElementById('modulo-entregables').style.display = (loggedIn && !esRestringido && !esSinRol) ? '' : 'none';
-
-      if (loggedIn && !esSinRol) { if (!esUsuario && !esRestringido) loadDashboard(); if (!esRestringido) loadEntregables(); }
+      if (loggedIn && !esSinRol) {
+        if (!esUsuario && !esRestringido) loadDashboard();
+        if (!esRestringido) loadEntregables();
+      }
     }
 
     function setSession(user) {
@@ -1711,6 +1755,47 @@
         .map(cb => parseInt(cb.value));
     }
 
+    // Color de perfil en registro
+    const REG_COLORS = ['#3B82F6','#005D97','#10B981','#8B5CF6','#F59E0B','#EF4444','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#06B6D4'];
+    let regTakenColors = new Set();
+
+    async function loadRegColors() {
+      try {
+        const data = await fetch(`${API}/api/usuarios/colores`).then(r => r.json());
+        regTakenColors = new Set((data.colores || []).map(u => u.color?.toLowerCase()));
+      } catch {}
+      renderRegSwatches();
+    }
+
+    function renderRegSwatches() {
+      const wrap      = document.getElementById('reg-color-swatches');
+      const cur       = document.getElementById('reg-color').value;
+      const available = REG_COLORS.filter(c => !regTakenColors.has(c.toLowerCase()));
+      if (!available.length) {
+        wrap.innerHTML = '<span style="font-size:12px;color:#9CA3AF;font-weight:600">Todos los colores están en uso. Usa el selector personalizado.</span>';
+        return;
+      }
+      if (!cur || regTakenColors.has(cur.toLowerCase())) {
+        document.getElementById('reg-color').value = available[0];
+        document.getElementById('reg-color-custom').value = available[0];
+      }
+      wrap.innerHTML = available.map(c => {
+        const sel = c === document.getElementById('reg-color').value;
+        return `<div style="width:32px;height:32px;border-radius:50%;background:${c};border:3px solid white;
+          box-shadow:0 0 0 2px ${sel?c:'#E5E7EB'};cursor:pointer;flex-shrink:0"
+          data-color="${c}" onclick="regPickColor(this)"></div>`;
+      }).join('');
+    }
+
+    function regPickColor(el, customVal) {
+      const color = customVal || el?.dataset.color;
+      if (!color) return;
+      if (regTakenColors.has(color.toLowerCase())) return;
+      document.getElementById('reg-color').value = color;
+      renderRegSwatches();
+      if (!customVal) document.getElementById('reg-color-custom').value = color;
+    }
+
     // Foto preview
     document.getElementById('reg-foto').addEventListener('change', e => {
       const file = e.target.files[0];
@@ -1740,6 +1825,7 @@
       document.getElementById('reg-dot-2').className = 'step-dot active';
       document.getElementById('reg-line-1').className = 'step-line done';
       loadRegProyectos();
+      loadRegColors();
     });
 
     // Paso 2 → 1
@@ -1776,7 +1862,11 @@
           return;
         }
 
-        // Paso 2: guardar info personal (si hay algo)
+        // Paso 2: guardar info personal + color
+        const colorVal = document.getElementById('reg-color').value || '#3B82F6';
+        await fetch(`${API}/api/usuarios/${data1.userId}/color`, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:colorVal})
+        });
         const fd = new FormData();
         fd.append('fecha_nacimiento', document.getElementById('reg-fnac').value);
         fd.append('proyecto_ids', JSON.stringify(getRegProyectos()));
@@ -2600,6 +2690,7 @@
       tbody.innerHTML += `<tr class="ep-add-row">
         <td colspan="${colCount}">
           <div class="ep-add-wrap">
+            <input type="number" class="ep-add-num" id="ep-add-num" placeholder="#" min="0.1" step="any" title="Número (opcional, ej: 3.1)" />
             <input class="ep-add-input" id="ep-add-input" placeholder="Nombre del nuevo entregable…" />
             <button class="ep-add-btn" id="ep-add-btn">＋ Agregar</button>
           </div>
@@ -2704,51 +2795,64 @@
         wrap.innerHTML = `<div class="entreg-empty-state"><span class="ei">📊</span>No hay datos para generar el informe.</div>`;
         return;
       }
+
       const sorted = [...entregablesData].sort((a,b) => a.mes - b.mes);
-      // Totales globales
-      const totalItems = sorted.reduce((s,a) => s + (a.items?.length||0), 0);
-      const totalComp  = sorted.reduce((s,a) => s + (a.items||[]).filter(it => etapaProgress(it.etapas)===100).length, 0);
-      const globalAvg  = totalItems
-        ? Math.round(sorted.reduce((s,a) => s + (a.items||[]).reduce((ss,it) => ss + etapaProgress(it.etapas), 0), 0) / totalItems)
-        : 0;
+      let totalItems = 0, totalComp = 0;
       const fecha = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
 
       const mesCards = sorted.map(acta => {
         const items = acta.items || [];
-        const n     = items.length;
-        if (!n) return '';
-        const avg  = Math.round(items.reduce((s,it) => s + etapaProgress(it.etapas), 0) / n);
-        const comp = items.filter(it => etapaProgress(it.etapas) === 100).length;
-        const etapaRows = ETAPAS.map((et, idx) => {
-          const done = items.filter(it => it.etapas[et.key].completada).length;
-          const pct  = Math.round(done / n * 100);
-          return `<div class="imc-etapa-row">
-            <span class="imc-etapa-lbl">${ETAPA_LABELS[idx]}</span>
-            <div class="imc-etapa-bar"><div class="imc-etapa-fill" style="width:${pct}%"></div></div>
-            <span class="imc-etapa-val">${done}/${n}</span>
-          </div>`;
-        }).join('');
-        return `<div class="informe-mes-card">
-          <div class="imc-header">
-            <span class="imc-mes">${acta.mesNombre}${acta.proyectoNombre ? ` <span style="font-size:10px;font-weight:600;opacity:.6">· ${escH(acta.proyectoNombre)}</span>` : ''}</span>
-            <span class="imc-pct">${avg}%</span>
+        if (!items.length) return '';
+
+        // Count items per current stage
+        const counts = new Array(ETAPAS.length + 1).fill(0);
+        let sinIniciar = 0;
+        for (const item of items) {
+          normEtapas(item.etapas);
+          // Último stage completado (verde)
+          let lastDone = -1;
+          for (let i = 0; i < ETAPAS.length; i++) {
+            if (item.etapas[ETAPAS[i].key]?.completada) lastDone = i; else break;
+          }
+          if (lastDone === -1) {
+            sinIniciar++;
+          } else if (lastDone === ETAPAS.length - 1) {
+            counts[ETAPAS.length]++; // completados
+          } else {
+            counts[lastDone]++;
+          }
+        }
+        totalItems += items.length;
+        totalComp  += counts[ETAPAS.length];
+        const avg = Math.round(items.reduce((s, it) => s + etapaProgress(it.etapas), 0) / items.length);
+
+        const sinIniciarRow = `<div class="inf-row inf-row-pending">
+          <span class="inf-row-lbl">Sin iniciar</span>
+          <span class="inf-row-cnt">${sinIniciar}/${items.length}</span>
+        </div>`;
+        const rows = [...Array(ETAPAS.length + 1).keys()]
+          .map(idx => {
+            const isDone = idx === ETAPAS.length;
+            const label  = isDone ? 'Completados' : ETAPA_LABELS[idx];
+            const cnt    = counts[idx];
+            return `<div class="inf-row${isDone ? ' inf-row-done' : ''}">
+              <span class="inf-row-lbl">${label}</span>
+              <span class="inf-row-cnt">${cnt}/${items.length}</span>
+            </div>`;
+          }).join('');
+
+        const mesLabel = acta.mesNombre + (acta.proyectoNombre ? ` <span class="inf-proj">· ${escH(acta.proyectoNombre)}</span>` : '');
+        return `<div class="inf-mes-card">
+          <div class="inf-mes-hdr">
+            <div><span class="inf-mes-lbl">${mesLabel}</span><span class="inf-mes-sub">${items.length} entregables</span></div>
+            <span class="inf-mes-total">${avg}%</span>
           </div>
-          <div class="imc-bar-wrap"><div class="imc-bar-fill" style="width:${avg}%"></div></div>
-          <div class="imc-stats">
-            <span class="imc-stat"><strong>${n}</strong> entregables</span>
-            <span class="imc-stat"><strong>${comp}</strong> completados</span>
-            <span class="imc-stat"><strong>${n - comp}</strong> en proceso</span>
-          </div>
-          <div class="imc-etapas">${etapaRows}</div>
+          <div class="inf-mes-rows">${sinIniciarRow}${rows}</div>
         </div>`;
       }).join('');
 
       wrap.innerHTML = `
         <div class="informe-resumen">
-          <div class="informe-stat">
-            <div class="informe-stat-val">${globalAvg}%</div>
-            <div class="informe-stat-lbl">Avance global</div>
-          </div>
           <div class="informe-stat">
             <div class="informe-stat-val">${totalItems}</div>
             <div class="informe-stat-lbl">Total entregables</div>
@@ -2758,11 +2862,11 @@
             <div class="informe-stat-lbl">Completados</div>
           </div>
           <div class="informe-stat">
-            <div class="informe-stat-val">${sorted.length}</div>
-            <div class="informe-stat-lbl">Meses cargados</div>
+            <div class="informe-stat-val">${totalItems - totalComp}</div>
+            <div class="informe-stat-lbl">En proceso</div>
           </div>
         </div>
-        <div class="informe-mes-grid">${mesCards}</div>
+        <div class="inf-stage-grid">${mesCards}</div>
         <div class="informe-footer">Generado el ${fecha}</div>`;
     }
 
@@ -2799,11 +2903,13 @@
       const wrap  = editBtn.closest('.ep-nombre-wrap');
       const texto = wrap.querySelector('.ep-nombre-text');
       if (wrap.querySelector('.ep-nombre-input')) return; // ya en modo edición
-      const current = texto.textContent;
+      const current    = texto.textContent;
+      const currentNum = parseFloat(row.dataset.itemNum);
       texto.style.display = 'none';
       editBtn.style.display = 'none';
       wrap.insertAdjacentHTML('beforeend',
-        `<input class="ep-nombre-input" value="${escH(current)}" maxlength="300" />
+        `<input type="number" class="ep-num-input" value="${currentNum}" min="0.1" step="any" title="Número (ej: 3.1)" />
+         <input class="ep-nombre-input" value="${escH(current)}" maxlength="300" />
          <button class="ep-nombre-save"   title="Guardar">✓</button>
          <button class="ep-nombre-cancel" title="Cancelar">✗</button>
          <button class="ep-nombre-delete" title="Eliminar entregable">🗑️</button>`);
@@ -2812,6 +2918,7 @@
 
       const restore = () => {
         texto.style.display = ''; editBtn.style.display = '';
+        wrap.querySelector('.ep-num-input')?.remove();
         wrap.querySelector('.ep-nombre-input')?.remove();
         wrap.querySelector('.ep-nombre-save')?.remove();
         wrap.querySelector('.ep-nombre-cancel')?.remove();
@@ -2822,7 +2929,7 @@
       wrap.querySelector('.ep-nombre-delete').addEventListener('click', async () => {
         if (!confirm(`¿Eliminar "${current}"? Esta acción no se puede deshacer.`)) return;
         const id  = row.dataset.itemId;
-        const num = parseInt(row.dataset.itemNum);
+        const num = parseFloat(row.dataset.itemNum);
         try {
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}`,
             { method: 'DELETE' });
@@ -2833,18 +2940,16 @@
       wrap.querySelector('.ep-nombre-save').addEventListener('click', async () => {
         const nuevoNombre = inp.value.trim();
         if (!nuevoNombre) return;
-        const id  = row.dataset.itemId;
-        const num = parseInt(row.dataset.itemNum);
+        const id     = row.dataset.itemId;
+        const num    = parseFloat(row.dataset.itemNum);
+        const newNum = parseInt(wrap.querySelector('.ep-num-input')?.value);
+        const body   = { nombre: nuevoNombre };
+        if (newNum >= 1 && newNum !== num) body.newNum = newNum;
         try {
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/nombre`,
             { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ nombre: nuevoNombre }) });
-          if ((await r.json()).success) {
-            const acta = entregablesData.find(a => a.id === id);
-            const item = acta?.items.find(it => it.num === num);
-            if (item) item.nombre = nuevoNombre;
-            texto.textContent = nuevoNombre;
-          }
+              body: JSON.stringify(body) });
+          if ((await r.json()).success) await loadEntregables();
         } catch {}
         restore();
       });
@@ -2856,17 +2961,21 @@
       const addBtn = e.target.closest('#ep-add-btn');
       if (!addBtn) return;
       const inp    = document.getElementById('ep-add-input');
+      const numInp = document.getElementById('ep-add-num');
       const nombre = inp.value.trim();
       if (!nombre) { inp.focus(); return; }
       const acta   = entregablesData.find(a => a.id === activeId);
       if (!acta) return;
       addBtn.disabled = true; addBtn.textContent = '…';
+      const body = { nombre };
+      const numVal = numInp?.value ? parseInt(numInp.value) : null;
+      if (numVal >= 1) body.num = numVal;
       try {
         const r    = await fetch(`${API}/api/entregables/${encodeURIComponent(activeId)}/items`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre }) });
+            body: JSON.stringify(body) });
         const data = await r.json();
-        if (data.success) { inp.value = ''; await loadEntregables(); }
+        if (data.success) { inp.value = ''; if (numInp) numInp.value = ''; await loadEntregables(); }
       } catch {}
       addBtn.disabled = false; addBtn.textContent = '＋ Agregar';
     });

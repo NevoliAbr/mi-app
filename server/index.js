@@ -236,7 +236,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, nombre, email, password_hash, rol FROM usuarios WHERE email = ? AND activo = 1',
+      'SELECT id, nombre, email, password_hash, rol, color FROM usuarios WHERE email = ? AND activo = 1',
       [email.toLowerCase().trim()]
     );
 
@@ -249,7 +249,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid)
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas.' });
 
-    res.json({ success: true, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol } });
+    res.json({ success: true, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, color: user.color || '#3B82F6' } });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -672,7 +672,7 @@ app.post('/api/entregables/upload', entregUpload.single('archivo'), async (req, 
       const nombre = String(rows[i][1] || '').trim();
       if (!nombre) continue;
       items.push({
-        num: parseInt(rows[i][0]) || i,
+        num: parseFloat(rows[i][0]) || i,
         nombre,
         etapas: {
           creacion:      { completada: false, fecha: null },
@@ -688,6 +688,23 @@ app.post('/api/entregables/upload', entregUpload.single('archivo'), async (req, 
       });
     }
   } catch {}
+
+  // Validar: sin duplicados y en orden ascendente
+  if (items.length) {
+    const nums  = items.map(it => it.num);
+    const dupes = nums.filter((n, i) => nums.indexOf(n) !== i);
+    if (dupes.length) {
+      fs.unlinkSync(destPath);
+      return res.status(400).json({ success: false,
+        error: `Números duplicados en el archivo: ${[...new Set(dupes)].join(', ')}. Corrige el Excel y vuelve a subir.` });
+    }
+    const outOfOrder = nums.some((n, i) => i > 0 && n <= nums[i - 1]);
+    if (outOfOrder) {
+      fs.unlinkSync(destPath);
+      return res.status(400).json({ success: false,
+        error: `Los entregables no están en orden ascendente. Orden encontrado: ${nums.join(', ')}. Corrige el Excel y vuelve a subir.` });
+    }
+  }
 
   const meta = { id, mes, mesNombre, año, proyecto_id, proyectoNombre,
                  ruta: `/entregables/${id}.xlsx`,
@@ -729,7 +746,7 @@ app.get('/api/entregables', (_req, res) => {
               for (let i = 1; i < rows.length; i++) {
                 const nombre = String(rows[i][1] || '').trim();
                 if (!nombre) continue;
-                meta.items.push({ num: parseInt(rows[i][0]) || i, nombre, etapas: ETAPA_INIT() });
+                meta.items.push({ num: parseFloat(rows[i][0]) || i, nombre, etapas: ETAPA_INIT() });
               }
               fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
             }
@@ -787,7 +804,7 @@ app.delete('/api/entregables/:id', (req, res) => {
 app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
-    const num      = parseInt(req.params.num);
+    const num      = parseFloat(req.params.num);
     const { etapa, completada, en_proceso } = req.body;
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
@@ -814,8 +831,9 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
 app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
-    const num      = parseInt(req.params.num);
+    const num      = parseFloat(req.params.num);
     const nombre   = (req.body.nombre || '').trim();
+    const newNum   = req.body.newNum !== undefined ? parseFloat(req.body.newNum) : null;
     if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
@@ -823,6 +841,17 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
     const item = meta.items?.find(it => it.num === num);
     if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
     item.nombre = nombre;
+    if (newNum !== null && !isNaN(newNum) && newNum >= 1 && newNum !== num) {
+      if (newNum > num) {
+        // Baja en la lista: los intermedios (num, newNum] suben un hueco
+        meta.items.forEach(it => { if (it.num !== num && it.num > num && it.num <= newNum) it.num--; });
+      } else {
+        // Sube en la lista: los intermedios [newNum, num) bajan un hueco
+        meta.items.forEach(it => { if (it.num !== num && it.num >= newNum && it.num < num) it.num++; });
+      }
+      item.num = newNum;
+      meta.items.sort((a, b) => a.num - b.num);
+    }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -832,7 +861,7 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
 app.delete('/api/entregables/:id/items/:num', (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
-    const num      = parseInt(req.params.num);
+    const num      = parseFloat(req.params.num);
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
@@ -849,13 +878,21 @@ app.post('/api/entregables/:id/items', (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
     const nombre = (req.body.nombre || '').trim();
+    const numReq = req.body.num !== undefined ? parseFloat(req.body.num) : null;
     if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta   = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-    const nextNum = (meta.items.length ? Math.max(...meta.items.map(it => it.num)) : 0) + 1;
+    let assignedNum;
+    if (numReq && !isNaN(numReq) && numReq >= 1) {
+      if (meta.items.some(it => it.num === numReq))
+        meta.items.forEach(it => { if (it.num >= numReq) it.num++; });
+      assignedNum = numReq;
+    } else {
+      assignedNum = (meta.items.length ? Math.max(...meta.items.map(it => it.num)) : 0) + 1;
+    }
     meta.items.push({
-      num: nextNum, nombre,
+      num: assignedNum, nombre,
       etapas: {
         creacion:      { completada: false, fecha: null },
         revision:      { completada: false, fecha: null },
@@ -868,8 +905,9 @@ app.post('/api/entregables/:id/items', (req, res) => {
         vobo_final:    { completada: false, fecha: null }
       }
     });
+    meta.items.sort((a, b) => a.num - b.num);
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-    res.status(201).json({ success: true, num: nextNum });
+    res.status(201).json({ success: true, num: assignedNum });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -896,7 +934,7 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
   try {
     const id       = decodeURIComponent(req.params.id);
-    const num      = parseInt(req.params.num);
+    const num      = parseFloat(req.params.num);
     const etapa    = req.params.etapa;
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) { fs.unlinkSync(req.file.path); return res.status(404).json({ success: false, error: 'No encontrado.' }); }
@@ -938,7 +976,7 @@ const obsImgUpload = multer({
 app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single('imagen'), (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
-    const num    = parseInt(req.params.num);
+    const num    = parseFloat(req.params.num);
     const texto  = (req.body.texto || '').trim();
     const imagen = req.file ? `/entregables/obs-imgs/${req.file.filename}` : null;
     if (!texto && !imagen) {
@@ -969,7 +1007,7 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
 app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
-    const num    = parseInt(req.params.num);
+    const num    = parseFloat(req.params.num);
     const obsIdx = parseInt(req.params.obsIdx);
     const { estado } = req.body;
     if (!['aceptada', 'rechazada'].includes(estado))
@@ -1362,6 +1400,15 @@ app.patch('/api/kanban/tasks/:id', async (req, res) => {
       await pool.execute(`UPDATE kanban_tasks SET ${sets.join(', ')} WHERE id = ?`, vals);
     }
     if (involucrados !== undefined) await syncInvolucrados(pool, parseInt(req.params.id), involucrados);
+    if (stage_id !== undefined && stage_id) {
+      const [stRows] = await pool.execute('SELECT es_final FROM kanban_stages WHERE id = ?', [parseInt(stage_id)]);
+      const today = new Date().toISOString().split('T')[0];
+      if (stRows[0]?.es_final) {
+        await pool.execute('UPDATE kanban_tasks SET completado_en = ? WHERE id = ? AND completado_en IS NULL', [today, parseInt(req.params.id)]);
+      } else {
+        await pool.execute('UPDATE kanban_tasks SET completado_en = NULL WHERE id = ?', [parseInt(req.params.id)]);
+      }
+    }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1539,6 +1586,47 @@ app.post('/api/kanban/tasks/:id/sessions', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+/* ── Color de usuario ───────────────────────────── */
+app.get('/api/usuarios/colores', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT id, color FROM usuarios WHERE color IS NOT NULL AND activo = 1');
+    res.json({ success: true, colores: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.patch('/api/usuarios/:id/color', async (req, res) => {
+  const { color } = req.body;
+  if (!color || !/^#[0-9A-Fa-f]{6}$/.test(color))
+    return res.status(400).json({ success: false, error: 'Color inválido.' });
+  try {
+    const pool = await getPool();
+    const uid = parseInt(req.params.id);
+    const [used] = await pool.execute('SELECT id FROM usuarios WHERE color = ? AND id != ? AND activo = 1', [color, uid]);
+    if (used.length) return res.status(409).json({ success: false, error: 'Ese color ya está en uso por otro usuario.' });
+    await pool.execute('UPDATE usuarios SET color = ? WHERE id = ?', [color, uid]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Informe Kanban por persona ─────────────────── */
+app.get('/api/kanban/informe', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [tasks] = await pool.execute(`
+      SELECT kt.id, kt.titulo, kt.modulo, kt.prioridad, kt.fecha_limite, kt.completado_en,
+             kt.stage_id, kt.board_id, ks.nombre AS stage_nombre, ks.es_final, ks.orden AS stage_orden
+      FROM kanban_tasks kt
+      LEFT JOIN kanban_stages ks ON ks.id = kt.stage_id
+      WHERE kt.activo = 1
+      ORDER BY kt.id DESC`);
+    const [users]       = await pool.execute("SELECT id, nombre, color FROM usuarios WHERE activo = 1 ORDER BY nombre");
+    const [involucrados]= await pool.execute('SELECT task_id, usuario_id FROM kanban_task_involucrados');
+    const [stages]      = await pool.execute('SELECT id, board_id, orden FROM kanban_stages WHERE activo = 1 ORDER BY board_id, orden');
+    res.json({ success: true, tasks, users, involucrados, stages });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Kanban Tasks: subir PDF ─────────────────────── */
 const kanbanPdfDir = path.join(__dirname, 'kanban-pdfs');
 if (!fs.existsSync(kanbanPdfDir)) fs.mkdirSync(kanbanPdfDir, { recursive: true });
@@ -1630,6 +1718,26 @@ async function ensureColumns() {
         : 'ALTER TABLE kanban_sessions ADD subido_por INT NULL';
       await pool.execute(sql, []);
       console.log('✔ Columna subido_por añadida a kanban_sessions');
+    }
+
+    // color en usuarios
+    try { await pool.execute('SELECT color FROM usuarios WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? "ALTER TABLE usuarios ADD COLUMN color VARCHAR(7) NULL DEFAULT '#3B82F6'"
+        : "ALTER TABLE usuarios ADD color NVARCHAR(7) NULL DEFAULT '#3B82F6'";
+      await pool.execute(sql, []);
+      console.log('✔ Columna color añadida a usuarios');
+    }
+
+    // completado_en en kanban_tasks
+    try { await pool.execute('SELECT completado_en FROM kanban_tasks WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? 'ALTER TABLE kanban_tasks ADD COLUMN completado_en DATE NULL'
+        : 'ALTER TABLE kanban_tasks ADD completado_en DATE NULL';
+      await pool.execute(sql, []);
+      console.log('✔ Columna completado_en añadida a kanban_tasks');
     }
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }
 }

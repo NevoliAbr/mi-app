@@ -169,6 +169,48 @@ ACCIÓN: solo reiniciar la app en Plesk después del push.
 
 
 ──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-04-30  (color de usuario + informe kanban)
+──────────────────────────────────────────────────────────────
+
+-- Color de perfil en usuarios
+ALTER TABLE usuarios ADD COLUMN color VARCHAR(7) NULL DEFAULT '#3B82F6';
+
+-- Fecha de completado en tareas kanban
+ALTER TABLE kanban_tasks ADD COLUMN completado_en DATE NULL;
+
+ACCIÓN: reiniciar la app — ensureColumns() las agrega automáticamente,
+        pero estos queries son el respaldo manual si falla.
+
+
+──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-05-06
+──────────────────────────────────────────────────────────────
+
+Sin queries. Todos los cambios son de código:
+
+  index.html
+  - Informe ejecutivo (btn evt-informe): reescrito para mostrar
+    una tarjeta por mes con conteo por etapa. La etapa de cada
+    entregable es el ÚLTIMO stage completado (verde), no el
+    primero pendiente. "Sin iniciar" = nada completado aún.
+  - Porcentaje de avance y total de entregables visibles en
+    cada tarjeta de mes.
+
+  server/index.js + index.html (entregables)
+  - Edición inline ahora incluye campo numérico (#) para cambiar
+    el número de un entregable; si el número ya existe, los
+    intermedios se renumeran automáticamente (bidireccional).
+  - Formulario de agregar también acepta número opcional; si ya
+    existe ese número, los siguientes se desplazan hacia abajo.
+  - Soporte para sub-números decimales: 3.1, 3.2, etc.
+    (parseInt → parseFloat en server y cliente).
+  - Validación en carga de xlsx: rechaza el archivo si hay
+    números duplicados o fuera de orden ascendente.
+
+ACCIÓN: solo reiniciar la app en Plesk después del push.
+
+
+──────────────────────────────────────────────────────────────
   DEPLOY: AAAA-MM-DD  <- copiar este bloque para futuros deploys
 ──────────────────────────────────────────────────────────────
 
