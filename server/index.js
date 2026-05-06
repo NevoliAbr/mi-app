@@ -1754,6 +1754,6 @@ async function ensureColumns() {
     }
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }
 }
-ensureColumns();
-
-app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
+ensureColumns().then(() => {
+  app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
+});
