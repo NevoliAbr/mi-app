@@ -249,7 +249,14 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid)
       return res.status(401).json({ success: false, error: 'Credenciales incorrectas.' });
 
-    res.json({ success: true, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, color: user.color || '#3B82F6' } });
+    let color = user.color;
+    if (!color) {
+      const PRESET_COLORS = ['#3B82F6','#005D97','#10B981','#8B5CF6','#F59E0B','#EF4444','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#06B6D4'];
+      color = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
+      await pool.execute('UPDATE usuarios SET color = ? WHERE id = ?', [color, user.id]);
+    }
+
+    res.json({ success: true, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, color } });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
