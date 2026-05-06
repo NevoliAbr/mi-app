@@ -2943,7 +2943,7 @@
         const id     = row.dataset.itemId;
         const num    = parseFloat(row.dataset.itemNum);
         const newNum = parseFloat(wrap.querySelector('.ep-num-input')?.value);
-        const body   = { nombre: nuevoNombre };
+        const body   = { oldNombre: current, nombre: nuevoNombre };
         if (newNum >= 1 && newNum !== num) body.newNum = newNum;
         try {
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/nombre`,

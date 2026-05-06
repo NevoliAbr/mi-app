@@ -833,12 +833,14 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
     const nombre   = (req.body.nombre || '').trim();
-    const newNum   = req.body.newNum !== undefined ? parseFloat(req.body.newNum) : null;
+    const newNum    = req.body.newNum !== undefined ? parseFloat(req.body.newNum) : null;
+    const oldNombre = (req.body.oldNombre || '').trim();
     if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-    const item = meta.items?.find(it => it.num === num);
+    const item = (oldNombre ? meta.items?.find(it => it.num === num && it.nombre === oldNombre) : null)
+              ?? meta.items?.find(it => it.num === num);
     if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
     item.nombre = nombre;
     if (newNum !== null && !isNaN(newNum) && newNum >= 1 && newNum !== num) {
