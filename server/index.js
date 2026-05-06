@@ -842,12 +842,16 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
     if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
     item.nombre = nombre;
     if (newNum !== null && !isNaN(newNum) && newNum >= 1 && newNum !== num) {
-      if (newNum > num) {
-        // Baja en la lista: los intermedios (num, newNum] suben un hueco
-        meta.items.forEach(it => { if (it.num !== num && it.num > num && it.num <= newNum) it.num--; });
-      } else {
-        // Sube en la lista: los intermedios [newNum, num) bajan un hueco
-        meta.items.forEach(it => { if (it.num !== num && it.num >= newNum && it.num < num) it.num++; });
+      // Resolve pre-existing duplicate nums before shifting
+      meta.items.sort((a, b) => a.num - b.num);
+      for (let i = 1; i < meta.items.length; i++) {
+        if (meta.items[i].num <= meta.items[i - 1].num) meta.items[i].num = meta.items[i - 1].num + 1;
+      }
+      const cur = item.num; // may differ from `num` if dedup changed it
+      if (newNum > cur) {
+        meta.items.forEach(it => { if (it.num !== cur && it.num > cur && it.num <= newNum) it.num--; });
+      } else if (newNum < cur) {
+        meta.items.forEach(it => { if (it.num !== cur && it.num >= newNum && it.num < cur) it.num++; });
       }
       item.num = newNum;
       meta.items.sort((a, b) => a.num - b.num);

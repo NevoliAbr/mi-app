@@ -2942,7 +2942,7 @@
         if (!nuevoNombre) return;
         const id     = row.dataset.itemId;
         const num    = parseFloat(row.dataset.itemNum);
-        const newNum = parseInt(wrap.querySelector('.ep-num-input')?.value);
+        const newNum = parseFloat(wrap.querySelector('.ep-num-input')?.value);
         const body   = { nombre: nuevoNombre };
         if (newNum >= 1 && newNum !== num) body.newNum = newNum;
         try {
