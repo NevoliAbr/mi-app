@@ -1083,7 +1083,7 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     const id     = decodeURIComponent(req.params.id);
     const num    = parseFloat(req.params.num);
     const obsIdx = parseInt(req.params.obsIdx);
-    const { estado } = req.body;
+    const { estado, usuario_nombre } = req.body;
     if (!['aceptada', 'rechazada'].includes(estado))
       return res.status(400).json({ success: false, error: 'Estado inválido.' });
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
@@ -1094,6 +1094,13 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     const obs = item.etapas.vobo.observaciones[obsIdx];
     if (!obs) return res.status(404).json({ success: false, error: 'Observación no encontrada.' });
     obs.estado = estado;
+    if (estado === 'aceptada') {
+      obs.aceptado_por = usuario_nombre || null;
+      obs.aceptado_en  = new Date().toISOString();
+    } else {
+      obs.aceptado_por = null;
+      obs.aceptado_en  = null;
+    }
     if (estado === 'rechazada') {
       item.etapas.revision.en_proceso = false;
       item.etapas.creacion.completada = false;
