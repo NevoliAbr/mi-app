@@ -36,6 +36,7 @@ SMTP_USER=Services@pmo.lcg.mx
 SMTP_PASS=41_0xmwE6
 SMTP_FROM=Services@pmo.lcg.mx
 APP_URL=https://<tu-dominio>
+APP_ENV=production
 
 NOTA: El archivo .env local usa SQL Server. En Plesk NUNCA
       copiar el .env local — usar solo las variables de arriba.
@@ -208,6 +209,42 @@ Sin queries. Todos los cambios son de código:
     números duplicados o fuera de orden ascendente.
 
 ACCIÓN: solo reiniciar la app en Plesk después del push.
+
+
+──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-05-06  (módulos dinámicos en task board)
+──────────────────────────────────────────────────────────────
+
+-- Tabla de módulos (ensureColumns() la crea automáticamente al reiniciar)
+-- Si falla ensureColumns, ejecutar manualmente:
+
+CREATE TABLE IF NOT EXISTS kanban_modules (
+  id     INT AUTO_INCREMENT PRIMARY KEY,
+  clave  VARCHAR(50)  NOT NULL UNIQUE,
+  nombre VARCHAR(100) NOT NULL,
+  color  VARCHAR(7)   NOT NULL DEFAULT '#64748B',
+  orden  INT          NOT NULL DEFAULT 0,
+  activo TINYINT      NOT NULL DEFAULT 1
+);
+
+INSERT IGNORE INTO kanban_modules (clave, nombre, color, orden) VALUES
+  ('caja','Caja','#0F766E',0),
+  ('recaudacion','Recaudación','#0369A1',1),
+  ('predio','Predio','#7C3AED',2),
+  ('catastro','Catastro','#B45309',3),
+  ('control_vehicular','Control Vehicular','#DC2626',4),
+  ('adquisiciones','Adquisiciones','#059669',5),
+  ('presupuestos','Presupuestos','#1E293B',6),
+  ('generales','Generales','#1D4ED8',7),
+  ('tramites','Trámites','#6D28D9',8),
+  ('nr_web','Nic. Romero Web','#5B21B6',9),
+  ('nr_escritorio','Nic. Romero Escritorio','#92400E',10),
+  ('predio_web','Predio Web','#0F766E',11),
+  ('obra_publica','Obra Pública','#C2410C',12),
+  ('tesoreria','Tesorería','#1E40AF',13);
+
+ACCIÓN: reiniciar la app — ensureColumns() crea la tabla y siembra
+        los módulos automáticamente.
 
 
 ──────────────────────────────────────────────────────────────

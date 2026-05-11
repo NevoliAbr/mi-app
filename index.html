@@ -24,21 +24,35 @@
 
     /* ── NAVBAR ─────────────────────────────── */
     nav {
-      background-color: #005D97;
-      padding: 16px 40px;
+      background: linear-gradient(90deg, #003f6b 0%, #005D97 55%, #006aae 100%);
+      padding: 0 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 70px;
+      height: 64px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.3);
+      border-bottom: 1px solid rgba(255,255,255,.07);
     }
     .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .logo-img { height:46px; width:46px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
-    .nav-menu { list-style:none; display:flex; align-items:center; gap:28px; }
+    .logo-img { height:42px; width:42px; object-fit:contain; border-radius:10px; background:#fff; padding:4px; display:block; }
+    .nav-menu { list-style:none; display:flex; align-items:center; gap:2px; }
     .nav-menu li a {
-      color:white; text-decoration:none; font-size:14px; font-weight:700;
-      letter-spacing:.3px; transition:opacity .15s;
+      color: rgba(255,255,255,.82);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .9px;
+      text-transform: uppercase;
+      padding: 7px 13px;
+      border-radius: 6px;
+      transition: background .15s, color .15s;
     }
-    .nav-menu li a:hover { opacity:.8; text-decoration:underline; }
+    .nav-menu li a:hover {
+      background: rgba(255,255,255,.13);
+      color: #fff;
+      opacity: 1;
+      text-decoration: none;
+    }
     #btn4 {
       color:rgba(255,255,255,.35); font-size:20px; font-weight:300;
       cursor:default; user-select:none;
@@ -1048,27 +1062,26 @@
     }
     .informe-stat-val  { font-size:28px; font-weight:900; color:#fff; line-height:1; }
     .informe-stat-lbl  { font-size:10px; font-weight:800; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.7px; margin-top:6px; }
-    .inf-stage-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
-    .inf-mes-card   {
+    .informe-mes-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+    .informe-mes-card  {
       background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-      border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:12px;
+      border-radius:14px; padding:20px 22px; display:flex; flex-direction:column; gap:14px;
     }
-    .inf-mes-hdr    { display:flex; align-items:center; justify-content:space-between; }
-    .inf-mes-lbl    { font-size:15px; font-weight:900; color:#fff; display:block; }
-    .inf-mes-sub    { font-size:10px; font-weight:700; color:rgba(255,255,255,.35); display:block; margin-top:2px; }
-    .inf-mes-total  { font-size:22px; font-weight:900; color:#00AEEF; }
-    .inf-proj       { font-size:10px; font-weight:600; opacity:.5; }
-    .inf-mes-rows   { display:flex; flex-direction:column; gap:5px; }
-    .inf-row        { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:rgba(255,255,255,.04); border-radius:7px; }
-    .inf-row-done    { background:rgba(16,185,129,.1); }
-    .inf-row-pending { background:rgba(253,224,71,.1); }
-    .inf-row-pending .inf-row-lbl { color:#FDE047; }
-    .inf-row-pending .inf-row-cnt { color:#FDE047; }
-    .inf-row-lbl    { font-size:11px; font-weight:700; color:rgba(255,255,255,.6); }
-    .inf-row-cnt    { font-size:14px; font-weight:900; color:#fff; }
-    .inf-row-done .inf-row-lbl { color:#34D399; }
-    .inf-row-done .inf-row-cnt { color:#34D399; }
-    .informe-footer { font-size:10px; color:rgba(255,255,255,.2); font-weight:600; text-align:right; padding:0 2px; }
+    .imc-header { display:flex; align-items:center; justify-content:space-between; }
+    .imc-mes    { font-size:16px; font-weight:900; color:#fff; }
+    .imc-pct    { font-size:24px; font-weight:900; color:#00AEEF; }
+    .imc-bar-wrap { height:6px; background:rgba(255,255,255,.08); border-radius:3px; }
+    .imc-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#005D97,#00AEEF); transition:width .4s; }
+    .imc-stats  { display:flex; gap:16px; }
+    .imc-stat   { font-size:11px; font-weight:700; color:rgba(255,255,255,.5); }
+    .imc-stat strong { color:#fff; font-size:13px; }
+    .imc-etapas { display:flex; flex-direction:column; gap:7px; }
+    .imc-etapa-row { display:grid; grid-template-columns:110px 1fr 30px; align-items:center; gap:8px; }
+    .imc-etapa-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.4px; }
+    .imc-etapa-bar { height:4px; background:rgba(255,255,255,.08); border-radius:2px; }
+    .imc-etapa-fill{ height:100%; border-radius:2px; background:#005D97; transition:width .3s; }
+    .imc-etapa-val { font-size:10px; font-weight:800; color:rgba(255,255,255,.5); text-align:right; }
+    .informe-footer{ font-size:10px; color:rgba(255,255,255,.2); font-weight:600; text-align:right; padding:0 2px; }
 
     /* ── Vista presentación ── */
     .pres-wrap {
@@ -1157,9 +1170,9 @@
       .avisos-page-wrap { padding: 20px 0 32px; }
     }
     @media (max-width:640px) {
-      nav { padding:12px 20px; height:auto; flex-wrap:wrap; gap:10px; }
-      .nav-menu { gap:14px; flex-wrap:wrap; justify-content:flex-end; }
-      .nav-menu li a { font-size:12px; }
+      nav { padding:10px 16px; height:auto; flex-wrap:wrap; gap:8px; }
+      .nav-menu { gap:2px; flex-wrap:wrap; justify-content:flex-end; }
+      .nav-menu li a { font-size:10px; padding:6px 10px; letter-spacing:.6px; }
       #iniciar-sesion { padding:7px 18px; font-size:11px; }
       .hero h1 { letter-spacing:-1px; }
       .cta-btn { padding:15px 36px; font-size:13px; letter-spacing:2px; }
@@ -1181,7 +1194,7 @@
       <li id="nav-btn2" style="display:none"><a href="avisos.html" id="btn2">Crear Avisos</a></li>
       <li id="nav-btn-entregables" style="display:none"><a href="entregables.html" id="btn-entregables">Carga de entregables</a></li>
       <li id="nav-btn-perfil"    style="display:none"><a href="perfil.html">Perfil</a></li>
-      <li id="nav-btn-analitica" style="display:none"><a href="analitica.html">Dashboard de Entregables</a></li>
+      <li id="nav-btn-analitica" style="display:none"><a href="analitica.html">Dashboards</a></li>
       <li id="nav-btn-task"     style="display:none"><a href="task.html">📋 Tasks</a></li>
       <li id="nav-btn3" style="display:none"><a href="#" id="btn3">Descargar</a></li>
       <li id="auth-sep"><span id="btn4">|</span></li>
@@ -1240,6 +1253,9 @@
           <span class="entreg-year-badge" id="entreg-year-badge">Año: —</span>
           <select id="entreg-select-proyecto" class="entreg-proyecto-select">
             <option value="">— Proyecto —</option>
+          </select>
+          <select id="entreg-select-mes" class="entreg-proyecto-select">
+            <option value="">— Mes —</option>
           </select>
         </div>
         <div style="display:flex;align-items:center;gap:16px;">
@@ -2550,6 +2566,7 @@
 
     let entregablesData    = [];
     let allEntregablesData = [];
+    let mesFilter          = null;
     let allProyectosData   = [];
     let activeId           = null;
     let voboCurrent        = null;
@@ -2582,6 +2599,21 @@
     function prevDone(etapas, idx) {
       normEtapas(etapas);
       return idx === 0 || etapas[ETAPAS[idx - 1].key].completada;
+    }
+
+    function renderMonthPills() {
+      const sorted      = [...entregablesData].sort((a, b) => a.mes - b.mes);
+      const esSu        = currentUserRol === 'superusuario';
+      const mostrarProy = !document.getElementById('entreg-select-proyecto').value;
+      const actasVisibles = mesFilter ? sorted.filter(e => e.mes == mesFilter) : sorted;
+      document.getElementById('entreg-months').innerHTML = actasVisibles.map(e =>
+        `<span class="epm-item">
+          <button class="epm-btn${activeId === e.id ? ' active' : ''}" data-id="${escH(e.id)}">
+            ${e.mesNombre}${mostrarProy && e.proyectoNombre ? ` · ${escH(e.proyectoNombre)}` : ''}
+          </button>
+          ${esSu ? `<button class="epm-del" data-id="${escH(e.id)}" title="Eliminar">✕</button>` : ''}
+        </span>`
+      ).join('');
     }
 
     function renderEntregables() {
@@ -2739,19 +2771,24 @@
           renderEntregables();
           return;
         }
-        const sorted = [...entregablesData].sort((a, b) => a.mes - b.mes);
-        if (!activeId || !entregablesData.find(e => e.id === activeId))
-          activeId = sorted[0].id;
+        const sorted      = [...entregablesData].sort((a, b) => a.mes - b.mes);
         const esSu        = currentUserRol === 'superusuario';
         const mostrarProy = !proyFiltro;
-        monthsEl.innerHTML = sorted.map(e =>
-          `<span class="epm-item">
-            <button class="epm-btn${activeId === e.id ? ' active' : ''}" data-id="${escH(e.id)}">
-              ${e.mesNombre}${mostrarProy && e.proyectoNombre ? ` · ${escH(e.proyectoNombre)}` : ''}
-            </button>
-            ${esSu ? `<button class="epm-del" data-id="${escH(e.id)}" title="Eliminar">✕</button>` : ''}
-          </span>`
-        ).join('');
+
+        // Select de mes: opciones únicas por número de mes
+        const selMes = document.getElementById('entreg-select-mes');
+        const uniqueMeses = [...new Map(sorted.map(e => [e.mes, e.mesNombre])).entries()].sort((a,b) => a[0]-b[0]);
+        selMes.innerHTML = '<option value="">— Mes —</option>' +
+          uniqueMeses.map(([mes, mesNombre]) => `<option value="${mes}">${mesNombre}</option>`).join('');
+        if (mesFilter && uniqueMeses.find(([m]) => m == mesFilter)) selMes.value = mesFilter;
+        else { mesFilter = null; selMes.value = ''; }
+
+        // Actas visibles según filtro de mes
+        const actasVisibles = mesFilter ? sorted.filter(e => e.mes == mesFilter) : sorted;
+        if (!activeId || !actasVisibles.find(e => e.id === activeId))
+          activeId = actasVisibles[0]?.id || sorted[0]?.id;
+
+        renderMonthPills();
         renderEntregables();
       } catch {}
     }
@@ -2769,6 +2806,12 @@
     document.getElementById('entreg-select-proyecto').addEventListener('change', () => {
       activeId = null;
       updateProyectoInfoPanel();
+      loadEntregables();
+    });
+
+    document.getElementById('entreg-select-mes').addEventListener('change', function () {
+      mesFilter = this.value ? parseInt(this.value) : null;
+      activeId  = null;
       loadEntregables();
     });
 
@@ -2795,64 +2838,50 @@
         wrap.innerHTML = `<div class="entreg-empty-state"><span class="ei">📊</span>No hay datos para generar el informe.</div>`;
         return;
       }
-
       const sorted = [...entregablesData].sort((a,b) => a.mes - b.mes);
-      let totalItems = 0, totalComp = 0;
+      const totalItems = sorted.reduce((s,a) => s + (a.items?.length||0), 0);
+      const totalComp  = sorted.reduce((s,a) => s + (a.items||[]).filter(it => etapaProgress(it.etapas)===100).length, 0);
+      const globalAvg  = totalItems
+        ? Math.round(sorted.reduce((s,a) => s + (a.items||[]).reduce((ss,it) => ss + etapaProgress(it.etapas), 0), 0) / totalItems)
+        : 0;
       const fecha = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
 
       const mesCards = sorted.map(acta => {
         const items = acta.items || [];
-        if (!items.length) return '';
-
-        // Count items per current stage
-        const counts = new Array(ETAPAS.length + 1).fill(0);
-        let sinIniciar = 0;
-        for (const item of items) {
-          normEtapas(item.etapas);
-          // Último stage completado (verde)
-          let lastDone = -1;
-          for (let i = 0; i < ETAPAS.length; i++) {
-            if (item.etapas[ETAPAS[i].key]?.completada) lastDone = i; else break;
-          }
-          if (lastDone === -1) {
-            sinIniciar++;
-          } else if (lastDone === ETAPAS.length - 1) {
-            counts[ETAPAS.length]++; // completados
-          } else {
-            counts[lastDone]++;
-          }
-        }
-        totalItems += items.length;
-        totalComp  += counts[ETAPAS.length];
-        const avg = Math.round(items.reduce((s, it) => s + etapaProgress(it.etapas), 0) / items.length);
-
-        const sinIniciarRow = `<div class="inf-row inf-row-pending">
-          <span class="inf-row-lbl">Sin iniciar</span>
-          <span class="inf-row-cnt">${sinIniciar}/${items.length}</span>
-        </div>`;
-        const rows = [...Array(ETAPAS.length + 1).keys()]
-          .map(idx => {
-            const isDone = idx === ETAPAS.length;
-            const label  = isDone ? 'Completados' : ETAPA_LABELS[idx];
-            const cnt    = counts[idx];
-            return `<div class="inf-row${isDone ? ' inf-row-done' : ''}">
-              <span class="inf-row-lbl">${label}</span>
-              <span class="inf-row-cnt">${cnt}/${items.length}</span>
-            </div>`;
-          }).join('');
-
-        const mesLabel = acta.mesNombre + (acta.proyectoNombre ? ` <span class="inf-proj">· ${escH(acta.proyectoNombre)}</span>` : '');
-        return `<div class="inf-mes-card">
-          <div class="inf-mes-hdr">
-            <div><span class="inf-mes-lbl">${mesLabel}</span><span class="inf-mes-sub">${items.length} entregables</span></div>
-            <span class="inf-mes-total">${avg}%</span>
+        const n     = items.length;
+        if (!n) return '';
+        const avg  = Math.round(items.reduce((s,it) => s + etapaProgress(it.etapas), 0) / n);
+        const comp = items.filter(it => etapaProgress(it.etapas) === 100).length;
+        const etapaRows = ETAPAS.map((et, idx) => {
+          const done = items.filter(it => it.etapas[et.key].completada).length;
+          const pct  = Math.round(done / n * 100);
+          return `<div class="imc-etapa-row">
+            <span class="imc-etapa-lbl">${ETAPA_LABELS[idx]}</span>
+            <div class="imc-etapa-bar"><div class="imc-etapa-fill" style="width:${pct}%"></div></div>
+            <span class="imc-etapa-val">${done}/${n}</span>
+          </div>`;
+        }).join('');
+        return `<div class="informe-mes-card">
+          <div class="imc-header">
+            <span class="imc-mes">${acta.mesNombre}${acta.proyectoNombre ? ` <span style="font-size:10px;font-weight:600;opacity:.6">· ${escH(acta.proyectoNombre)}</span>` : ''}</span>
+            <span class="imc-pct">${avg}%</span>
           </div>
-          <div class="inf-mes-rows">${sinIniciarRow}${rows}</div>
+          <div class="imc-bar-wrap"><div class="imc-bar-fill" style="width:${avg}%"></div></div>
+          <div class="imc-stats">
+            <span class="imc-stat"><strong>${n}</strong> entregables</span>
+            <span class="imc-stat"><strong>${comp}</strong> completados</span>
+            <span class="imc-stat"><strong>${n - comp}</strong> en proceso</span>
+          </div>
+          <div class="imc-etapas">${etapaRows}</div>
         </div>`;
       }).join('');
 
       wrap.innerHTML = `
         <div class="informe-resumen">
+          <div class="informe-stat">
+            <div class="informe-stat-val">${globalAvg}%</div>
+            <div class="informe-stat-lbl">Avance global</div>
+          </div>
           <div class="informe-stat">
             <div class="informe-stat-val">${totalItems}</div>
             <div class="informe-stat-lbl">Total entregables</div>
@@ -2862,11 +2891,11 @@
             <div class="informe-stat-lbl">Completados</div>
           </div>
           <div class="informe-stat">
-            <div class="informe-stat-val">${totalItems - totalComp}</div>
-            <div class="informe-stat-lbl">En proceso</div>
+            <div class="informe-stat-val">${sorted.length}</div>
+            <div class="informe-stat-lbl">Meses cargados</div>
           </div>
         </div>
-        <div class="inf-stage-grid">${mesCards}</div>
+        <div class="informe-mes-grid">${mesCards}</div>
         <div class="informe-footer">Generado el ${fecha}</div>`;
     }
 
@@ -2890,8 +2919,12 @@
       const btn = e.target.closest('.epm-btn');
       if (!btn) return;
       activeId = btn.dataset.id;
-      document.querySelectorAll('.epm-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      const acta = entregablesData.find(a => a.id === activeId);
+      if (acta) {
+        mesFilter = acta.mes;
+        document.getElementById('entreg-select-mes').value = mesFilter;
+      }
+      renderMonthPills();
       renderEntregables();
     });
 
@@ -2981,6 +3014,9 @@
     });
 
     /* Clicks en etapas */
+    const CARPETA_ALLOWED = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx'];
+    function sessionUser() { try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch { return {}; } }
+
     document.getElementById('entreg-tbody').addEventListener('click', async e => {
       const obsBtn = e.target.closest('.vobo-obs-btn');
       if (obsBtn) { openVoboModal(obsBtn.dataset.id, parseInt(obsBtn.dataset.num), obsBtn.dataset.nombre); return; }
@@ -3141,7 +3177,7 @@ if (btn.dataset.pdf === 'true') {
           // Segundo click → completar
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
             { method:'PATCH', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ etapa:'creacion', completada:true, en_proceso:false }) });
+              body: JSON.stringify({ etapa:'creacion', completada:true, en_proceso:false, usuario_email: sessionUser().email }) });
           if ((await r.json()).success) {
             ec.completada=true; ec.fecha=new Date().toISOString(); ec.en_proceso=false;
             renderEntregables();
@@ -3166,6 +3202,18 @@ if (btn.dataset.pdf === 'true') {
 
       /* toggle etapa simple o VOBO */
       const nowDone = !item.etapas[etapa].completada;
+
+      // Restricción Carpeta y Dig.: solo usuarios autorizados
+      if (etapa === 'carpeta' && nowDone) {
+        const su = sessionUser();
+        if (!CARPETA_ALLOWED.includes((su.email || '').toLowerCase())) {
+          Swal.fire({ icon:'error', title:'Sin permiso',
+            text:'Solo Elisa Mendez o Daniel Arias pueden completar Carpeta y Dig.',
+            confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+          return;
+        }
+      }
+
       if (!nowDone && hayPosterioresCompletas(etapa)) {
         const siguiente = ETAPAS.slice(ETAPAS.findIndex(e => e.key === etapa) + 1)
           .find(e => item.etapas[e.key]?.completada);
@@ -3173,10 +3221,16 @@ if (btn.dataset.pdf === 'true') {
         alert(`Debes desmarcar primero las etapas de mayor avance.\nPrimero desmarca: ${sigLabel}.`);
         return;
       }
-      const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+      const r    = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
         { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ etapa, completada: nowDone }) });
-      if ((await r.json()).success) {
+          body: JSON.stringify({ etapa, completada: nowDone, usuario_email: sessionUser().email }) });
+      const rData = await r.json();
+      if (r.status === 403) {
+        Swal.fire({ icon:'error', title:'Sin permiso', text: rData.error,
+          confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+        return;
+      }
+      if (rData.success) {
         item.etapas[etapa].completada = nowDone;
         item.etapas[etapa].fecha      = nowDone ? new Date().toISOString() : null;
         if (etapa === 'vobo' && nowDone) item.etapas.vobo.rechazado = false;

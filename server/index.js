@@ -18,6 +18,13 @@ const transporter = nodemailer.createTransport({
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 });
 
+// En producción usa los destinatarios reales; en pruebas redirige todo a nevoli
+const IS_PROD = process.env.APP_ENV === 'production';
+function notifyTo(emails) {
+  if (IS_PROD) return emails;
+  return 'nevoli.gonzalez@lcg.mx';
+}
+
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
@@ -812,12 +819,20 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
-    const { etapa, completada, en_proceso } = req.body;
+    const { etapa, completada, en_proceso, usuario_email } = req.body;
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const item = meta.items?.find(it => it.num === num);
     if (!item) return res.status(400).json({ success: false, error: 'Inválido.' });
+
+    // Restricción: solo Elisa o Daniel pueden completar Carpeta y Dig.
+    const CARPETA_ALLOWED = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx'];
+    if (etapa === 'carpeta' && completada === true) {
+      if (!usuario_email || !CARPETA_ALLOWED.includes(usuario_email.toLowerCase()))
+        return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Daniel Arias pueden completar Carpeta y Dig.' });
+    }
+
     // Migrar etapas faltantes en el item
     if (!item.etapas.creacion)   item.etapas = { creacion: { completada: false, fecha: null }, ...item.etapas };
     if (!item.etapas.vobo_final) item.etapas.vobo_final = { completada: false, fecha: null };
@@ -830,6 +845,44 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     if (!item.etapas[etapa].fecha_cambio && (completada || en_proceso === true))
       item.etapas[etapa].fecha_cambio = new Date().toISOString();
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+    // Correos de notificación (no bloquean la respuesta)
+    if (completada) {
+      const proy = meta.proyectoNombre || meta.mesNombre || '';
+      const to3  = ['elisa.mendez@lcg.mx', 'moises.quintero@lcg.mx', 'daniel.arias@lcg.mx'];
+      const mailMap = {
+        creacion: {
+          to: notifyTo('elisa.mendez@lcg.mx'),
+          subject: 'Elaboración terminada – Favor de revisar',
+          html: `<p>El archivo en elaboración ha sido terminado. Favor de revisar.</p>
+                 <p><strong>Entregable:</strong> ${item.nombre}<br><strong>Número:</strong> ${item.num}</p>`
+        },
+        firma_interna: {
+          to: notifyTo(to3),
+          subject: `Entregable #${item.num} salió de Firma Interna`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Interna</strong>.</p>`
+        },
+        firma_externa: {
+          to: notifyTo(to3),
+          subject: `Entregable #${item.num} salió de Firma Externa`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Externa</strong>.</p>`
+        },
+        carpeta: {
+          to: notifyTo('elisa.mendez@lcg.mx'),
+          subject: `Carpeta y digitalización terminada – ${proy} #${item.num}`,
+          html: `<p>Carpeta y digitalización del proyecto <strong>${proy}</strong> con número <strong>#${item.num}</strong> se ha elaborado y terminado.</p>`
+        },
+        acuse: {
+          to: notifyTo('elisa.mendez@lcg.mx'),
+          subject: `Acuse pendiente de VoBo – ${item.nombre} #${item.num}`,
+          html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
+        }
+      };
+      const opts = mailMap[etapa];
+      if (opts) transporter.sendMail({ from: process.env.SMTP_FROM, ...opts })
+                            .catch(err => console.warn('⚠ Email etapa:', err.message));
+    }
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -968,6 +1021,14 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
     if (!item.etapas[etapa].fecha_cambio) item.etapas[etapa].fecha_cambio = new Date().toISOString();
     if (etapa === 'revision') item.etapas.vobo.rechazado = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    if (etapa === 'acuse') {
+      transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: notifyTo('elisa.mendez@lcg.mx'),
+        subject: `Acuse pendiente de VoBo – ${item.nombre} #${item.num}`,
+        html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
+      }).catch(err => console.warn('⚠ Email acuse PDF:', err.message));
+    }
     res.json({ success: true, pdf: ruta });
   } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1544,6 +1605,57 @@ app.delete('/api/kanban/stages/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success:false, error:err.message }); }
 });
 
+/* ── Kanban Modules ─────────────────────────────── */
+app.get('/api/kanban/modules', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT * FROM kanban_modules ORDER BY orden, id');
+    res.json({ success: true, modules: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.post('/api/kanban/modules', async (req, res) => {
+  const { nombre, color } = req.body;
+  if (!nombre?.trim()) return res.status(400).json({ success: false, error: 'Nombre requerido.' });
+  try {
+    const pool  = await getPool();
+    const clave = nombre.trim().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const [[{maxOrden}]] = await pool.execute("SELECT COALESCE(MAX(orden),0) AS maxOrden FROM kanban_modules WHERE activo=1");
+    const [r] = await pool.execute(
+      'INSERT INTO kanban_modules (clave, nombre, color, orden) VALUES (?,?,?,?)',
+      [clave, nombre.trim(), color || '#64748B', maxOrden + 1]);
+    res.status(201).json({ success: true, id: r.insertId, clave });
+  } catch (err) {
+    if (err.message.includes('Duplicate') || err.message.includes('UNIQUE'))
+      return res.status(400).json({ success: false, error: 'Ya existe un módulo con ese nombre.' });
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/kanban/modules/:id', async (req, res) => {
+  const { nombre, color } = req.body;
+  try {
+    const pool = await getPool();
+    const sets = [], vals = [];
+    if (nombre !== undefined) { sets.push('nombre=?'); vals.push(nombre.trim()); }
+    if (color  !== undefined) { sets.push('color=?');  vals.push(color); }
+    if (!sets.length) return res.status(400).json({ success: false, error: 'Nada que actualizar.' });
+    vals.push(parseInt(req.params.id));
+    await pool.execute(`UPDATE kanban_modules SET ${sets.join(',')} WHERE id=?`, vals);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.delete('/api/kanban/modules/:id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute('UPDATE kanban_modules SET activo=0 WHERE id=?', [parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Kanban Sessions ────────────────────────────────
    DDL MySQL:
    CREATE TABLE kanban_sessions (
@@ -1751,6 +1863,44 @@ async function ensureColumns() {
         : 'ALTER TABLE kanban_tasks ADD completado_en DATE NULL';
       await pool.execute(sql, []);
       console.log('✔ Columna completado_en añadida a kanban_tasks');
+    }
+
+    // kanban_modules table
+    try { await pool.execute('SELECT id FROM kanban_modules WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? `CREATE TABLE kanban_modules (
+             id INT AUTO_INCREMENT PRIMARY KEY,
+             clave VARCHAR(50) NOT NULL UNIQUE,
+             nombre VARCHAR(100) NOT NULL,
+             color VARCHAR(7) NOT NULL DEFAULT '#64748B',
+             orden INT NOT NULL DEFAULT 0,
+             activo TINYINT NOT NULL DEFAULT 1
+           )`
+        : `CREATE TABLE kanban_modules (
+             id INT IDENTITY(1,1) PRIMARY KEY,
+             clave NVARCHAR(50) NOT NULL,
+             nombre NVARCHAR(100) NOT NULL,
+             color NVARCHAR(7) NOT NULL DEFAULT '#64748B',
+             orden INT NOT NULL DEFAULT 0,
+             activo TINYINT NOT NULL DEFAULT 1
+           )`;
+      await pool.execute(sql, []);
+      console.log('✔ Tabla kanban_modules creada');
+      const seeds = [
+        ['caja','Caja','#0F766E',0],['recaudacion','Recaudación','#0369A1',1],
+        ['predio','Predio','#7C3AED',2],['catastro','Catastro','#B45309',3],
+        ['control_vehicular','Control Vehicular','#DC2626',4],['adquisiciones','Adquisiciones','#059669',5],
+        ['presupuestos','Presupuestos','#1E293B',6],['generales','Generales','#1D4ED8',7],
+        ['tramites','Trámites','#6D28D9',8],['nr_web','Nic. Romero Web','#5B21B6',9],
+        ['nr_escritorio','Nic. Romero Escritorio','#92400E',10],['predio_web','Predio Web','#0F766E',11],
+        ['obra_publica','Obra Pública','#C2410C',12],['tesoreria','Tesorería','#1E40AF',13],
+      ];
+      for (const [clave, nombre, color, orden] of seeds) {
+        try { await pool.execute('INSERT INTO kanban_modules (clave,nombre,color,orden) VALUES (?,?,?,?)',[clave,nombre,color,orden]); }
+        catch {}
+      }
+      console.log('✔ Módulos por defecto insertados');
     }
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }
 }
