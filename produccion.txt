@@ -248,6 +248,23 @@ ACCIÓN: reiniciar la app — ensureColumns() crea la tabla y siembra
 
 
 ──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-05-12  (campos adicionales en proyectos)
+──────────────────────────────────────────────────────────────
+
+-- ensureColumns() los agrega automáticamente al reiniciar.
+-- Si falla, ejecutar manualmente:
+
+ALTER TABLE proyectos
+  ADD COLUMN nombre_corto      VARCHAR(100) NULL,
+  ADD COLUMN responsable       VARCHAR(200) NULL,
+  ADD COLUMN firmantes_cliente TEXT         NULL,
+  ADD COLUMN firmantes_interno TEXT         NULL;
+
+ACCIÓN: reiniciar la app — ensureColumns() crea las columnas
+        automáticamente al iniciar.
+
+
+──────────────────────────────────────────────────────────────
   DEPLOY: AAAA-MM-DD  <- copiar este bloque para futuros deploys
 ──────────────────────────────────────────────────────────────
 

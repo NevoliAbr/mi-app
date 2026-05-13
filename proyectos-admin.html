@@ -97,6 +97,49 @@
     .td-name { font-weight:700; color:#1A1A1A; }
     .td-long { max-width:200px; white-space:normal; word-break:break-word; font-size:12px; color:#4B5563; line-height:1.4; }
     .td-center { text-align:center; padding:40px 16px; color:#9CA3AF; font-size:14px; }
+    .btn-pdf-view {
+      padding:4px 10px; background:#FEF3C7; color:#92400E;
+      border:1.5px solid #FCD34D; border-radius:20px;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:800;
+      cursor:pointer; white-space:nowrap; transition:background .15s; text-decoration:none;
+      display:inline-block;
+    }
+    .btn-pdf-view:hover { background:#FDE68A; }
+    .btn-pdf-upload {
+      padding:4px 10px; background:#F3F4F6; color:#6B7280;
+      border:1.5px solid #D1D5DB; border-radius:20px;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:800;
+      cursor:pointer; white-space:nowrap; transition:background .15s;
+    }
+    .btn-pdf-upload:hover { background:#E5E7EB; color:#374151; }
+    #pdf-preview-panel {
+      display:none; position:fixed; top:0; left:0; width:48%; height:100vh;
+      background:#111827; border-right:1px solid rgba(255,255,255,.12);
+      box-shadow:6px 0 40px rgba(0,0,0,.6); z-index:9999;
+      flex-direction:column; pointer-events:none;
+    }
+    #pdf-preview-panel.show { display:flex; pointer-events:auto; }
+    #pdf-preview-bar {
+      padding:8px 16px; background:#1f2937; font-size:11px; font-weight:700;
+      color:rgba(255,255,255,.45); letter-spacing:.6px; text-transform:uppercase;
+      border-bottom:1px solid rgba(255,255,255,.08); flex-shrink:0;
+    }
+    .btn-firmas {
+      padding:4px 10px; background:#F0FDF4; color:#065F46;
+      border:1.5px solid #6EE7B7; border-radius:20px;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:800;
+      cursor:pointer; white-space:nowrap; transition:background .15s;
+    }
+    .btn-firmas:hover  { background:#DCFCE7; }
+    .btn-firmas.open   { background:#DCFCE7; border-color:#34D399; }
+    .firmas-detail td  { background:#F9FAFB; border-bottom:2px solid #E5E7EB; padding:14px 24px; }
+    .firmas-detail:hover { background:#F9FAFB !important; }
+    .firmas-block      { margin-bottom:10px; }
+    .firmas-block-title{ font-size:10px; font-weight:800; color:#6B7280; letter-spacing:.7px; text-transform:uppercase; margin-bottom:6px; }
+    .firmas-table      { display:flex; flex-wrap:wrap; gap:6px; }
+    .firmante-chip     { background:white; border:1px solid #E5E7EB; border-radius:8px; padding:6px 12px; font-size:12px; color:#374151; }
+    .firmante-chip strong { display:block; font-weight:800; color:#1A1A1A; }
+    .firmante-chip span   { color:#6B7280; font-size:11px; }
 
     .badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:800; }
     .badge-activo   { background:#D1FAE5; color:#065F46; }
@@ -138,6 +181,8 @@
       background:white; border-radius:16px; width:100%; max-width:560px;
       overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.4);
       animation:modalIn .2s ease;
+      display:flex; flex-direction:column;
+      max-height:90vh;
     }
     @keyframes modalIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
     .modal-header {
@@ -148,7 +193,7 @@
     .modal-close { background:none; border:none; color:white; font-size:22px; cursor:pointer; opacity:.65; transition:opacity .15s; padding:4px; }
     .modal-close:hover { opacity:1; }
     .modal-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
-    .modal-body { padding:24px; }
+    .modal-body { padding:24px; overflow-y:auto; flex:1; }
     .modal-alert {
       padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;
       margin-bottom:16px; display:none;
@@ -164,7 +209,7 @@
     }
     .form-group input:focus, .form-group textarea:focus { border-color:#005D97; background:#fff; box-shadow:0 0 0 4px rgba(0,93,151,.08); }
     .form-group textarea { resize:vertical; min-height:90px; line-height:1.5; }
-    .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; }
+    .modal-footer { padding:16px 24px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; flex-shrink:0; }
     .btn-cancel { padding:10px 22px; background:#F3F4F6; color:#374151; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
     .btn-cancel:hover { background:#E5E7EB; }
     .btn-save {
@@ -186,6 +231,20 @@
     .confirm-btn   { padding:10px 24px; border-radius:8px; border:none; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; }
     .confirm-btn.cancel { background:#F3F4F6; color:#374151; }
     .confirm-btn.danger { background:#C41010; color:white; }
+
+    .section-sep { font-size:11px; font-weight:800; color:#374151; letter-spacing:.6px; text-transform:uppercase; margin:22px 0 10px; padding-bottom:7px; border-bottom:2px solid #E5E7EB; display:flex; align-items:center; justify-content:space-between; }
+    .firmante-labels { display:grid; gap:8px; font-size:10px; font-weight:700; color:#9CA3AF; letter-spacing:.5px; text-transform:uppercase; padding:0 2px 4px; }
+    .firmante-labels.fc { grid-template-columns:1fr 1fr 1fr 30px; }
+    .firmante-labels.fi { grid-template-columns:1fr 1fr 30px; }
+    .firmante-row { display:grid; gap:8px; margin-bottom:6px; align-items:center; }
+    .firmante-row.fc { grid-template-columns:1fr 1fr 1fr 30px; }
+    .firmante-row.fi { grid-template-columns:1fr 1fr 30px; }
+    .fi-in { padding:7px 10px; border:1.5px solid #E5E7EB; border-radius:6px; font-family:'Montserrat',sans-serif; font-size:12px; color:#1A1A1A; background:#FAFAFA; outline:none; transition:border-color .15s; width:100%; }
+    .fi-in:focus { border-color:#005D97; background:#fff; }
+    .fi-del { width:30px; height:30px; background:#FEF2F2; border:none; border-radius:6px; cursor:pointer; color:#DC2626; font-size:14px; transition:background .15s; flex-shrink:0; }
+    .fi-del:hover { background:#FEE2E2; }
+    .btn-add-fi { margin-top:6px; padding:6px 14px; background:#EFF6FF; color:#1D4ED8; border:1.5px solid #BFDBFE; border-radius:6px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:background .15s; }
+    .btn-add-fi:hover { background:#DBEAFE; }
 
     @media (max-width:768px) {
       nav { padding:0 16px; }
@@ -258,7 +317,9 @@
               <th>Nombre Proyecto</th>
               <th>Procedimiento</th>
               <th>Contrato</th>
+              <th>Firmas</th>
               <th>Vigencia</th>
+              <th>PDF</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -301,7 +362,22 @@
           <label for="input-contrato">Contrato</label>
           <input type="text" id="input-contrato" placeholder="Ej: CONT-2025-001" maxlength="200" />
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+        <div class="section-sep" style="margin-top:22px">
+          <span>Firmantes Cliente</span>
+          <button class="btn-add-fi" type="button" onclick="addFC()">+ Agregar</button>
+        </div>
+        <div class="firmante-labels fc"><span>Nombre</span><span>Cargo</span><span>Rol</span><span></span></div>
+        <div id="fc-list"></div>
+
+        <div class="section-sep">
+          <span>Firmantes Interno</span>
+          <button class="btn-add-fi" type="button" onclick="addFI()">+ Agregar</button>
+        </div>
+        <div class="firmante-labels fi"><span>Nombre</span><span>Rol</span><span></span></div>
+        <div id="fi-list"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
           <div class="form-group" style="margin-bottom:0">
             <label for="input-vigencia-inicio">Vigencia inicio</label>
             <input type="date" id="input-vigencia-inicio" />
@@ -311,6 +387,18 @@
             <input type="date" id="input-vigencia-fin" />
           </div>
         </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group" style="margin-bottom:0">
+            <label for="input-nombre-corto">Nombre corto</label>
+            <input type="text" id="input-nombre-corto" placeholder="Ej: SIAG" maxlength="100" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label for="input-responsable">Responsable del proyecto</label>
+            <input type="text" id="input-responsable" placeholder="Nombre del responsable…" maxlength="200" />
+          </div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" id="modal-cancel">Cancelar</button>
@@ -333,6 +421,12 @@
   </div>
 
   <div id="toast"></div>
+
+  <!-- Panel preview PDF izquierdo -->
+  <div id="pdf-preview-panel">
+    <div id="pdf-preview-bar">Vista previa — PDF de proyecto</div>
+    <iframe id="pdf-preview-frame" src="" style="border:none;width:100%;flex:1" loading="lazy"></iframe>
+  </div>
 
   <script>
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
@@ -370,10 +464,28 @@
         return;
       }
       tbody.innerHTML = list.map(p => {
-        const fmtDate = d => d ? new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : null;
+        const fmtDate = d => { if (!d) return null; const [y,m,day] = d.slice(0,10).split('-').map(Number); return new Date(y,m-1,day).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}); };
         const vi = fmtDate(p.vigencia_inicio);
         const vf = fmtDate(p.vigencia_fin);
         const vigencia = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
+        const fc = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente : [];
+        const fi = Array.isArray(p.firmantes_interno) ? p.firmantes_interno : [];
+        const hasFirmas = fc.length > 0 || fi.length > 0;
+        const firmasBtn = hasFirmas
+          ? `<button class="btn-firmas" data-id="${p.id}" data-action="firmas">✍ Firmas (${fc.length + fi.length})</button>`
+          : `<span style="color:#D1D5DB;font-size:12px">—</span>`;
+        const fcChips = fc.map(f => `<div class="firmante-chip"><strong>${esc(f.nombre||'—')}</strong><span>${[f.cargo,f.rol].filter(Boolean).join(' · ') || '—'}</span></div>`).join('');
+        const fiChips = fi.map(f => `<div class="firmante-chip"><strong>${esc(f.nombre||'—')}</strong><span>${esc(f.rol||'—')}</span></div>`).join('');
+        const pdfCell = p.pdf_url
+          ? `<button class="btn-pdf-view" data-pdf-url="${esc(p.pdf_url)}" data-pdf-id="${p.id}">📄 Ver PDF</button>`
+          : `<label class="btn-pdf-upload" title="Subir PDF">📎 Subir<input type="file" accept=".pdf" data-proy-id="${p.id}" style="display:none"></label>`;
+        const detailRow = hasFirmas ? `
+        <tr class="firmas-detail" id="firmas-detail-${p.id}" style="display:none">
+          <td colspan="10">
+            ${fc.length ? `<div class="firmas-block"><div class="firmas-block-title">Firmantes Cliente</div><div class="firmas-table">${fcChips}</div></div>` : ''}
+            ${fi.length ? `<div class="firmas-block"><div class="firmas-block-title">Firmantes Interno</div><div class="firmas-table">${fiChips}</div></div>` : ''}
+          </td>
+        </tr>` : '';
         return `
         <tr>
           <td class="td-id">${p.orden ?? p.id}</td>
@@ -381,7 +493,9 @@
           <td class="td-long">${esc(p.NombreProyecto || '—')}</td>
           <td class="td-long">${esc(p.procedimiento || '—')}</td>
           <td class="td-long">${esc(p.contrato || '—')}</td>
+          <td>${firmasBtn}</td>
           <td style="font-size:12px;color:#4B5563">${vigencia}</td>
+          <td>${pdfCell}</td>
           <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? '● Activo' : '○ Inactivo'}</span></td>
           <td>
             <div class="td-actions">
@@ -390,7 +504,7 @@
               <button class="btn-action btn-delete" title="Eliminar" data-id="${p.id}" data-action="delete" data-nombre="${esc(p.nombre)}">🗑️</button>
             </div>
           </td>
-        </tr>`;}).join('');
+        </tr>${detailRow}`;}).join('');
     }
 
     /* ── Cargar ── */
@@ -419,22 +533,51 @@
     /* ── Modal helpers ── */
     function toInputDate(val) {
       if (!val) return '';
-      const d = new Date(val);
-      return isNaN(d) ? '' : d.toISOString().slice(0, 10);
+      return String(val).slice(0, 10);
     }
 
-    function openModal(titulo, nombre = '', id = null, nombreProyecto = '', procedimiento = '', contrato = '', vigencia_inicio = '', vigencia_fin = '', orden = '') {
-      editingId = id;
+    let _fcList = [], _fiList = [];
+
+    function renderFC() {
+      document.getElementById('fc-list').innerHTML = _fcList.map((f,i) =>
+        `<div class="firmante-row fc">
+          <input class="fi-in" placeholder="Nombre" value="${esc(f.nombre||'')}" oninput="_fcList[${i}].nombre=this.value" />
+          <input class="fi-in" placeholder="Cargo"  value="${esc(f.cargo||'')}"  oninput="_fcList[${i}].cargo=this.value" />
+          <input class="fi-in" placeholder="Rol"    value="${esc(f.rol||'')}"    oninput="_fcList[${i}].rol=this.value" />
+          <button class="fi-del" onclick="removeFC(${i})">✕</button>
+        </div>`).join('');
+    }
+    function renderFI() {
+      document.getElementById('fi-list').innerHTML = _fiList.map((f,i) =>
+        `<div class="firmante-row fi">
+          <input class="fi-in" placeholder="Nombre" value="${esc(f.nombre||'')}" oninput="_fiList[${i}].nombre=this.value" />
+          <input class="fi-in" placeholder="Rol"    value="${esc(f.rol||'')}"    oninput="_fiList[${i}].rol=this.value" />
+          <button class="fi-del" onclick="removeFI(${i})">✕</button>
+        </div>`).join('');
+    }
+    function addFC()       { _fcList.push({nombre:'',cargo:'',rol:''}); renderFC(); }
+    function addFI()       { _fiList.push({nombre:'',rol:''});          renderFI(); }
+    function removeFC(i)   { _fcList.splice(i,1); renderFC(); }
+    function removeFI(i)   { _fiList.splice(i,1); renderFI(); }
+
+
+    function openModal(titulo, p = {}) {
+      editingId = p.id || null;
       document.getElementById('modal-title').textContent          = titulo;
-      document.getElementById('input-orden').value                = orden ?? '';
-      document.getElementById('input-nombre').value               = nombre;
-      document.getElementById('input-nombre-proyecto').value      = nombreProyecto;
-      document.getElementById('input-procedimiento').value        = procedimiento;
-      document.getElementById('input-contrato').value             = contrato;
-      document.getElementById('input-vigencia-inicio').value      = toInputDate(vigencia_inicio);
-      document.getElementById('input-vigencia-fin').value         = toInputDate(vigencia_fin);
+      document.getElementById('input-orden').value                = p.orden ?? '';
+      document.getElementById('input-nombre').value               = p.nombre || '';
+      document.getElementById('input-nombre-proyecto').value      = p.NombreProyecto || '';
+      document.getElementById('input-procedimiento').value        = p.procedimiento || '';
+      document.getElementById('input-contrato').value             = p.contrato || '';
+      document.getElementById('input-vigencia-inicio').value      = toInputDate(p.vigencia_inicio);
+      document.getElementById('input-vigencia-fin').value         = toInputDate(p.vigencia_fin);
+      document.getElementById('input-nombre-corto').value         = p.nombre_corto || '';
+      document.getElementById('input-responsable').value          = p.responsable || '';
       document.getElementById('modal-alert').className            = 'modal-alert';
       document.getElementById('modal-alert').textContent          = '';
+      _fcList = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente.map(f=>({...f})) : [];
+      _fiList = Array.isArray(p.firmantes_interno) ? p.firmantes_interno.map(f=>({...f})) : [];
+      renderFC(); renderFI();
       document.getElementById('modal-overlay').classList.add('active');
       setTimeout(() => document.getElementById('input-nombre').focus(), 50);
     }
@@ -444,19 +587,23 @@
     }
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    document.getElementById('btn-nuevo').addEventListener('click', () => openModal('Nuevo Proyecto'));
+    document.getElementById('btn-nuevo').addEventListener('click', () => openModal('Nuevo Proyecto', {}));
 
     /* ── Guardar ── */
     document.getElementById('modal-save').addEventListener('click', async () => {
-      const orden           = document.getElementById('input-orden').value ? parseInt(document.getElementById('input-orden').value) : null;
-      const nombre          = document.getElementById('input-nombre').value.trim();
-      const NombreProyecto  = document.getElementById('input-nombre-proyecto').value.trim();
-      const procedimiento   = document.getElementById('input-procedimiento').value.trim();
-      const contrato        = document.getElementById('input-contrato').value.trim();
-      const vigencia_inicio = document.getElementById('input-vigencia-inicio').value || null;
-      const vigencia_fin    = document.getElementById('input-vigencia-fin').value    || null;
-      const alert           = document.getElementById('modal-alert');
-      const btn             = document.getElementById('modal-save');
+      const orden              = document.getElementById('input-orden').value ? parseInt(document.getElementById('input-orden').value) : null;
+      const nombre             = document.getElementById('input-nombre').value.trim();
+      const NombreProyecto     = document.getElementById('input-nombre-proyecto').value.trim();
+      const procedimiento      = document.getElementById('input-procedimiento').value.trim();
+      const contrato           = document.getElementById('input-contrato').value.trim();
+      const vigencia_inicio    = document.getElementById('input-vigencia-inicio').value || null;
+      const vigencia_fin       = document.getElementById('input-vigencia-fin').value    || null;
+      const nombre_corto       = document.getElementById('input-nombre-corto').value.trim();
+      const responsable        = document.getElementById('input-responsable').value.trim();
+      const firmantes_cliente  = _fcList.filter(f => f.nombre || f.cargo || f.rol);
+      const firmantes_interno  = _fiList.filter(f => f.nombre || f.rol);
+      const alert              = document.getElementById('modal-alert');
+      const btn                = document.getElementById('modal-save');
       if (!nombre) { alert.textContent = 'El nombre es requerido.'; alert.className = 'modal-alert error'; return; }
 
       btn.disabled = true; btn.textContent = 'Guardando…';
@@ -464,7 +611,7 @@
         const url    = editingId ? `${API}/api/admin/proyectos/${editingId}` : `${API}/api/admin/proyectos`;
         const method = editingId ? 'PATCH' : 'POST';
         const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orden, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin }) });
+          body: JSON.stringify({ orden, nombre, nombre_corto, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno }) });
         const data   = await res.json();
         if (!data.success) throw new Error(data.error);
         showToast(editingId ? 'Proyecto actualizado.' : 'Proyecto creado.');
@@ -501,8 +648,16 @@
       const action = btn.dataset.action;
       const proy   = allProyectos.find(p => p.id === id);
 
+      if (action === 'firmas') {
+        const detail = document.getElementById(`firmas-detail-${id}`);
+        const open   = detail.style.display === 'none';
+        detail.style.display = open ? '' : 'none';
+        btn.classList.toggle('open', open);
+        return;
+      }
+
       if (action === 'edit') {
-        openModal('Editar Proyecto', proy.nombre, id, proy.NombreProyecto || '', proy.procedimiento || '', proy.contrato || '', proy.vigencia_inicio, proy.vigencia_fin, proy.orden);
+        openModal('Editar Proyecto', proy);
         return;
       }
 
@@ -537,6 +692,57 @@
     /* Enter en input guarda */
     document.getElementById('input-nombre').addEventListener('keydown', e => {
       if (e.key === 'Enter') document.getElementById('modal-save').click();
+    });
+
+    /* ── PDF upload ── */
+    document.getElementById('proj-tbody').addEventListener('change', async e => {
+      const input = e.target.closest('input[type="file"][data-proy-id]');
+      if (!input || !input.files[0]) return;
+      const id = parseInt(input.dataset.proyId);
+      const fd = new FormData();
+      fd.append('pdf', input.files[0]);
+      try {
+        const r    = await fetch(`${API}/api/admin/proyectos/${id}/pdf`, { method:'POST', body:fd });
+        const data = await r.json();
+        if (!data.success) throw new Error(data.error);
+        showToast('PDF subido correctamente.');
+        const p = allProyectos.find(p => p.id === id);
+        if (p) p.pdf_url = data.pdf_url;
+        renderTable(allProyectos);
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+
+    /* ── PDF preview / download ── */
+    const pdfPanel = document.getElementById('pdf-preview-panel');
+    const pdfFrame = document.getElementById('pdf-preview-frame');
+    let   pdfHideTimer = null;
+
+    function showPdfPreview(url) {
+      clearTimeout(pdfHideTimer);
+      if (pdfFrame.src !== location.origin + url && pdfFrame.src !== url) pdfFrame.src = url;
+      pdfPanel.classList.add('show');
+    }
+    function hidePdfPreview() {
+      pdfHideTimer = setTimeout(() => pdfPanel.classList.remove('show'), 150);
+    }
+
+    document.getElementById('proj-tbody').addEventListener('mouseover', e => {
+      const btn = e.target.closest('[data-pdf-url]');
+      if (btn) showPdfPreview(btn.dataset.pdfUrl);
+    });
+    document.getElementById('proj-tbody').addEventListener('mouseout', e => {
+      if (e.target.closest('[data-pdf-url]')) hidePdfPreview();
+    });
+    pdfPanel.addEventListener('mouseover', () => clearTimeout(pdfHideTimer));
+    pdfPanel.addEventListener('mouseout',  hidePdfPreview);
+
+    document.getElementById('proj-tbody').addEventListener('click', e => {
+      const btn = e.target.closest('[data-pdf-url]');
+      if (!btn) return;
+      const a = document.createElement('a');
+      a.href     = btn.dataset.pdfUrl;
+      a.download = `proyecto-${btn.dataset.pdfId || 'pdf'}.pdf`;
+      a.click();
     });
   </script>
 </body>

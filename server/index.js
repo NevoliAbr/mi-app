@@ -38,10 +38,12 @@ app.use(express.static(publicDir));
 /* ── Directorios ────────────────────────────────── */
 const uploadsDir     = path.join(__dirname, 'uploads');
 const projectsDir    = path.join(__dirname, '..', 'projects');
-const entregablesDir = path.join(__dirname, 'entregables');
-if (!fs.existsSync(uploadsDir))     fs.mkdirSync(uploadsDir,     { recursive: true });
-if (!fs.existsSync(projectsDir))    fs.mkdirSync(projectsDir,    { recursive: true });
-if (!fs.existsSync(entregablesDir)) fs.mkdirSync(entregablesDir, { recursive: true });
+const entregablesDir  = path.join(__dirname, 'entregables');
+const proyectosPdfDir = path.join(__dirname, 'proyectos-pdfs');
+if (!fs.existsSync(uploadsDir))        fs.mkdirSync(uploadsDir,        { recursive: true });
+if (!fs.existsSync(projectsDir))       fs.mkdirSync(projectsDir,       { recursive: true });
+if (!fs.existsSync(entregablesDir))    fs.mkdirSync(entregablesDir,    { recursive: true });
+if (!fs.existsSync(proyectosPdfDir))   fs.mkdirSync(proyectosPdfDir,   { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
@@ -59,8 +61,9 @@ const upload = multer({
       : cb(new Error('Solo se permiten imágenes.'))
 });
 
-app.use('/uploads',     express.static(uploadsDir));
-app.use('/entregables', express.static(entregablesDir));
+app.use('/uploads',        express.static(uploadsDir));
+app.use('/entregables',    express.static(entregablesDir));
+app.use('/proyectos-pdfs', express.static(proyectosPdfDir));
 
 /* ── Multer: xlsx projects ──────────────────────── */
 const xlsxStorage = multer.diskStorage({
@@ -145,44 +148,59 @@ app.get('/api/proyectos', async (_req, res) => {
 app.get('/api/admin/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
-    const [rows] = await pool.execute('SELECT id, orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo FROM proyectos ORDER BY orden, nombre');
-    res.json({ success: true, proyectos: rows });
+    const [rows] = await pool.execute(
+      'SELECT id, orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno, pdf_url, activo FROM proyectos ORDER BY orden, nombre'
+    );
+    const proyectos = rows.map(r => ({
+      ...r,
+      firmantes_cliente: r.firmantes_cliente ? JSON.parse(r.firmantes_cliente) : [],
+      firmantes_interno: r.firmantes_interno ? JSON.parse(r.firmantes_interno) : [],
+    }));
+    res.json({ success: true, proyectos });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/proyectos', async (req, res) => {
-  const orden           = req.body.orden != null ? parseInt(req.body.orden) || null : null;
-  const nombre          = (req.body.nombre          || '').trim();
-  const procedimiento   = (req.body.procedimiento   || '').trim() || null;
-  const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
-  const contrato        = (req.body.contrato        || '').trim() || null;
-  const vigencia_inicio = req.body.vigencia_inicio  || null;
-  const vigencia_fin    = req.body.vigencia_fin     || null;
+  const orden              = req.body.orden != null ? parseInt(req.body.orden) || null : null;
+  const nombre             = (req.body.nombre          || '').trim();
+  const nombre_corto       = (req.body.nombre_corto    || '').trim() || null;
+  const procedimiento      = (req.body.procedimiento   || '').trim() || null;
+  const NombreProyecto     = (req.body.NombreProyecto  || '').trim() || null;
+  const contrato           = (req.body.contrato        || '').trim() || null;
+  const vigencia_inicio    = req.body.vigencia_inicio  || null;
+  const vigencia_fin       = req.body.vigencia_fin     || null;
+  const responsable        = (req.body.responsable     || '').trim() || null;
+  const firmantes_cliente  = req.body.firmantes_cliente?.length  ? JSON.stringify(req.body.firmantes_cliente)  : null;
+  const firmantes_interno  = req.body.firmantes_interno?.length  ? JSON.stringify(req.body.firmantes_interno)  : null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
     const [result] = await pool.execute(
-      'INSERT INTO proyectos (orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, activo) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
-      [orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin]
+      'INSERT INTO proyectos (orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.patch('/api/admin/proyectos/:id', async (req, res) => {
-  const orden           = req.body.orden != null ? parseInt(req.body.orden) || null : null;
-  const nombre          = (req.body.nombre          || '').trim();
-  const procedimiento   = (req.body.procedimiento   || '').trim() || null;
-  const NombreProyecto  = (req.body.NombreProyecto  || '').trim() || null;
-  const contrato        = (req.body.contrato        || '').trim() || null;
-  const vigencia_inicio = req.body.vigencia_inicio  || null;
-  const vigencia_fin    = req.body.vigencia_fin     || null;
+  const orden              = req.body.orden != null ? parseInt(req.body.orden) || null : null;
+  const nombre             = (req.body.nombre          || '').trim();
+  const nombre_corto       = (req.body.nombre_corto    || '').trim() || null;
+  const procedimiento      = (req.body.procedimiento   || '').trim() || null;
+  const NombreProyecto     = (req.body.NombreProyecto  || '').trim() || null;
+  const contrato           = (req.body.contrato        || '').trim() || null;
+  const vigencia_inicio    = req.body.vigencia_inicio  || null;
+  const vigencia_fin       = req.body.vigencia_fin     || null;
+  const responsable        = (req.body.responsable     || '').trim() || null;
+  const firmantes_cliente  = req.body.firmantes_cliente?.length  ? JSON.stringify(req.body.firmantes_cliente)  : null;
+  const firmantes_interno  = req.body.firmantes_interno?.length  ? JSON.stringify(req.body.firmantes_interno)  : null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
     await pool.execute(
-      'UPDATE proyectos SET orden = ?, nombre = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ? WHERE id = ?',
-      [orden, nombre, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, parseInt(req.params.id)]
+      'UPDATE proyectos SET orden = ?, nombre = ?, nombre_corto = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ?, responsable = ?, firmantes_cliente = ?, firmantes_interno = ? WHERE id = ?',
+      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno, parseInt(req.params.id)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -202,6 +220,29 @@ app.delete('/api/admin/proyectos/:id', async (req, res) => {
     await pool.execute('DELETE FROM proyectos WHERE id = ?', [parseInt(req.params.id)]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+const proyectoPdfUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, proyectosPdfDir),
+    filename:    (req,  _file, cb) => cb(null, `proyecto_${req.params.id}_${Date.now()}.pdf`)
+  }),
+  limits:     { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = file.originalname.toLowerCase().endsWith('.pdf');
+    cb(ok ? null : new Error('Solo se permiten archivos PDF'), ok);
+  }
+});
+
+app.post('/api/admin/proyectos/:id/pdf', proyectoPdfUpload.single('pdf'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
+  try {
+    const id      = parseInt(req.params.id);
+    const pdf_url = `/proyectos-pdfs/${req.file.filename}`;
+    const pool    = await getPool();
+    await pool.execute('UPDATE proyectos SET pdf_url = ? WHERE id = ?', [pdf_url, id]);
+    res.json({ success: true, pdf_url });
+  } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
 });
 
 /* ── Auth: Registro ─────────────────────────────── */
@@ -819,7 +860,7 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
-    const { etapa, completada, en_proceso, usuario_email } = req.body;
+    const { etapa, completada, en_proceso, usuario_email, usuario_nombre } = req.body;
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
@@ -839,7 +880,18 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     if (!item.etapas[etapa]) return res.status(400).json({ success: false, error: 'Etapa inválida.' });
     item.etapas[etapa].completada = completada;
     item.etapas[etapa].fecha      = completada ? new Date().toISOString() : null;
-    if (etapa === 'creacion' || etapa === 'revision')
+    if (completada) {
+      item.etapas[etapa].completado_por = usuario_nombre || usuario_email || null;
+      item.etapas[etapa].completado_en  = new Date().toISOString();
+      // Primer check de creación → esta persona es el owner del entregable
+      if (etapa === 'creacion' && !item.owner) {
+        item.owner = { nombre: usuario_nombre || usuario_email || null, email: usuario_email || null, fecha: new Date().toISOString() };
+      }
+    } else {
+      item.etapas[etapa].completado_por = null;
+      item.etapas[etapa].completado_en  = null;
+    }
+    if (['creacion', 'revision', 'firma_interna', 'firma_externa'].includes(etapa))
       item.etapas[etapa].en_proceso = (en_proceso === true && !completada);
     if (etapa === 'vobo' && completada) item.etapas.vobo.rechazado = false;
     if (!item.etapas[etapa].fecha_cambio && (completada || en_proceso === true))
@@ -848,39 +900,49 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
 
     // Correos de notificación (no bloquean la respuesta)
     if (completada) {
-      const proy = meta.proyectoNombre || meta.mesNombre || '';
-      const to3  = ['elisa.mendez@lcg.mx', 'moises.quintero@lcg.mx', 'daniel.arias@lcg.mx'];
+      const proy   = meta.proyectoNombre || '';
+      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
+      const to3    = ['elisa.mendez@lcg.mx', 'moises.quintero@lcg.mx', 'daniel.arias@lcg.mx'];
       const mailMap = {
         creacion: {
           to: notifyTo('elisa.mendez@lcg.mx'),
-          subject: 'Elaboración terminada – Favor de revisar',
+          subject: `${prefix} Elaboración terminada – Favor de revisar`,
           html: `<p>El archivo en elaboración ha sido terminado. Favor de revisar.</p>
                  <p><strong>Entregable:</strong> ${item.nombre}<br><strong>Número:</strong> ${item.num}</p>`
         },
         firma_interna: {
           to: notifyTo(to3),
-          subject: `Entregable #${item.num} salió de Firma Interna`,
+          subject: `${prefix} Entregable #${item.num} salió de Firma Interna`,
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Interna</strong>.</p>`
         },
         firma_externa: {
           to: notifyTo(to3),
-          subject: `Entregable #${item.num} salió de Firma Externa`,
+          subject: `${prefix} Entregable #${item.num} salió de Firma Externa`,
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Externa</strong>.</p>`
         },
         carpeta: {
           to: notifyTo('elisa.mendez@lcg.mx'),
-          subject: `Carpeta y digitalización terminada – ${proy} #${item.num}`,
-          html: `<p>Carpeta y digitalización del proyecto <strong>${proy}</strong> con número <strong>#${item.num}</strong> se ha elaborado y terminado.</p>`
+          subject: `${prefix} Carpeta y digitalización terminada – #${item.num}`,
+          html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> con número <strong>#${item.num}</strong> se ha elaborado y terminado.</p>`
         },
         acuse: {
           to: notifyTo('elisa.mendez@lcg.mx'),
-          subject: `Acuse pendiente de VoBo – ${item.nombre} #${item.num}`,
+          subject: `${prefix} Acuse pendiente de VoBo – #${item.num}`,
           html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
         }
       };
       const opts = mailMap[etapa];
       if (opts) transporter.sendMail({ from: process.env.SMTP_FROM, ...opts })
                             .catch(err => console.warn('⚠ Email etapa:', err.message));
+      // Notificar al owner cuando VOBO completado
+      if (etapa === 'vobo' && item.owner?.email) {
+        transporter.sendMail({
+          from: process.env.SMTP_FROM,
+          to: notifyTo(item.owner.email),
+          subject: `${prefix} Entregable #${item.num} – Visto Bueno otorgado`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha recibido Visto Bueno.</p>`
+        }).catch(err => console.warn('⚠ Email vobo owner:', err.message));
+      }
     }
 
     res.json({ success: true });
@@ -1022,10 +1084,12 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
     if (etapa === 'revision') item.etapas.vobo.rechazado = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     if (etapa === 'acuse') {
+      const _proy   = meta.proyectoNombre || '';
+      const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
       transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: notifyTo('elisa.mendez@lcg.mx'),
-        subject: `Acuse pendiente de VoBo – ${item.nombre} #${item.num}`,
+        subject: `${_prefix} Acuse pendiente de VoBo – #${item.num}`,
         html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
       }).catch(err => console.warn('⚠ Email acuse PDF:', err.message));
     }
@@ -1073,6 +1137,18 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     item.etapas.creacion.fecha        = null;
     item.etapas.creacion.en_proceso   = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    // Notificar al owner que hay nuevas observaciones
+    if (item.owner?.email) {
+      const _proy   = meta.proyectoNombre || '';
+      const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
+      transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: notifyTo(item.owner.email),
+        subject: `${_prefix} Entregable #${item.num} – Nuevas observaciones`,
+        html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> tiene nuevas observaciones de VOBO.</p>
+               <p>Por favor revisa el sistema.</p>`
+      }).catch(err => console.warn('⚠ Email obs owner:', err.message));
+    }
     res.json({ success: true, imagen });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1909,6 +1985,30 @@ async function ensureColumns() {
       }
       console.log('✔ Módulos por defecto insertados');
     }
+    // nombre_corto, responsable, firmantes, pdf_url en proyectos
+    try { await pool.execute('SELECT nombre_corto FROM proyectos WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? 'ALTER TABLE proyectos ADD COLUMN nombre_corto VARCHAR(100) NULL, ADD COLUMN responsable VARCHAR(200) NULL, ADD COLUMN firmantes_cliente TEXT NULL, ADD COLUMN firmantes_interno TEXT NULL'
+        : 'ALTER TABLE proyectos ADD nombre_corto NVARCHAR(100) NULL';
+      await pool.execute(sql, []);
+      if (dbType !== 'mysql') {
+        await pool.execute('ALTER TABLE proyectos ADD responsable NVARCHAR(200) NULL', []);
+        await pool.execute('ALTER TABLE proyectos ADD firmantes_cliente NVARCHAR(MAX) NULL', []);
+        await pool.execute('ALTER TABLE proyectos ADD firmantes_interno NVARCHAR(MAX) NULL', []);
+      }
+      console.log('✔ Columnas nombre_corto/responsable/firmantes añadidas a proyectos');
+    }
+    // pdf_url en proyectos
+    try { await pool.execute('SELECT pdf_url FROM proyectos WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? 'ALTER TABLE proyectos ADD COLUMN pdf_url VARCHAR(500) NULL'
+        : 'ALTER TABLE proyectos ADD pdf_url NVARCHAR(500) NULL';
+      await pool.execute(sql, []);
+      console.log('✔ Columna pdf_url añadida a proyectos');
+    }
+
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }
 }
 ensureColumns().then(() => {

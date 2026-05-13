@@ -2575,8 +2575,8 @@
       { key: 'revision'                  },
       { key: 'vobo',          vobo: true },
       { key: 'impresion'                 },
-      { key: 'firma_interna'             },
-      { key: 'firma_externa'             },
+      { key: 'firma_interna', twoStep: true },
+      { key: 'firma_externa', twoStep: true },
       { key: 'carpeta'                   },
       { key: 'acuse',         pdf: true  },
       { key: 'vobo_final'                },
@@ -2590,6 +2590,14 @@
     let activeId           = null;
     let voboCurrent        = null;
 
+    function etapaTip(e) {
+      if (!e?.completado_por && !e?.completado_en) return '';
+      const parts = [];
+      if (e.completado_por) parts.push(e.completado_por);
+      if (e.completado_en)  parts.push(new Date(e.completado_en).toLocaleString('es-MX'));
+      return ` title="${parts.join(' · ')}"`;
+    }
+
     function etapaDate(e) {
       const d = e?.fecha_cambio || e?.fecha;
       if (!d) return '';
@@ -2600,7 +2608,9 @@
     function normEtapas(etapas) {
       if (!etapas.creacion)                               etapas.creacion  = { completada: false, fecha: null, en_proceso: false };
       else if (etapas.creacion.en_proceso  === undefined) etapas.creacion.en_proceso  = false;
-      if (etapas.revision  && etapas.revision.en_proceso  === undefined) etapas.revision.en_proceso  = false;
+      if (etapas.revision     && etapas.revision.en_proceso     === undefined) etapas.revision.en_proceso     = false;
+      if (etapas.firma_interna && etapas.firma_interna.en_proceso === undefined) etapas.firma_interna.en_proceso = false;
+      if (etapas.firma_externa && etapas.firma_externa.en_proceso === undefined) etapas.firma_externa.en_proceso = false;
       if (!etapas.vobo_final) etapas.vobo_final = { completada: false, fecha: null };
       return etapas;
     }
@@ -2668,14 +2678,14 @@
               else           { cls = 'lock';   icon = '·'; }
               const nObs = item.etapas.vobo.observaciones.length;
               return `<td><div class="vobo-cell">
-                <button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision">${icon}</button>
+                <button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision"${etapaTip(e)}>${icon}</button>
                 ${etapaDate(e)}
                 ${nObs > 0 ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs (${nObs})</button>` : ''}
               </div></td>`;
             }
             const icon = e.completada ? '✓' : (et.vobo ? '—' : '·');
             const cls  = e.completada ? 'done' : 'lock';
-            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}">${icon}</button>${etapaDate(e)}</div></td>`;
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}"${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
           }
 
           if (et.vobo) {
@@ -2683,7 +2693,7 @@
             if (e.completada) { cls = 'done';  icon = '✓'; }
             else if (prev)    { cls = 'avail'; icon = '✓'; }
             else              { cls = 'lock';  icon = '—'; }
-            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="vobo">${icon}</button>${etapaDate(e)}</div></td>`;
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="vobo"${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
           }
           // Revisión: mostrar botón Obs junto al check; warn si vobo tiene observaciones pendientes
           if (et.key === 'revision') {
@@ -2699,7 +2709,7 @@
             else                             { cls = 'lock';   icon = '·'; }
             const showObs = nObs > 0;
             return `<td><div class="vobo-cell">
-              <button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision">${icon}</button>
+              <button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="revision"${etapaTip(e)}>${icon}</button>
               ${etapaDate(e)}
               ${showObs ? `<button class="vobo-obs-btn" data-id="${escH(acta.id)}" data-num="${item.num}" data-nombre="${escH(item.nombre)}">Obs${nObs ? ' ('+nObs+')' : ''}</button>` : ''}
             </div></td>`;
@@ -2712,14 +2722,22 @@
             else if (hasObsPend && prev)   { cls = 'notice'; icon = '!'; }
             else if (prev)                 { cls = 'avail';  icon = '·'; }
             else                           { cls = 'lock';   icon = '·'; }
-            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="creacion">${icon}</button>${etapaDate(e)}</div></td>`;
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="creacion"${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
+          }
+          if (et.twoStep) {
+            let cls, icon;
+            if (e.completada)      { cls = 'done';   icon = '✓'; }
+            else if (e.en_proceso) { cls = 'inprog'; icon = '⏳'; }
+            else if (prev)         { cls = 'avail';  icon = '·'; }
+            else                   { cls = 'lock';   icon = '·'; }
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}"${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
           }
           const done  = e.completada;
           const cls   = done ? 'done' : prev ? 'avail' : 'lock';
           const icon  = done ? '✓' : et.pdf ? '↑' : '·';
           const attrs = et.pdf ? `data-pdf="true"` : '';
           const pdfPrev = (et.pdf && done && e.pdf) ? `data-pdf-url="${escH(e.pdf)}"` : '';
-          return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${attrs} ${pdfPrev}>${icon}</button>${etapaDate(e)}</div></td>`;
+          return `<td><div class="ep-cell"><button class="ep-btn ${cls}" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${attrs} ${pdfPrev}${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
         }).join('');
         return `<tr data-item-id="${escH(acta.id)}" data-item-num="${item.num}">
           <td class="col-num">${item.num}</td>
@@ -3196,7 +3214,7 @@ if (btn.dataset.pdf === 'true') {
           // Segundo click → completar
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
             { method:'PATCH', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ etapa:'creacion', completada:true, en_proceso:false, usuario_email: sessionUser().email }) });
+              body: JSON.stringify({ etapa:'creacion', completada:true, en_proceso:false, usuario_email: sessionUser().email, usuario_nombre: sessionUser().nombre || '' }) });
           if ((await r.json()).success) {
             ec.completada=true; ec.fecha=new Date().toISOString(); ec.en_proceso=false;
             renderEntregables();
@@ -3216,6 +3234,41 @@ if (btn.dataset.pdf === 'true') {
           { method:'PATCH', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ etapa:'creacion', completada:false, en_proceso:true }) });
         if ((await r.json()).success) { ec.en_proceso=true; renderEntregables(); }
+        return;
+      }
+
+      /* Etapas de dos pasos: firma_interna, firma_externa */
+      if (ETAPAS.find(e => e.key === etapa)?.twoStep) {
+        const ef    = item.etapas[etapa];
+        const label = ETAPA_LABELS[ETAPAS.findIndex(e => e.key === etapa)];
+        if (ef.completada) {
+          if (hayPosterioresCompletas(etapa)) {
+            const sig = ETAPAS.slice(ETAPAS.findIndex(e => e.key === etapa) + 1).find(s => item.etapas[s.key]?.completada);
+            alert(`Debes desmarcar primero: ${ETAPA_LABELS[ETAPAS.findIndex(s => s.key === sig?.key)]}.`);
+            return;
+          }
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+            { method:'PATCH', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ etapa, completada:false, en_proceso:false, usuario_email: sessionUser().email, usuario_nombre: sessionUser().nombre || '' }) });
+          if ((await r.json()).success) { ef.completada=false; ef.fecha=null; ef.en_proceso=false; renderEntregables(); }
+          return;
+        }
+        if (ef.en_proceso) {
+          const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+            { method:'PATCH', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ etapa, completada:true, en_proceso:false, usuario_email: sessionUser().email, usuario_nombre: sessionUser().nombre || '' }) });
+          if ((await r.json()).success) {
+            ef.completada=true; ef.fecha=new Date().toISOString(); ef.en_proceso=false;
+            renderEntregables();
+            Swal.fire({ toast:true, position:'top-end', showConfirmButton:false, timer:3000, timerProgressBar:true,
+              icon:'success', title:`${label} completada`, background:'#1e293b', color:'#D1FAE5' });
+          }
+          return;
+        }
+        const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
+          { method:'PATCH', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ etapa, completada:false, en_proceso:true }) });
+        if ((await r.json()).success) { ef.en_proceso=true; renderEntregables(); }
         return;
       }
 
@@ -3242,7 +3295,7 @@ if (btn.dataset.pdf === 'true') {
       }
       const r    = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/etapa`,
         { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ etapa, completada: nowDone, usuario_email: sessionUser().email }) });
+          body: JSON.stringify({ etapa, completada: nowDone, usuario_email: sessionUser().email, usuario_nombre: sessionUser().nombre || '' }) });
       const rData = await r.json();
       if (r.status === 403) {
         Swal.fire({ icon:'error', title:'Sin permiso', text: rData.error,
