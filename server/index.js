@@ -138,9 +138,13 @@ app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, orden, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin FROM proyectos WHERE activo = 1 ORDER BY orden, nombre'
+      'SELECT id, orden, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin, responsables, pdf_url FROM proyectos WHERE activo = 1 ORDER BY orden, nombre'
     );
-    res.json({ success: true, proyectos: rows });
+    const proyectos = rows.map(r => ({
+      ...r,
+      responsables: r.responsables ? JSON.parse(r.responsables) : [],
+    }));
+    res.json({ success: true, proyectos });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -149,12 +153,13 @@ app.get('/api/admin/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno, pdf_url, activo FROM proyectos ORDER BY orden, nombre'
+      'SELECT id, orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, pdf_url, activo FROM proyectos ORDER BY orden, nombre'
     );
     const proyectos = rows.map(r => ({
       ...r,
       firmantes_cliente: r.firmantes_cliente ? JSON.parse(r.firmantes_cliente) : [],
       firmantes_interno: r.firmantes_interno ? JSON.parse(r.firmantes_interno) : [],
+      responsables:      r.responsables      ? JSON.parse(r.responsables)      : [],
     }));
     res.json({ success: true, proyectos });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -169,15 +174,15 @@ app.post('/api/admin/proyectos', async (req, res) => {
   const contrato           = (req.body.contrato        || '').trim() || null;
   const vigencia_inicio    = req.body.vigencia_inicio  || null;
   const vigencia_fin       = req.body.vigencia_fin     || null;
-  const responsable        = (req.body.responsable     || '').trim() || null;
   const firmantes_cliente  = req.body.firmantes_cliente?.length  ? JSON.stringify(req.body.firmantes_cliente)  : null;
   const firmantes_interno  = req.body.firmantes_interno?.length  ? JSON.stringify(req.body.firmantes_interno)  : null;
+  const responsables       = req.body.responsables?.length       ? JSON.stringify(req.body.responsables)       : null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
     const [result] = await pool.execute(
-      'INSERT INTO proyectos (orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno]
+      'INSERT INTO proyectos (orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -192,15 +197,15 @@ app.patch('/api/admin/proyectos/:id', async (req, res) => {
   const contrato           = (req.body.contrato        || '').trim() || null;
   const vigencia_inicio    = req.body.vigencia_inicio  || null;
   const vigencia_fin       = req.body.vigencia_fin     || null;
-  const responsable        = (req.body.responsable     || '').trim() || null;
   const firmantes_cliente  = req.body.firmantes_cliente?.length  ? JSON.stringify(req.body.firmantes_cliente)  : null;
   const firmantes_interno  = req.body.firmantes_interno?.length  ? JSON.stringify(req.body.firmantes_interno)  : null;
+  const responsables       = req.body.responsables?.length       ? JSON.stringify(req.body.responsables)       : null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
   try {
     const pool = await getPool();
     await pool.execute(
-      'UPDATE proyectos SET orden = ?, nombre = ?, nombre_corto = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ?, responsable = ?, firmantes_cliente = ?, firmantes_interno = ? WHERE id = ?',
-      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno, parseInt(req.params.id)]
+      'UPDATE proyectos SET orden = ?, nombre = ?, nombre_corto = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ?, firmantes_cliente = ?, firmantes_interno = ?, responsables = ? WHERE id = ?',
+      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, parseInt(req.params.id)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -326,10 +331,23 @@ app.get('/api/usuarios/:id/info', async (req, res) => {
       [usuarioId]
     );
 
+    // Proyectos donde el usuario figura como responsable (JSON en columna responsables)
+    let responsable_proyectos = [];
+    try {
+      const [respRows] = await pool.execute(
+        'SELECT id, nombre, responsables FROM proyectos WHERE responsables IS NOT NULL ORDER BY nombre'
+      );
+      responsable_proyectos = respRows.filter(r => {
+        try { return JSON.parse(r.responsables).some(x => Number(x.id) === usuarioId); }
+        catch { return false; }
+      }).map(r => ({ id: r.id, nombre: r.nombre }));
+    } catch {}
+
     res.json({
       success: true,
       info: infoRows[0] || null,
-      proyectos: minsRows
+      proyectos: minsRows,
+      responsable_proyectos
     });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -2014,6 +2032,15 @@ async function ensureColumns() {
         : 'ALTER TABLE proyectos ADD pdf_url NVARCHAR(500) NULL';
       await pool.execute(sql, []);
       console.log('✔ Columna pdf_url añadida a proyectos');
+    }
+    // responsables en proyectos
+    try { await pool.execute('SELECT responsables FROM proyectos WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? 'ALTER TABLE proyectos ADD COLUMN responsables TEXT NULL'
+        : 'ALTER TABLE proyectos ADD responsables NVARCHAR(MAX) NULL';
+      await pool.execute(sql, []);
+      console.log('✔ Columna responsables añadida a proyectos');
     }
 
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }

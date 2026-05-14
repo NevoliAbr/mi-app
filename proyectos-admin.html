@@ -245,6 +245,13 @@
     .fi-del:hover { background:#FEE2E2; }
     .btn-add-fi { margin-top:6px; padding:6px 14px; background:#EFF6FF; color:#1D4ED8; border:1.5px solid #BFDBFE; border-radius:6px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:background .15s; }
     .btn-add-fi:hover { background:#DBEAFE; }
+    .firmante-row.resp { grid-template-columns:1fr 30px; }
+    .resp-chips { display:flex; flex-wrap:wrap; gap:4px; }
+    .resp-chip {
+      display:inline-flex; align-items:center; gap:4px;
+      background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE;
+      border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; white-space:nowrap;
+    }
 
     @media (max-width:768px) {
       nav { padding:0 16px; }
@@ -317,6 +324,7 @@
               <th>Nombre Proyecto</th>
               <th>Procedimiento</th>
               <th>Contrato</th>
+              <th>Responsables</th>
               <th>Firmas</th>
               <th>Vigencia</th>
               <th>PDF</th>
@@ -325,7 +333,7 @@
             </tr>
           </thead>
           <tbody id="proj-tbody">
-            <tr><td colspan="6" class="td-center">Cargando…</td></tr>
+            <tr><td colspan="11" class="td-center">Cargando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -364,6 +372,13 @@
         </div>
 
         <div class="section-sep" style="margin-top:22px">
+          <span>Responsables del proyecto</span>
+          <button class="btn-add-fi" type="button" onclick="addResponsable()">+ Agregar</button>
+        </div>
+        <div class="firmante-labels" style="grid-template-columns:1fr 30px"><span>Usuario</span><span></span></div>
+        <div id="resp-list"></div>
+
+        <div class="section-sep" style="margin-top:22px">
           <span>Firmantes Cliente</span>
           <button class="btn-add-fi" type="button" onclick="addFC()">+ Agregar</button>
         </div>
@@ -388,15 +403,9 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div class="form-group" style="margin-bottom:0">
-            <label for="input-nombre-corto">Nombre corto</label>
-            <input type="text" id="input-nombre-corto" placeholder="Ej: SIAG" maxlength="100" />
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label for="input-responsable">Responsable del proyecto</label>
-            <input type="text" id="input-responsable" placeholder="Nombre del responsable…" maxlength="200" />
-          </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label for="input-nombre-corto">Nombre corto</label>
+          <input type="text" id="input-nombre-corto" placeholder="Ej: SIAG" maxlength="100" />
         </div>
 
       </div>
@@ -438,7 +447,18 @@
     })();
 
     let allProyectos = [];
+    let allUsuarios  = [];
     let editingId    = null;
+
+    /* ── Cargar usuarios (para responsables) ── */
+    async function loadUsuarios() {
+      try {
+        const res  = await fetch(`${API}/api/usuarios`);
+        const data = await res.json();
+        if (data.success) allUsuarios = data.usuarios || [];
+      } catch {}
+    }
+    loadUsuarios();
 
     /* ── Toast ── */
     function showToast(msg, tipo = 'success') {
@@ -447,11 +467,16 @@
       setTimeout(() => { t.style.display = 'none'; }, 2800);
     }
 
+    /* Estado efectivo: requiere flag activo + vigencia inicio y fin */
+    function esActivo(p) {
+      return !!(p.activo && p.vigencia_inicio && p.vigencia_fin);
+    }
+
     /* ── Stats ── */
     function updateStats(list) {
       document.getElementById('stat-total').textContent    = list.length;
-      document.getElementById('stat-activos').textContent  = list.filter(p => p.activo).length;
-      document.getElementById('stat-inactivos').textContent= list.filter(p => !p.activo).length;
+      document.getElementById('stat-activos').textContent  = list.filter(esActivo).length;
+      document.getElementById('stat-inactivos').textContent= list.filter(p => !esActivo(p)).length;
     }
 
     /* ── Render tabla ── */
@@ -460,7 +485,7 @@
     function renderTable(list) {
       const tbody = document.getElementById('proj-tbody');
       if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="td-center">No se encontraron proyectos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="td-center">No se encontraron proyectos.</td></tr>';
         return;
       }
       tbody.innerHTML = list.map(p => {
@@ -470,6 +495,10 @@
         const vigencia = vi || vf ? `${vi || '—'} al ${vf || '—'}` : '—';
         const fc = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente : [];
         const fi = Array.isArray(p.firmantes_interno) ? p.firmantes_interno : [];
+        const resp = Array.isArray(p.responsables) ? p.responsables : [];
+        const respCell = resp.length
+          ? `<div class="resp-chips">${resp.map(r => `<span class="resp-chip">👤 ${esc(r.nombre || '—')}</span>`).join('')}</div>`
+          : `<span style="color:#D1D5DB;font-size:12px">—</span>`;
         const hasFirmas = fc.length > 0 || fi.length > 0;
         const firmasBtn = hasFirmas
           ? `<button class="btn-firmas" data-id="${p.id}" data-action="firmas">✍ Firmas (${fc.length + fi.length})</button>`
@@ -481,7 +510,7 @@
           : `<label class="btn-pdf-upload" title="Subir PDF">📎 Subir<input type="file" accept=".pdf" data-proy-id="${p.id}" style="display:none"></label>`;
         const detailRow = hasFirmas ? `
         <tr class="firmas-detail" id="firmas-detail-${p.id}" style="display:none">
-          <td colspan="10">
+          <td colspan="11">
             ${fc.length ? `<div class="firmas-block"><div class="firmas-block-title">Firmantes Cliente</div><div class="firmas-table">${fcChips}</div></div>` : ''}
             ${fi.length ? `<div class="firmas-block"><div class="firmas-block-title">Firmantes Interno</div><div class="firmas-table">${fiChips}</div></div>` : ''}
           </td>
@@ -493,10 +522,11 @@
           <td class="td-long">${esc(p.NombreProyecto || '—')}</td>
           <td class="td-long">${esc(p.procedimiento || '—')}</td>
           <td class="td-long">${esc(p.contrato || '—')}</td>
+          <td>${respCell}</td>
           <td>${firmasBtn}</td>
           <td style="font-size:12px;color:#4B5563">${vigencia}</td>
           <td>${pdfCell}</td>
-          <td><span class="badge ${p.activo ? 'badge-activo' : 'badge-inactivo'}">${p.activo ? '● Activo' : '○ Inactivo'}</span></td>
+          <td><span class="badge ${esActivo(p) ? 'badge-activo' : 'badge-inactivo'}"${p.activo && !esActivo(p) ? ' title="Inactivo: falta fecha de vigencia"' : ''}>${esActivo(p) ? '● Activo' : '○ Inactivo'}</span></td>
           <td>
             <div class="td-actions">
               <button class="btn-action btn-edit"   title="Editar"   data-id="${p.id}" data-action="edit">✏️</button>
@@ -518,7 +548,7 @@
         renderTable(allProyectos);
       } catch (err) {
         document.getElementById('proj-tbody').innerHTML =
-          `<tr><td colspan="4" class="td-center" style="color:#C41010">Error al cargar: ${err.message}</td></tr>`;
+          `<tr><td colspan="11" class="td-center" style="color:#C41010">Error al cargar: ${err.message}</td></tr>`;
       }
     }
 
@@ -560,6 +590,25 @@
     function removeFC(i)   { _fcList.splice(i,1); renderFC(); }
     function removeFI(i)   { _fiList.splice(i,1); renderFI(); }
 
+    /* ── Responsables del proyecto ── */
+    let _responsablesList = [];
+    function renderResponsables() {
+      document.getElementById('resp-list').innerHTML = _responsablesList.map((r, i) => {
+        const opts = '<option value="">— Seleccionar usuario —</option>' +
+          allUsuarios.map(u => `<option value="${u.id}" ${String(u.id) === String(r.id) ? 'selected' : ''}>${esc(u.nombre)}</option>`).join('');
+        return `<div class="firmante-row resp">
+          <select class="fi-in" onchange="setResponsable(${i}, this.value)">${opts}</select>
+          <button class="fi-del" type="button" onclick="removeResponsable(${i})">✕</button>
+        </div>`;
+      }).join('');
+    }
+    function setResponsable(i, val) {
+      const u = allUsuarios.find(u => String(u.id) === String(val));
+      _responsablesList[i] = u ? { id: u.id, nombre: u.nombre } : { id: null, nombre: '' };
+    }
+    function addResponsable()    { _responsablesList.push({ id: null, nombre: '' }); renderResponsables(); }
+    function removeResponsable(i){ _responsablesList.splice(i, 1); renderResponsables(); }
+
 
     function openModal(titulo, p = {}) {
       editingId = p.id || null;
@@ -572,12 +621,12 @@
       document.getElementById('input-vigencia-inicio').value      = toInputDate(p.vigencia_inicio);
       document.getElementById('input-vigencia-fin').value         = toInputDate(p.vigencia_fin);
       document.getElementById('input-nombre-corto').value         = p.nombre_corto || '';
-      document.getElementById('input-responsable').value          = p.responsable || '';
       document.getElementById('modal-alert').className            = 'modal-alert';
       document.getElementById('modal-alert').textContent          = '';
       _fcList = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente.map(f=>({...f})) : [];
       _fiList = Array.isArray(p.firmantes_interno) ? p.firmantes_interno.map(f=>({...f})) : [];
-      renderFC(); renderFI();
+      _responsablesList = Array.isArray(p.responsables) ? p.responsables.map(r=>({...r})) : [];
+      renderFC(); renderFI(); renderResponsables();
       document.getElementById('modal-overlay').classList.add('active');
       setTimeout(() => document.getElementById('input-nombre').focus(), 50);
     }
@@ -599,9 +648,11 @@
       const vigencia_inicio    = document.getElementById('input-vigencia-inicio').value || null;
       const vigencia_fin       = document.getElementById('input-vigencia-fin').value    || null;
       const nombre_corto       = document.getElementById('input-nombre-corto').value.trim();
-      const responsable        = document.getElementById('input-responsable').value.trim();
       const firmantes_cliente  = _fcList.filter(f => f.nombre || f.cargo || f.rol);
       const firmantes_interno  = _fiList.filter(f => f.nombre || f.rol);
+      const responsables       = _responsablesList
+        .filter(r => r.id)
+        .filter((r, i, a) => a.findIndex(x => String(x.id) === String(r.id)) === i);
       const alert              = document.getElementById('modal-alert');
       const btn                = document.getElementById('modal-save');
       if (!nombre) { alert.textContent = 'El nombre es requerido.'; alert.className = 'modal-alert error'; return; }
@@ -611,7 +662,7 @@
         const url    = editingId ? `${API}/api/admin/proyectos/${editingId}` : `${API}/api/admin/proyectos`;
         const method = editingId ? 'PATCH' : 'POST';
         const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orden, nombre, nombre_corto, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin, responsable, firmantes_cliente, firmantes_interno }) });
+          body: JSON.stringify({ orden, nombre, nombre_corto, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables }) });
         const data   = await res.json();
         if (!data.success) throw new Error(data.error);
         showToast(editingId ? 'Proyecto actualizado.' : 'Proyecto creado.');

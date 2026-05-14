@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo de Seguimiento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#001829; }
+
+    /* ── NAVBAR ─────────────────────────────── */
+    nav {
+      background: linear-gradient(90deg, #003f6b 0%, #005D97 55%, #006aae 100%);
+      padding: 0 40px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 14px rgba(0,0,0,.3);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-left { display:flex; align-items:center; gap:14px; }
+    .logo-img { height:42px; width:42px; object-fit:contain; border-radius:10px; background:#fff; padding:4px; display:block; }
+    .nav-title { color:rgba(255,255,255,.8); font-size:13px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; }
+    .btn-nav {
+      background:transparent; border:2px solid rgba(255,255,255,.5); color:white;
+      padding:7px 18px; border-radius:30px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+      transition:border-color .15s, background .15s;
+    }
+    .btn-nav:hover { border-color:white; background:rgba(255,255,255,.13); }
+    .page-pad { padding-top:32px; }
+
+    /* ── DASHBOARD ──────────────────────────── */
+    .dash-page-wrap {
+      padding: 0 0 56px;
+      display: flex;
+      justify-content: center;
+    }
+    .dash-card {
+      width: 75%;
+      background: linear-gradient(180deg, #0a1f35 0%, #071524 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,.65),
+        0 0 0 1px rgba(0,174,239,.1),
+        inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .dash-header {
+      display:flex; align-items:center; justify-content:center;
+      gap:12px; padding:28px 28px 0;
+    }
+    .dash-title {
+      font-size:clamp(18px,2.2vw,28px); font-weight:900; color:#fff;
+      letter-spacing:5px; text-transform:uppercase;
+      text-shadow: 0 0 24px rgba(0,174,239,.3);
+    }
+    .dash-line {
+      flex:1; max-width:100px; height:1px;
+      background:linear-gradient(90deg,#00AEEF,transparent);
+    }
+    .dash-line.right { background:linear-gradient(270deg,#00AEEF,transparent); }
+
+
+    /* Project cards grid */
+    .dash-projects {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      gap:16px; padding:20px 24px 28px;
+    }
+    .dash-proj-card {
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+      border-radius:14px; padding:20px; cursor:pointer;
+      transition:background .15s, border-color .15s, transform .15s;
+    }
+    .dash-proj-card:hover {
+      background:rgba(0,93,151,.25); border-color:rgba(0,174,239,.35);
+      transform:translateY(-2px);
+    }
+    .dash-proj-name {
+      font-size:13px; font-weight:800; color:#fff; line-height:1.4;
+      margin-bottom:10px;
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .dash-proj-dates {
+      font-size:11px; color:rgba(255,255,255,.45); font-weight:600;
+      margin-bottom:12px;
+    }
+    .dash-progress-wrap { margin-bottom:6px; }
+    .dash-progress-bar {
+      height:5px; background:rgba(255,255,255,.1); border-radius:3px; overflow:hidden;
+    }
+    .dash-progress-fill {
+      height:100%; background:linear-gradient(90deg,#00AEEF,#005D97);
+      border-radius:3px; transition:width .6s ease;
+    }
+    .dash-progress-label {
+      font-size:10px; color:rgba(255,255,255,.4); font-weight:700;
+      margin-top:4px;
+    }
+    .dash-empty {
+      grid-column:1/-1; padding:48px 24px; text-align:center;
+      color:rgba(255,255,255,.25); font-size:13px; font-weight:700;
+    }
+    .dash-proj-card { position:relative; }
+    .dash-proj-del {
+      position:absolute; top:10px; right:10px;
+      background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.25);
+      color:rgba(239,68,68,.6); border-radius:6px;
+      width:26px; height:26px; font-size:13px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; opacity:0; transition:opacity .15s, background .15s, color .15s;
+    }
+    .dash-proj-card:hover .dash-proj-del { opacity:1; }
+    .dash-proj-del:hover { background:rgba(239,68,68,.3); color:#f87171; border-color:rgba(239,68,68,.5); }
+
+    /* ── PROJECT DETAIL MODAL ───────────────── */
+    .proj-overlay {
+      display:none; position:fixed; inset:0; z-index:3000;
+      background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+      align-items:flex-start; justify-content:center;
+      padding:20px; overflow-y:auto;
+    }
+    .proj-overlay.active { display:flex; }
+    .proj-modal {
+      background:#0d1e2e; border-radius:20px; width:100%; max-width:1180px;
+      margin:auto; overflow:hidden;
+      box-shadow:0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,174,239,.15);
+      animation:projIn .28s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes projIn {
+      from { opacity:0; transform:scale(.9) translateY(20px); }
+      to   { opacity:1; transform:scale(1)  translateY(0); }
+    }
+    .proj-modal-header {
+      background:linear-gradient(135deg,#003E66,#005D97);
+      padding:24px 28px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .proj-modal-title { font-size:16px; font-weight:900; color:#fff; line-height:1.35; flex:1; }
+    .proj-modal-close {
+      background:none; border:none; color:rgba(255,255,255,.7); font-size:22px;
+      cursor:pointer; line-height:1; padding:2px; flex-shrink:0;
+      transition:color .15s;
+    }
+    .proj-modal-close:hover { color:#fff; }
+    .proj-modal-stripe { height:3px; background:linear-gradient(90deg,#00AEEF,transparent); }
+
+    /* Summary bar */
+    .proj-summary {
+      display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .proj-stat {
+      flex:1; padding:16px 20px; border-right:1px solid rgba(255,255,255,.07);
+      text-align:center;
+    }
+    .proj-stat:last-child { border-right:none; }
+    .proj-stat-val { font-size:22px; font-weight:900; color:#fff; }
+    .proj-stat-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.4);
+                     letter-spacing:.6px; text-transform:uppercase; margin-top:2px; }
+
+    /* Task list */
+    .task-list { padding:0 0 24px; max-height:70vh; overflow-y:auto; }
+    .task-list::-webkit-scrollbar { width:5px; }
+    .task-list::-webkit-scrollbar-track { background:transparent; }
+    .task-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:3px; }
+
+    .task-row {
+      display:grid;
+      grid-template-columns: 62px 1fr 215px 62px 190px;
+      align-items:center; column-gap:10px;
+      padding:9px 20px; border-bottom:1px solid rgba(255,255,255,.04);
+      cursor:default; transition:background .1s;
+    }
+    .task-row:hover { background:rgba(255,255,255,.03); }
+    .task-row.is-group { cursor:pointer; }
+    .task-row.nivel-1 { background:rgba(0,93,151,.15); }
+    .task-row.nivel-2 .task-name { padding-left:16px; }
+    .task-row.nivel-3 .task-name { padding-left:32px; }
+    .task-row.nivel-4 .task-name { padding-left:48px; }
+    .task-row.nivel-5 .task-name { padding-left:64px; }
+
+    .task-toggle {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:9px; color:rgba(255,255,255,.4);
+      width:16px; height:16px; flex-shrink:0;
+      transition:transform .15s; cursor:pointer; vertical-align:middle; margin-right:4px;
+    }
+    .task-toggle.open { transform:rotate(90deg); color:#00AEEF; }
+    .task-toggle-space { display:inline-block; width:20px; }
+
+    .task-edt {
+      font-size:10px; font-weight:800; color:rgba(255,255,255,.3); white-space:nowrap;
+    }
+    .task-name {
+      font-size:12px; font-weight:700; color:rgba(255,255,255,.85);
+      line-height:1.35; display:flex; align-items:center; min-width:0;
+    }
+    .task-name-text { flex:1; min-width:0; }
+    .task-row.nivel-1 .task-name { font-size:13px; color:#fff; font-weight:900; }
+
+    .task-dates {
+      font-size:10px; color:rgba(255,255,255,.3); font-weight:600;
+      white-space:nowrap; text-align:center;
+    }
+    .task-dur {
+      font-size:10px; color:rgba(255,255,255,.25); font-weight:600;
+      white-space:nowrap; text-align:right;
+    }
+
+    /* ── Progress control ── */
+    .prog-ctrl { position:relative; }
+    .prog-btn {
+      width:100%; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+      border-radius:7px; color:white; padding:5px 8px; cursor:pointer;
+      font-family:'Montserrat',sans-serif;
+      display:flex; align-items:center; gap:6px; transition:background .15s;
+    }
+    .prog-btn:hover  { background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.2); }
+    .prog-btn.open   { border-color:rgba(0,174,239,.5); background:rgba(0,174,239,.1); }
+    .prog-barmini    { width:32px; height:4px; background:rgba(255,255,255,.1); border-radius:2px; overflow:hidden; flex-shrink:0; }
+    .prog-barmini-fill { height:100%; border-radius:2px; transition:width .3s, background .3s; }
+    .prog-label      { flex:1; font-size:10px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .prog-arrow      { font-size:8px; color:rgba(255,255,255,.35); flex-shrink:0; transition:transform .15s; }
+    .prog-btn.open .prog-arrow { transform:rotate(180deg); }
+
+    .prog-drop {
+      position:fixed; min-width:205px; z-index:9999;
+      background:#0e2030; border:1px solid rgba(0,174,239,.35);
+      border-radius:10px; box-shadow:0 10px 32px rgba(0,0,0,.65);
+      display:none; overflow:hidden;
+    }
+    .prog-drop.open { display:block; }
+
+    .prog-drop-item {
+      display:flex; align-items:center; gap:8px;
+      padding:9px 14px; cursor:pointer;
+      font-size:11px; font-weight:700; color:rgba(255,255,255,.65);
+      border:none; background:none; width:100%;
+      font-family:'Montserrat',sans-serif; transition:background .1s;
+    }
+    .prog-drop-item:hover { background:rgba(255,255,255,.07); color:#fff; }
+    .prog-drop-item.sel   { color:#00AEEF; }
+    .pdi-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.15); flex-shrink:0; transition:background .15s; }
+    .prog-drop-item.sel .pdi-dot { background:#00AEEF; }
+    .pdi-pct { margin-left:auto; font-size:10px; opacity:.5; }
+
+    .prog-en-proceso-row {
+      padding:3px 14px 10px; display:none; align-items:center; gap:6px;
+    }
+    .prog-en-proceso-row.show { display:flex; }
+    .prog-pct-input {
+      width:48px; padding:4px 6px; border:1px solid rgba(0,174,239,.45);
+      border-radius:5px; background:rgba(0,0,0,.4); color:#00AEEF;
+      font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800;
+      text-align:center; outline:none;
+    }
+    .prog-pct-ok {
+      padding:4px 10px; background:#00AEEF; border:none; border-radius:5px;
+      color:#001829; font-size:11px; font-weight:800; cursor:pointer;
+      font-family:'Montserrat',sans-serif;
+    }
+    .prog-pct-ok:hover { background:#00c4ff; }
+    .prog-pct-symbol   { font-size:11px; color:rgba(255,255,255,.4); font-weight:700; }
+    .group-prog-display { display:flex; align-items:center; gap:8px; padding:4px 0; }
+    .group-prog-label   { font-size:11px; font-weight:800; color:rgba(255,255,255,.55); }
+
+    @media (max-width:1100px) { .dash-card { width: 88%; } }
+    @media (max-width:700px)  {
+      .dash-card { width: 96%; border-radius:16px; }
+      .dash-page-wrap { padding:0 0 32px; }
+      .proj-summary { flex-wrap:wrap; }
+      .proj-stat { flex:1 1 45%; }
+    }
+    @media (max-width:640px) { nav { padding:0 16px; } }
+  </style>
+</head>
+<body>
+
+  <!-- ══ NAVBAR ══════════════════════════════════════ -->
+  <nav>
+    <div class="nav-left">
+      <a href="index.html"><img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" /></a>
+      <span class="nav-title">📊 Módulo de Seguimiento</span>
+    </div>
+    <a href="index.html" class="btn-nav">← Inicio</a>
+  </nav>
+
+  <div class="page-pad">
+  <div class="dash-page-wrap" id="modulo-seguimiento">
+    <div class="dash-card">
+      <div class="dash-header">
+        <div class="dash-line"></div>
+        <span class="dash-title">&#128202; Módulo de Seguimiento</span>
+        <div class="dash-line right"></div>
+      </div>
+      <div class="dash-projects" id="dash-projects">
+        <div class="dash-empty">Cargando proyectos…</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ══ MODAL: DETALLE PROYECTO ══════════════════════ -->
+  <div class="proj-overlay" id="proj-overlay">
+    <div class="proj-modal" id="proj-modal">
+      <div class="proj-modal-header">
+        <div class="proj-modal-title" id="proj-modal-title"></div>
+        <button class="proj-modal-close" id="proj-modal-close">&#10005;</button>
+      </div>
+      <div class="proj-modal-stripe"></div>
+      <div class="proj-summary" id="proj-summary"></div>
+      <div class="task-list" id="task-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+    function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    /* ── Verificar sesión y rol ── */
+    let currentUserRol = null;
+    (function () {
+      const saved = localStorage.getItem('session');
+      if (!saved) { window.location.href = 'index.html'; return; }
+      try {
+        const user = JSON.parse(saved);
+        currentUserRol = user?.rol || null;
+        const esUsuario     = currentUserRol === 'usuario';
+        const esRestringido = currentUserRol === 'desarrollolead' || currentUserRol === 'operacional';
+        const esSinRol      = currentUserRol === 'sinrol';
+        if (esUsuario || esRestringido || esSinRol) { window.location.href = 'index.html'; }
+      } catch {
+        localStorage.removeItem('session');
+        window.location.href = 'index.html';
+      }
+    })();
+
+    /* ══ DASHBOARD ════════════════════════════════ */
+    let allProjects = [];
+    let activeYear  = null;
+    const collapsedGroups = new Set();
+
+    function fmtShort(iso) {
+      if (!iso) return '—';
+      const [y,m,d] = iso.split('-');
+      const mes = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1];
+      return `${+d} ${mes} ${y}`;
+    }
+
+    function estadoBadge(estado) {
+      if (!estado) return '';
+      const e = estado.toLowerCase();
+      if (e === 'terminado')   return `<span class="task-badge badge-terminado">Terminado</span>`;
+      if (e === 'en progreso') return `<span class="task-badge badge-progreso">En progreso</span>`;
+      return `<span class="task-badge badge-abierto">${estado || 'Abierto'}</span>`;
+    }
+
+    async function loadDashboard() {
+      try {
+        const res  = await fetch(`${API}/api/projects`);
+        const data = await res.json();
+        if (!data.success) return;
+        allProjects = data.projects;
+
+        const sessionYear = parseInt((JSON.parse(localStorage.getItem('session') || '{}')).año) || new Date().getFullYear();
+        activeYear = sessionYear;
+        renderProjectCards();
+      } catch {
+        document.getElementById('dash-projects').innerHTML =
+          '<div class="dash-empty">No se pudo conectar con el servidor.</div>';
+      }
+    }
+
+    function renderProjectCards() {
+      const container  = document.getElementById('dash-projects');
+      const filtered   = allProjects.filter(p => p.year === activeYear);
+      const esSuperusr = currentUserRol === 'superusuario';
+
+      if (!filtered.length) {
+        container.innerHTML = '<div class="dash-empty">Sin proyectos para este año.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="dash-proj-card" onclick="openProject('${p.id}')">
+          ${esSuperusr ? `<button class="dash-proj-del" onclick="deleteProject(event,'${p.id}',\`${escH(p.nombre)}\`)" title="Eliminar proyecto">✕</button>` : ''}
+          <div class="dash-proj-name">${escH(p.nombre)}</div>
+          <div class="dash-proj-dates">
+            ${fmtShort(p.inicio)} &rarr; ${fmtShort(p.fin)}
+          </div>
+          <div class="dash-progress-wrap">
+            <div class="dash-progress-bar">
+              <div class="dash-progress-fill" style="width:${p.progreso}%"></div>
+            </div>
+            <div class="dash-progress-label">${p.progreso}% completado</div>
+          </div>
+        </div>`
+      ).join('');
+    }
+
+    async function deleteProject(e, id, nombre) {
+      e.stopPropagation();
+      if (!confirm(`¿Eliminar el proyecto "${nombre}"?\nEsta acción no se puede deshacer.`)) return;
+      try {
+        const res  = await fetch(`${API}/api/projects/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          allProjects = allProjects.filter(p => p.id !== id);
+          renderProjectCards();
+        } else {
+          alert('Error al eliminar: ' + (data.error || 'desconocido'));
+        }
+      } catch {
+        alert('No se pudo conectar con el servidor.');
+      }
+    }
+
+    async function openProject(id) {
+      const overlay = document.getElementById('proj-overlay');
+      document.getElementById('task-list').innerHTML =
+        '<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-weight:700">Cargando tareas…</div>';
+      document.getElementById('proj-summary').innerHTML = '';
+      document.getElementById('proj-modal-title').textContent = '';
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      collapsedGroups.clear();
+      loadProgOverrides(id);
+
+      try {
+        const res  = await fetch(`${API}/api/projects/${id}/tasks`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const { projectRow, tasks } = data;
+
+        document.getElementById('proj-modal-title').textContent =
+          projectRow?.nombre || decodeURIComponent(id);
+
+        // Summary stats
+        const tareas   = tasks.filter(t => t.tipo === 'tarea');
+        const terminas = tareas.filter(t => t.estado?.toLowerCase() === 'terminado').length;
+        const total    = tareas.length;
+        const horas    = tasks.reduce((s, t) => s + (t.duracion || 0), 0);
+
+        document.getElementById('proj-summary').innerHTML = `
+          <div class="proj-stat">
+            <div class="proj-stat-val">${total}</div>
+            <div class="proj-stat-lbl">Tareas</div>
+          </div>
+          <div class="proj-stat">
+            <div class="proj-stat-val">${terminas}</div>
+            <div class="proj-stat-lbl">Terminadas</div>
+          </div>
+          <div class="proj-stat">
+            <div class="proj-stat-val">${total - terminas}</div>
+            <div class="proj-stat-lbl">Pendientes</div>
+          </div>
+          <div class="proj-stat">
+            <div class="proj-stat-val">${horas.toLocaleString()}</div>
+            <div class="proj-stat-lbl">Horas totales</div>
+          </div>`;
+
+        renderTaskList(tasks);
+      } catch (err) {
+        document.getElementById('task-list').innerHTML =
+          `<div style="padding:32px;text-align:center;color:#f87171;font-weight:700">Error: ${err.message}</div>`;
+      }
+    }
+
+    /* ── Progress override management ─────────────── */
+    let currentProjectId = null;
+    let progOverrides    = {};
+    let currentTasks     = [];
+
+    const PROG_COLORS = {
+      'por-iniciar': 'rgba(255,255,255,.18)',
+      'iniciado':    '#f59e0b',
+      'en-proceso':  '#00AEEF',
+      'culminado':   '#16a34a',
+    };
+    const PROG_LABELS = {
+      'por-iniciar': 'Por iniciar',
+      'iniciado':    'Iniciado',
+      'en-proceso':  'En proceso',
+      'culminado':   'Culminado',
+    };
+
+    function loadProgOverrides(pid) {
+      currentProjectId = pid;
+      try { progOverrides = JSON.parse(localStorage.getItem(`prog_${pid}`) || '{}'); }
+      catch { progOverrides = {}; }
+    }
+    function saveProgOverrides() {
+      if (currentProjectId)
+        localStorage.setItem(`prog_${currentProjectId}`, JSON.stringify(progOverrides));
+    }
+    function getEffectiveProg(edt, xlsPct) {
+      if (progOverrides[edt]) return progOverrides[edt];
+      const p = xlsPct || 0;
+      if (p <= 0)  return { statusKey: 'por-iniciar', pct: 0 };
+      if (p <= 15) return { statusKey: 'iniciado',    pct: 15 };
+      if (p < 100) return { statusKey: 'en-proceso',  pct: Math.max(16, Math.min(80, p)) };
+      return { statusKey: 'culminado', pct: 100 };
+    }
+
+    function buildProgCtrl(edt, xlsPct) {
+      const { statusKey, pct } = getEffectiveProg(edt, xlsPct);
+      const color = PROG_COLORS[statusKey];
+
+      const opts = ['por-iniciar','iniciado','en-proceso','culminado'].map(sk => {
+        const pctLbl = { 'por-iniciar':'0%', 'iniciado':'15%', 'en-proceso':'16–80%', 'culminado':'100%' }[sk];
+        const enRow  = sk === 'en-proceso'
+          ? `<div class="prog-en-proceso-row${statusKey === 'en-proceso' ? ' show' : ''}">
+               <input class="prog-pct-input" type="number" min="16" max="80"
+                      value="${statusKey === 'en-proceso' ? pct : 50}" />
+               <span class="prog-pct-symbol">%</span>
+               <button class="prog-pct-ok" type="button">✓</button>
+             </div>` : '';
+        return `<button class="prog-drop-item${sk === statusKey ? ' sel' : ''}" type="button" data-sk="${sk}">
+          <span class="pdi-dot"></span>${PROG_LABELS[sk]}<span class="pdi-pct">${pctLbl}</span>
+        </button>${enRow}`;
+      }).join('');
+
+      return `<button class="prog-btn" type="button">
+        <div class="prog-barmini"><div class="prog-barmini-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="prog-label">${PROG_LABELS[statusKey]} ${pct}%</span>
+        <span class="prog-arrow">▾</span>
+      </button>
+      <div class="prog-drop">${opts}</div>`;
+    }
+
+    function buildGroupProg(edt) {
+      const stored = progOverrides[edt];
+      let pct;
+      if (stored) {
+        pct = stored.pct;
+      } else {
+        const depth    = edt.split('.').length;
+        const prefix   = edt + '.';
+        const children = currentTasks.filter(t =>
+          t.edt.startsWith(prefix) && t.edt.split('.').length === depth + 1
+        );
+        if (!children.length) return '';
+        pct = Math.round(
+          children.reduce((s, c) => s + getEffectiveProg(c.edt, c.progreso).pct, 0) / children.length
+        );
+      }
+      const sk    = pct <= 0 ? 'por-iniciar' : pct <= 15 ? 'iniciado' : pct < 100 ? 'en-proceso' : 'culminado';
+      const color = PROG_COLORS[sk];
+      return `<div class="group-prog-display">
+        <div class="prog-barmini" style="width:56px">
+          <div class="prog-barmini-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <span class="group-prog-label">${pct}%</span>
+      </div>`;
+    }
+
+    function computeGroupProgress(edt) {
+      const depth    = edt.split('.').length;
+      const prefix   = edt + '.';
+      const children = currentTasks.filter(t =>
+        t.edt.startsWith(prefix) && t.edt.split('.').length === depth + 1
+      );
+      if (!children.length) return null;
+      return Math.round(
+        children.reduce((s, c) => s + getEffectiveProg(c.edt, c.progreso).pct, 0) / children.length
+      );
+    }
+
+    function rollupProgress(changedEdt) {
+      const parts = changedEdt.split('.');
+      for (let len = parts.length - 1; len >= 1; len--) {
+        const parentEdt = parts.slice(0, len).join('.');
+        const pct = computeGroupProgress(parentEdt);
+        if (pct === null) continue;
+        const sk = pct <= 0 ? 'por-iniciar' : pct <= 15 ? 'iniciado' : pct < 100 ? 'en-proceso' : 'culminado';
+        progOverrides[parentEdt] = { statusKey: sk, pct };
+        const row = document.querySelector(`.task-row[data-edt="${parentEdt}"]`);
+        if (row) {
+          const fill  = row.querySelector('.prog-barmini-fill');
+          const label = row.querySelector('.group-prog-label');
+          if (fill)  { fill.style.width = `${pct}%`; fill.style.background = PROG_COLORS[sk]; }
+          if (label) label.textContent  = `${pct}%`;
+        }
+      }
+      saveProgOverrides();
+    }
+
+    function closeAllProgDrops() {
+      document.querySelectorAll('.prog-drop.open').forEach(d => {
+        d.classList.remove('open');
+        const b = d.previousElementSibling;
+        if (b?.classList.contains('prog-btn')) b.classList.remove('open');
+      });
+    }
+    function toggleProgDrop(btn) {
+      const ctrl  = btn.closest('.prog-ctrl');
+      const drop  = ctrl.querySelector('.prog-drop');
+      const isOpen = drop.classList.contains('open');
+      closeAllProgDrops();
+      if (isOpen) return;
+      const rect = btn.getBoundingClientRect();
+      drop.style.right  = (window.innerWidth - rect.right) + 'px';
+      drop.style.left   = 'auto';
+      if (window.innerHeight - rect.bottom < 210) {
+        drop.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        drop.style.top    = 'auto';
+      } else {
+        drop.style.top    = (rect.bottom + 4) + 'px';
+        drop.style.bottom = 'auto';
+      }
+      drop.classList.add('open');
+      btn.classList.add('open');
+    }
+    function applyProgStatus(ctrl, sk, pct) {
+      const edt = ctrl.closest('.task-row').dataset.edt;
+      progOverrides[edt] = { statusKey: sk, pct };
+      saveProgOverrides();
+      const btn   = ctrl.querySelector('.prog-btn');
+      btn.querySelector('.prog-barmini-fill').style.width      = `${pct}%`;
+      btn.querySelector('.prog-barmini-fill').style.background = PROG_COLORS[sk];
+      btn.querySelector('.prog-label').textContent             = `${PROG_LABELS[sk]} ${pct}%`;
+      ctrl.querySelectorAll('.prog-drop-item').forEach(i => i.classList.remove('sel'));
+      ctrl.querySelector(`[data-sk="${sk}"]`)?.classList.add('sel');
+      const enRow = ctrl.querySelector('.prog-en-proceso-row');
+      if (enRow) enRow.classList.toggle('show', sk === 'en-proceso');
+      rollupProgress(edt);
+      closeAllProgDrops();
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.prog-ctrl')) closeAllProgDrops();
+    });
+
+    function renderTaskList(tasks) {
+      currentTasks = tasks;
+      const list = document.getElementById('task-list');
+
+      function isVisible(task) {
+        const parts = task.edt.split('.');
+        for (let len = 1; len < parts.length; len++) {
+          if (collapsedGroups.has(parts.slice(0, len).join('.'))) return false;
+        }
+        return true;
+      }
+
+      function build() {
+        list.innerHTML = tasks.filter(isVisible).map(t => {
+          const isGroup = t.tipo !== 'tarea';
+          const isOpen  = !collapsedGroups.has(t.edt);
+          const toggleEl = isGroup
+            ? `<span class="task-toggle ${isOpen ? 'open' : ''}" data-edt="${t.edt}">&#9658;</span>`
+            : `<span class="task-toggle-space"></span>`;
+          const dates = (t.inicio || t.fin)
+            ? `${fmtShort(t.inicio)} – ${fmtShort(t.fin)}` : '—';
+          const dur   = t.duracion ? `${t.duracion}h` : '—';
+          const prog  = isGroup ? buildGroupProg(t.edt) : buildProgCtrl(t.edt, t.progreso);
+
+          return `<div class="task-row nivel-${t.nivel} ${isGroup ? 'is-group' : ''}" data-edt="${t.edt}">
+            <span class="task-edt">${t.edt}</span>
+            <span class="task-name">${toggleEl}<span class="task-name-text">${escH(t.nombre)}</span></span>
+            <span class="task-dates">${dates}</span>
+            <span class="task-dur">${dur}</span>
+            <div class="prog-ctrl">${prog}</div>
+          </div>`;
+        }).join('');
+
+        list.querySelectorAll('.task-toggle[data-edt]').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const edt = btn.dataset.edt;
+            if (collapsedGroups.has(edt)) collapsedGroups.delete(edt);
+            else collapsedGroups.add(edt);
+            build();
+          });
+        });
+
+        list.querySelectorAll('.task-row.is-group').forEach(row => {
+          row.addEventListener('click', () => {
+            const edt = row.dataset.edt;
+            if (!row.querySelector('.task-toggle[data-edt]')) return;
+            if (collapsedGroups.has(edt)) collapsedGroups.delete(edt);
+            else collapsedGroups.add(edt);
+            build();
+          });
+        });
+
+        list.querySelectorAll('.prog-btn').forEach(btn => {
+          btn.addEventListener('click', e => { e.stopPropagation(); toggleProgDrop(btn); });
+        });
+
+        list.querySelectorAll('.prog-drop-item').forEach(item => {
+          item.addEventListener('click', e => {
+            e.stopPropagation();
+            const sk   = item.dataset.sk;
+            const ctrl = item.closest('.prog-ctrl');
+            if (sk === 'en-proceso') {
+              ctrl.querySelectorAll('.prog-drop-item').forEach(i => i.classList.remove('sel'));
+              item.classList.add('sel');
+              ctrl.querySelector('.prog-en-proceso-row')?.classList.add('show');
+              ctrl.querySelector('.prog-pct-input')?.focus();
+            } else {
+              const pct = { 'por-iniciar': 0, 'iniciado': 15, 'culminado': 100 }[sk];
+              applyProgStatus(ctrl, sk, pct);
+            }
+          });
+        });
+
+        list.querySelectorAll('.prog-pct-ok').forEach(ok => {
+          ok.addEventListener('click', e => {
+            e.stopPropagation();
+            const ctrl  = ok.closest('.prog-ctrl');
+            const input = ctrl.querySelector('.prog-pct-input');
+            let v = Math.max(16, Math.min(80, parseInt(input.value) || 50));
+            input.value = v;
+            applyProgStatus(ctrl, 'en-proceso', v);
+          });
+        });
+
+        list.querySelectorAll('.prog-pct-input').forEach(inp => {
+          inp.addEventListener('click', e => e.stopPropagation());
+          inp.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            e.stopPropagation();
+            const ctrl = inp.closest('.prog-ctrl');
+            let v = Math.max(16, Math.min(80, parseInt(inp.value) || 50));
+            inp.value = v;
+            applyProgStatus(ctrl, 'en-proceso', v);
+          });
+        });
+      }
+
+      build();
+    }
+
+    function closeProject() {
+      document.getElementById('proj-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('proj-modal-close').addEventListener('click', closeProject);
+    document.getElementById('proj-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('proj-overlay')) closeProject();
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>

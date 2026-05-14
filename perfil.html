@@ -189,6 +189,10 @@
             <span class="info-label">Proyectos</span>
             <div class="proyectos-chips" id="info-proyectos-chips"></div>
           </div>
+          <div class="info-row" id="info-responsable-row" style="display:none">
+            <span class="info-label">Responsable de Proyecto</span>
+            <div class="proyectos-chips" id="info-responsable-chips"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -338,6 +342,11 @@
           opt.value = p.id; opt.textContent = p.nombre;
           sel.appendChild(opt);
         });
+      }
+      if (data.success && data.responsable_proyectos?.length) {
+        document.getElementById('info-responsable-chips').innerHTML =
+          data.responsable_proyectos.map(p => `<span class="proy-chip">${esc(p.nombre)}</span>`).join('');
+        document.getElementById('info-responsable-row').style.display = '';
       }
     } catch {}
   })();
