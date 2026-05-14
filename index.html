@@ -2759,7 +2759,7 @@
       tbody.innerHTML += `<tr class="ep-add-row">
         <td colspan="${colCount}">
           <div class="ep-add-wrap">
-            <input type="number" class="ep-add-num" id="ep-add-num" placeholder="#" min="0.1" step="any" title="Número (opcional, ej: 3.1)" />
+            <input type="number" class="ep-add-num" id="ep-add-num" placeholder="#" min="0" step="any" title="Número (opcional, ej: 0, 3.1)" />
             <input class="ep-add-input" id="ep-add-input" placeholder="Nombre del nuevo entregable…" />
             <button class="ep-add-btn" id="ep-add-btn">＋ Agregar</button>
           </div>
@@ -2978,7 +2978,7 @@
       texto.style.display = 'none';
       editBtn.style.display = 'none';
       wrap.insertAdjacentHTML('beforeend',
-        `<input type="number" class="ep-num-input" value="${currentNum}" min="0.1" step="any" title="Número (ej: 3.1)" />
+        `<input type="number" class="ep-num-input" value="${currentNum}" min="0" step="any" title="Número (ej: 0, 3.1)" />
          <input class="ep-nombre-input" value="${escH(current)}" maxlength="300" />
          <button class="ep-nombre-save"   title="Guardar">✓</button>
          <button class="ep-nombre-cancel" title="Cancelar">✗</button>
@@ -3014,7 +3014,7 @@
         const num    = parseFloat(row.dataset.itemNum);
         const newNum = parseFloat(wrap.querySelector('.ep-num-input')?.value);
         const body   = { oldNombre: current, nombre: nuevoNombre };
-        if (newNum >= 1 && newNum !== num) body.newNum = newNum;
+        if (!isNaN(newNum) && newNum >= 0 && newNum !== num) body.newNum = newNum;
         try {
           const r = await fetch(`${API}/api/entregables/${encodeURIComponent(id)}/items/${num}/nombre`,
             { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -3038,8 +3038,8 @@
       if (!acta) return;
       addBtn.disabled = true; addBtn.textContent = '…';
       const body = { nombre };
-      const numVal = numInp?.value ? parseInt(numInp.value) : null;
-      if (numVal >= 1) body.num = numVal;
+      const numVal = numInp?.value !== '' && numInp?.value != null ? parseInt(numInp.value) : null;
+      if (numVal !== null && !isNaN(numVal) && numVal >= 0) body.num = numVal;
       try {
         const r    = await fetch(`${API}/api/entregables/${encodeURIComponent(activeId)}/items`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' },

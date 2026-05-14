@@ -965,7 +965,7 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
               ?? meta.items?.find(it => it.num === num);
     if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
     item.nombre = nombre;
-    if (newNum !== null && !isNaN(newNum) && newNum >= 1 && newNum !== num) {
+    if (newNum !== null && !isNaN(newNum) && newNum >= 0 && newNum !== num) {
       // Resolve pre-existing duplicate nums before shifting
       meta.items.sort((a, b) => a.num - b.num);
       for (let i = 1; i < meta.items.length; i++) {
@@ -975,7 +975,14 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
       if (newNum > cur) {
         meta.items.forEach(it => { if (it.num !== cur && it.num > cur && it.num <= newNum) it.num--; });
       } else if (newNum < cur) {
-        meta.items.forEach(it => { if (it.num !== cur && it.num >= newNum && it.num < cur) it.num++; });
+        const others   = meta.items.filter(it => it.num !== cur);
+        const minOther = others.length ? Math.min(...others.map(it => it.num)) : Infinity;
+        if (newNum < minOther) {
+          // Mover por debajo del mínimo: cerrar el hueco que deja en `cur`
+          meta.items.forEach(it => { if (it.num !== cur && it.num > cur) it.num--; });
+        } else {
+          meta.items.forEach(it => { if (it.num !== cur && it.num >= newNum && it.num < cur) it.num++; });
+        }
       }
       item.num = newNum;
       meta.items.sort((a, b) => a.num - b.num);
@@ -1012,7 +1019,7 @@ app.post('/api/entregables/:id/items', (req, res) => {
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'No encontrado.' });
     const meta   = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     let assignedNum;
-    if (numReq && !isNaN(numReq) && numReq >= 1) {
+    if (numReq !== null && !isNaN(numReq) && numReq >= 0) {
       if (meta.items.some(it => it.num === numReq))
         meta.items.forEach(it => { if (it.num >= numReq) it.num++; });
       assignedNum = numReq;
