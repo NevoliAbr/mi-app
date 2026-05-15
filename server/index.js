@@ -1918,7 +1918,7 @@ async function ensureColumns() {
     catch {
       const sql = dbType === 'mysql'
         ? 'ALTER TABLE kanban_boards ADD COLUMN privado TINYINT NOT NULL DEFAULT 0, ADD COLUMN creado_por INT NULL'
-        : 'ALTER TABLE kanban_boards ADD privado TINYINT NOT NULL DEFAULT 0, ADD creado_por INT NULL';
+        : 'ALTER TABLE kanban_boards ADD privado TINYINT NOT NULL DEFAULT 0, creado_por INT NULL';
       await pool.execute(sql, []);
       console.log('✔ Columnas privado/creado_por añadidas a kanban_boards');
     }

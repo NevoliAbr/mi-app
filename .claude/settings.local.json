@@ -36,7 +36,13 @@
       "Bash(node -c server/index.js)",
       "Bash(node -e \"for\\(const f of ['proyectos-admin.html','perfil.html']\\){const h=require\\('fs'\\).readFileSync\\(f,'utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];let ok=true;m.forEach\\(\\(s,i\\)=>{if\\(s[1].includes\\('cdn.'\\)\\)return;try{new Function\\(s[1]\\)}catch\\(e\\){ok=false;console.log\\(f+' s'+i+' ERR: '+e.message\\)}}\\);if\\(ok\\)console.log\\(f+' OK'\\);}\")",
       "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('proyectos-admin.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];let ok=true;m.forEach\\(\\(s,i\\)=>{try{new Function\\(s[1]\\)}catch\\(e\\){ok=false;console.log\\('s'+i+' ERR: '+e.message\\)}}\\);console.log\\(ok?'proyectos-admin.html OK':'ERROR'\\);\")",
-      "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('modulo-entregables.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];let ok=true;m.forEach\\(\\(s,i\\)=>{if\\(s[1].includes\\('cdn.'\\)\\)return;try{new Function\\(s[1]\\)}catch\\(e\\){ok=false;console.log\\('s'+i+' ERR: '+e.message\\)}}\\);console.log\\(ok?'modulo-entregables.html OK':'ERROR'\\);\")"
+      "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('modulo-entregables.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];let ok=true;m.forEach\\(\\(s,i\\)=>{if\\(s[1].includes\\('cdn.'\\)\\)return;try{new Function\\(s[1]\\)}catch\\(e\\){ok=false;console.log\\('s'+i+' ERR: '+e.message\\)}}\\);console.log\\(ok?'modulo-entregables.html OK':'ERROR'\\);\")",
+      "Bash(node -c navbar.js)",
+      "Bash(echo \"--- exit: $? ---\")",
+      "Bash(git check-ignore *)",
+      "Bash(timeout 12 node index.js)",
+      "Bash(cd /c/mi-app && grep -n \"creado_por\\\\|async function ensureColumns\\\\|SELECT responsables\\\\|✔ Columna responsables\\\\|SELECT pdf_url\" server/index.js)",
+      "Read(//c/c/mi-app/server/**)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Desarrollador web\\Downloads"

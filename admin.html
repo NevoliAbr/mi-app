@@ -45,6 +45,10 @@
     .btn-nav.primary { background:#005D97; border-color:#005D97; }
     .btn-nav.primary:hover { background:#003E66; border-color:#003E66; }
     .nav-center { display:flex; gap:6px; }
+    .admin-tabs {
+      background:#004f80; padding:10px 40px; display:flex; gap:6px; flex-wrap:wrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.15); position:sticky; top:64px; z-index:900;
+    }
     .btn-nav-tab {
       background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
       padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
@@ -433,26 +437,13 @@
 </head>
 <body>
 
-  <!-- ══ NAVBAR ══════════════════════════════════════ -->
-  <nav>
-    <div class="nav-left">
-      <a href="index.html">
-        <img src="logo.png" alt="Logo" class="logo-img" />
-      </a>
-      <span class="nav-title">/ Administración</span>
-    </div>
-    <div class="nav-center">
-      <a href="admin.html" class="btn-nav-tab active">👥 Usuarios</a>
-      <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
-      <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
-      <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
-    </div>
-    <div class="nav-right">
-      <span id="admin-nombre"></span>
-      <a href="index.html" class="btn-nav">&#8592; Inicio</a>
-      <button id="btn-logout" class="btn-nav">Cerrar sesión</button>
-    </div>
-  </nav>
+  <script src="navbar.js"></script>
+  <div class="admin-tabs">
+    <a href="admin.html" class="btn-nav-tab active">👥 Usuarios</a>
+    <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+    <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
+    <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
+  </div>
 
   <!-- ══ PAGE HEADER ══════════════════════════════════ -->
   <div class="page-header">
@@ -650,13 +641,6 @@
     if (!session || session.rol !== 'superusuario') {
       window.location.replace('index.html');
     }
-
-    document.getElementById('admin-nombre').textContent = session.nombre;
-
-    document.getElementById('btn-logout').addEventListener('click', () => {
-      localStorage.removeItem('session');
-      window.location.href = 'index.html';
-    });
 
     /* ── Toast ───────────────────────────────── */
     let toastTimer;

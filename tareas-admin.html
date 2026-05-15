@@ -21,6 +21,10 @@
     .nav-left   { display:flex; align-items:center; gap:16px; }
     .nav-right  { display:flex; align-items:center; gap:14px; }
     .nav-center { display:flex; gap:6px; }
+    .admin-tabs {
+      background:#004f80; padding:10px 40px; display:flex; gap:6px; flex-wrap:wrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.15); position:sticky; top:64px; z-index:900;
+    }
     .logo-img   { height:40px; width:40px; object-fit:contain; border-radius:12px; background:#fff; padding:4px; display:block; }
     .nav-title  { color:rgba(255,255,255,.75); font-size:13px; font-weight:700; letter-spacing:.4px; }
     #admin-nombre { color:rgba(255,255,255,.85); font-size:13px; font-weight:700; }
@@ -189,24 +193,13 @@
 </head>
 <body>
 
-<nav>
-  <div class="nav-left">
-    <a href="index.html">
-      <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'" />
-    </a>
-    <span class="nav-title">/ Administración</span>
-  </div>
-  <div class="nav-center">
-    <a href="admin.html"          class="btn-nav-tab">👥 Usuarios</a>
-    <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
-    <a href="tareas-admin.html"   class="btn-nav-tab active">📋 Tareas</a>
-    <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
-  </div>
-  <div class="nav-right">
-    <span id="admin-nombre"></span>
-    <a href="index.html" class="btn-nav">&#8592; Inicio</a>
-  </div>
-</nav>
+<script src="navbar.js"></script>
+<div class="admin-tabs">
+  <a href="admin.html"           class="btn-nav-tab">👥 Usuarios</a>
+  <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+  <a href="tareas-admin.html"    class="btn-nav-tab active">📋 Tareas</a>
+  <a href="sistemas-admin.html"  class="btn-nav-tab">⚙️ Sistemas</a>
+</div>
 
 <div class="page-header">
   <h1>📋 Tareas</h1>
@@ -322,11 +315,6 @@
 <script>
   const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
-  /* ── Nombre admin ── */
-  try {
-    const u = JSON.parse(sessionStorage.getItem('usuario') || '{}');
-    if (u.nombre) document.getElementById('admin-nombre').textContent = u.nombre;
-  } catch {}
 
   /* ── Helpers ── */
   function esc(s) {
