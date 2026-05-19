@@ -25,6 +25,9 @@ function notifyTo(emails) {
   return 'nevoli.gonzalez@lcg.mx';
 }
 
+// Destinatarios principales de notificaciones de seguimiento
+const ELISA_NOTIFY = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
@@ -546,6 +549,56 @@ app.post('/api/avisos', upload.array('imagenes', 10), async (req, res) => {
   }
 });
 
+/* ── Avisos: PUT actualizar ─────────────────────── */
+app.put('/api/avisos/:id', upload.array('imagenes', 10), async (req, res) => {
+  const avisoId = parseInt(req.params.id);
+  const { titulo, texto, fecha_fin, link, imagenes_eliminadas } = req.body;
+
+  if (!titulo || !fecha_fin)
+    return res.status(400).json({ success: false, error: 'Título y fecha son requeridos.' });
+
+  try {
+    const pool = await getPool();
+
+    await pool.execute(
+      'UPDATE avisos SET titulo = ?, texto = ?, fecha_fin = ?, link = ? WHERE id = ?',
+      [titulo.trim(), texto || null, fecha_fin, link || null, avisoId]
+    );
+
+    // Eliminar imágenes seleccionadas
+    let rutasAEliminar = [];
+    if (imagenes_eliminadas) {
+      try {
+        rutasAEliminar = JSON.parse(imagenes_eliminadas);
+      } catch { rutasAEliminar = []; }
+    }
+    for (const ruta of rutasAEliminar) {
+      await pool.execute(
+        'DELETE FROM aviso_imagenes WHERE aviso_id = ? AND ruta = ?',
+        [avisoId, ruta]
+      );
+      const filePath = path.join(__dirname, ruta);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    // Agregar nuevas imágenes
+    for (const file of (req.files || [])) {
+      const ruta = `/uploads/${file.filename}`;
+      await pool.execute(
+        'INSERT INTO aviso_imagenes (aviso_id, ruta) VALUES (?, ?)',
+        [avisoId, ruta]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    for (const file of (req.files || [])) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /* ── Avisos: DELETE ─────────────────────────────── */
 app.delete('/api/avisos/:id', async (req, res) => {
   try {
@@ -577,6 +630,90 @@ app.patch('/api/avisos/:id/activo', async (req, res) => {
       'UPDATE avisos SET activo = ? WHERE id = ?',
       [req.body.activo ? 1 : 0, parseInt(req.params.id)]
     );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Notificaciones: helper ─────────────────────── */
+async function crearNotificacion({ usuario_id, tipo, titulo, mensaje, link_url, meta }) {
+  if (!usuario_id) return;
+  try {
+    const pool = await getPool();
+    await pool.execute(
+      'INSERT INTO notificaciones (usuario_id, tipo, titulo, mensaje, link_url, meta_json) VALUES (?, ?, ?, ?, ?, ?)',
+      [usuario_id, tipo, titulo, mensaje || null, link_url || null, meta ? JSON.stringify(meta) : null]
+    );
+  } catch (err) { console.warn('⚠ crearNotificacion:', err.message); }
+}
+
+/* ── Notificaciones: GET lista del usuario ─────── */
+app.get('/api/usuarios/:id/notificaciones', async (req, res) => {
+  try {
+    const pool      = await getPool();
+    const usuarioId = parseInt(req.params.id);
+    const limit     = Math.min(parseInt(req.query.limit) || 50, 200);
+    const soloUnread = req.query.unread === '1';
+    const where     = soloUnread ? 'WHERE usuario_id = ? AND leida = 0' : 'WHERE usuario_id = ?';
+    const isMysql   = getDBType() === 'mysql';
+    const sql       = isMysql
+      ? `SELECT id, tipo, titulo, mensaje, link_url, meta_json, leida, leida_en, creada_en
+         FROM notificaciones ${where}
+         ORDER BY creada_en DESC
+         LIMIT ${limit}`
+      : `SELECT TOP ${limit} id, tipo, titulo, mensaje, link_url, meta_json, leida, leida_en, creada_en
+         FROM notificaciones ${where}
+         ORDER BY creada_en DESC`;
+    const [rows] = await pool.execute(sql, [usuarioId]);
+    for (const r of rows) {
+      if (r.meta_json) { try { r.meta = JSON.parse(r.meta_json); } catch { r.meta = null; } }
+      delete r.meta_json;
+    }
+    res.json({ success: true, notificaciones: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Notificaciones: contador no leídas ─────────── */
+app.get('/api/usuarios/:id/notificaciones/unread-count', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      'SELECT COUNT(*) AS n FROM notificaciones WHERE usuario_id = ? AND leida = 0',
+      [parseInt(req.params.id)]
+    );
+    res.json({ success: true, count: Number(rows[0]?.n || 0) });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Notificaciones: marcar leída ───────────────── */
+app.patch('/api/notificaciones/:id/leida', async (req, res) => {
+  try {
+    const pool  = await getPool();
+    const leida = req.body.leida === false ? 0 : 1;
+    await pool.execute(
+      'UPDATE notificaciones SET leida = ?, leida_en = CASE WHEN ? = 1 THEN NOW() ELSE NULL END WHERE id = ?',
+      [leida, leida, parseInt(req.params.id)]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Notificaciones: marcar todas leídas del usuario ── */
+app.patch('/api/usuarios/:id/notificaciones/leer-todas', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute(
+      'UPDATE notificaciones SET leida = 1, leida_en = NOW() WHERE usuario_id = ? AND leida = 0',
+      [parseInt(req.params.id)]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Notificaciones: eliminar ───────────────────── */
+app.delete('/api/notificaciones/:id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute('DELETE FROM notificaciones WHERE id = ?', [parseInt(req.params.id)]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -885,11 +1022,13 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
     const item = meta.items?.find(it => it.num === num);
     if (!item) return res.status(400).json({ success: false, error: 'Inválido.' });
 
-    // Restricción: solo Elisa o Daniel pueden completar Carpeta y Dig.
-    const CARPETA_ALLOWED = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx'];
-    if (etapa === 'carpeta' && completada === true) {
-      if (!usuario_email || !CARPETA_ALLOWED.includes(usuario_email.toLowerCase()))
-        return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Daniel Arias pueden completar Carpeta y Dig.' });
+    // Carpeta y Acuse ya no se pueden cambiar item por item — solo vía /etapa-bulk
+    if (etapa === 'carpeta' || etapa === 'acuse') {
+      return res.status(403).json({ success: false, error: 'Carpeta y Acuse se gestionan a nivel acta. Usa los botones globales (solo Elisa Mendez o Daniel Arias).' });
+    }
+    // VOBO Final ya no se cambia manualmente — se acopla al estado de Acuse
+    if (etapa === 'vobo_final') {
+      return res.status(403).json({ success: false, error: 'VOBO Final se marca automáticamente al completar Acuse.' });
     }
 
     // Migrar etapas faltantes en el item
@@ -923,7 +1062,7 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
       const to3    = ['elisa.mendez@lcg.mx', 'moises.quintero@lcg.mx', 'daniel.arias@lcg.mx'];
       const mailMap = {
         creacion: {
-          to: notifyTo('elisa.mendez@lcg.mx'),
+          to: notifyTo(ELISA_NOTIFY),
           subject: `${prefix} Elaboración terminada – Favor de revisar`,
           html: `<p>El archivo en elaboración ha sido terminado. Favor de revisar.</p>
                  <p><strong>Entregable:</strong> ${item.nombre}<br><strong>Número:</strong> ${item.num}</p>`
@@ -939,12 +1078,12 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Externa</strong>.</p>`
         },
         carpeta: {
-          to: notifyTo('elisa.mendez@lcg.mx'),
+          to: notifyTo(ELISA_NOTIFY),
           subject: `${prefix} Carpeta y digitalización terminada – #${item.num}`,
           html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> con número <strong>#${item.num}</strong> se ha elaborado y terminado.</p>`
         },
         acuse: {
-          to: notifyTo('elisa.mendez@lcg.mx'),
+          to: notifyTo(ELISA_NOTIFY),
           subject: `${prefix} Acuse pendiente de VoBo – #${item.num}`,
           html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
         }
@@ -960,6 +1099,28 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
           subject: `${prefix} Entregable #${item.num} – Visto Bueno otorgado`,
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha recibido Visto Bueno.</p>`
         }).catch(err => console.warn('⚠ Email vobo owner:', err.message));
+      }
+    }
+
+    // Notificación al 80% del acta: cuando todos los items tienen firma_externa completada
+    if (etapa === 'firma_externa') {
+      const todosFirmados = meta.items.every(it => it.etapas?.firma_externa?.completada);
+      if (todosFirmados && !meta.notif_80_sent) {
+        meta.notif_80_sent = true;
+        fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+        const proy   = meta.proyectoNombre || '';
+        const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
+        transporter.sendMail({
+          from: process.env.SMTP_FROM,
+          to: notifyTo(ELISA_NOTIFY),
+          subject: `${prefix} 80% completado — Listo para Carpeta y Digitalización`,
+          html: `<p>Se ha completado el <strong>80%</strong> del proyecto <strong>${proy || meta.mesNombre}</strong>.</p>
+                 <p>Todos los entregables tienen Firma Externa completada. Listo para <strong>Carpeta y Digitalización</strong>.</p>`
+        }).catch(err => console.warn('⚠ Email 80%:', err.message));
+      } else if (!todosFirmados && meta.notif_80_sent) {
+        // Si alguien revierte un firma_externa, reseteamos el flag para que se reenvíe al volver al 100%
+        meta.notif_80_sent = false;
+        fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
       }
     }
 
@@ -1089,6 +1250,11 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
     const etapa    = req.params.etapa;
+    // Acuse ya no se sube por item — solo vía /etapa-bulk/acuse
+    if (etapa === 'acuse') {
+      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(403).json({ success: false, error: 'El acuse se sube a nivel acta. Usa el botón global (solo Elisa Mendez o Daniel Arias).' });
+    }
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) { fs.unlinkSync(req.file.path); return res.status(404).json({ success: false, error: 'No encontrado.' }); }
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
@@ -1113,13 +1279,259 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
       const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
       transporter.sendMail({
         from: process.env.SMTP_FROM,
-        to: notifyTo('elisa.mendez@lcg.mx'),
+        to: notifyTo(ELISA_NOTIFY),
         subject: `${_prefix} Acuse pendiente de VoBo – #${item.num}`,
         html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
       }).catch(err => console.warn('⚠ Email acuse PDF:', err.message));
     }
     res.json({ success: true, pdf: ruta });
   } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: Carpeta/Acuse bulk (acta completa) ── */
+const BULK_ALLOWED = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+
+// Carpeta: marcar en_proceso / completada para TODOS los items del acta
+app.patch('/api/entregables/:id/etapa-bulk/carpeta', (req, res) => {
+  try {
+    const id = decodeURIComponent(req.params.id);
+    const { accion, usuario_email, usuario_nombre } = req.body; // accion: 'en_proceso' | 'completada' | 'reset'
+    if (!['en_proceso', 'completada', 'reset'].includes(accion))
+      return res.status(400).json({ success: false, error: 'Acción inválida.' });
+    if (!usuario_email || !BULK_ALLOWED.includes(usuario_email.toLowerCase()))
+      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Daniel Arias pueden gestionar Carpeta y Dig.' });
+
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'Acta no encontrada.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    if (!Array.isArray(meta.items) || meta.items.length === 0)
+      return res.status(400).json({ success: false, error: 'Acta sin items.' });
+
+    // Validar precondiciones: para completar, todos los items deben tener firma_externa completada
+    if (accion === 'completada') {
+      const faltantes = meta.items.filter(it => !it.etapas?.firma_externa?.completada);
+      if (faltantes.length) {
+        return res.status(400).json({
+          success: false,
+          error: `Hay ${faltantes.length} item(s) sin Firma Externa completada. No se puede marcar Carpeta y Dig.`
+        });
+      }
+    }
+    // Para reset, no debe haber acuse completado en ningún item
+    if (accion === 'reset') {
+      const conAcuse = meta.items.filter(it => it.etapas?.acuse?.completada);
+      if (conAcuse.length) {
+        return res.status(400).json({
+          success: false,
+          error: 'Debes revertir Acuse antes de revertir Carpeta y Dig.'
+        });
+      }
+    }
+
+    const now = new Date().toISOString();
+    for (const item of meta.items) {
+      if (!item.etapas) item.etapas = {};
+      if (!item.etapas.carpeta) item.etapas.carpeta = { completada: false, fecha: null };
+      const c = item.etapas.carpeta;
+      if (accion === 'en_proceso') {
+        c.completada = false; c.fecha = null;
+        c.en_proceso = true;
+        c.fecha_cambio = now;
+        c.completado_por = null; c.completado_en = null;
+      } else if (accion === 'completada') {
+        c.completada = true; c.fecha = now;
+        c.en_proceso = false;
+        c.completado_por = usuario_nombre || usuario_email;
+        c.completado_en  = now;
+        c.fecha_cambio   = now;
+      } else { // reset
+        c.completada = false; c.fecha = null;
+        c.en_proceso = false;
+        c.completado_por = null; c.completado_en = null;
+        c.fecha_cambio = now;
+      }
+    }
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+    // Correo único al completar
+    if (accion === 'completada') {
+      const proy   = meta.proyectoNombre || '';
+      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
+      transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: notifyTo(ELISA_NOTIFY),
+        subject: `${prefix} Carpeta y digitalización terminada (acta completa)`,
+        html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> se completó para todos los entregables del acta.</p>`
+      }).catch(err => console.warn('⚠ Email carpeta bulk:', err.message));
+    }
+
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// Acuse: marcar en_proceso (sin PDF), o completar subiendo un PDF compartido para todos
+app.patch('/api/entregables/:id/etapa-bulk/acuse', pdfUpload.single('pdf'), (req, res) => {
+  try {
+    const id     = decodeURIComponent(req.params.id);
+    const accion = req.body.accion; // 'en_proceso' | 'completada' | 'reset'
+    const usuario_email  = req.body.usuario_email;
+    const usuario_nombre = req.body.usuario_nombre;
+
+    const cleanup = () => { if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); };
+
+    if (!['en_proceso', 'completada', 'reset'].includes(accion)) { cleanup(); return res.status(400).json({ success: false, error: 'Acción inválida.' }); }
+    if (!usuario_email || !BULK_ALLOWED.includes(usuario_email.toLowerCase())) {
+      cleanup();
+      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Daniel Arias pueden gestionar Acuse.' });
+    }
+
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) { cleanup(); return res.status(404).json({ success: false, error: 'Acta no encontrada.' }); }
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    if (!Array.isArray(meta.items) || meta.items.length === 0) { cleanup(); return res.status(400).json({ success: false, error: 'Acta sin items.' }); }
+
+    // Validar: para completar, todos deben tener carpeta completada y debe venir PDF
+    if (accion === 'completada') {
+      if (!req.file) return res.status(400).json({ success: false, error: 'PDF de acuse requerido.' });
+      const faltantes = meta.items.filter(it => !it.etapas?.carpeta?.completada);
+      if (faltantes.length) {
+        cleanup();
+        return res.status(400).json({ success: false, error: `Hay ${faltantes.length} item(s) sin Carpeta y Dig. completada.` });
+      }
+    }
+    // Reset: no debe haber vobo_final completado
+    if (accion === 'reset') {
+      const conFinal = meta.items.filter(it => it.etapas?.vobo_final?.completada);
+      if (conFinal.length) {
+        cleanup();
+        return res.status(400).json({ success: false, error: 'Debes revertir VOBO Final antes de revertir Acuse.' });
+      }
+    }
+
+    const now = new Date().toISOString();
+    const pdfRuta = req.file ? `/entregables/pdfs/${req.file.filename}` : null;
+
+    for (const item of meta.items) {
+      if (!item.etapas) item.etapas = {};
+      if (!item.etapas.acuse) item.etapas.acuse = { completada: false, fecha: null };
+      const a = item.etapas.acuse;
+      if (accion === 'en_proceso') {
+        a.completada = false; a.fecha = null;
+        a.en_proceso = true;
+        a.fecha_cambio = now;
+        a.completado_por = null; a.completado_en = null;
+        // No tocamos a.pdf
+      } else if (accion === 'completada') {
+        // Si el item ya tenía un PDF propio, lo eliminamos para usar el global
+        if (a.pdf && a.pdf !== pdfRuta) {
+          const old = path.join(__dirname, a.pdf);
+          if (fs.existsSync(old)) { try { fs.unlinkSync(old); } catch {} }
+        }
+        a.pdf = pdfRuta;
+        a.completada = true; a.fecha = now;
+        a.en_proceso = false;
+        a.completado_por = usuario_nombre || usuario_email;
+        a.completado_en  = now;
+        a.fecha_cambio   = now;
+      } else { // reset
+        if (a.pdf) {
+          const old = path.join(__dirname, a.pdf);
+          if (fs.existsSync(old)) { try { fs.unlinkSync(old); } catch {} }
+        }
+        a.pdf = null;
+        a.completada = false; a.fecha = null;
+        a.en_proceso = false;
+        a.completado_por = null; a.completado_en = null;
+        a.fecha_cambio = now;
+      }
+    }
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+    // Correo único al completar
+    if (accion === 'completada') {
+      const proy   = meta.proyectoNombre || '';
+      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
+      transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: notifyTo(ELISA_NOTIFY),
+        subject: `${prefix} Acuse pendiente de VoBo (acta completa)`,
+        html: `<p>Se ha subido el acuse del acta completa de <strong>${proy || meta.mesNombre}</strong>. Favor de dar visto bueno.</p>`
+      }).catch(err => console.warn('⚠ Email acuse bulk:', err.message));
+    }
+
+    res.json({ success: true, pdf: pdfRuta });
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// VOBO Final: solo Elisa (+ Nevoli para pruebas). Marca completado a todos los items del acta.
+const VOBO_FINAL_ALLOWED = ['elisa.mendez@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+
+app.patch('/api/entregables/:id/etapa-bulk/vobo_final', (req, res) => {
+  try {
+    const id = decodeURIComponent(req.params.id);
+    const { accion, usuario_email, usuario_nombre } = req.body;
+    if (!['en_proceso', 'completada', 'reset'].includes(accion))
+      return res.status(400).json({ success: false, error: 'Acción inválida.' });
+    if (!usuario_email || !VOBO_FINAL_ALLOWED.includes(usuario_email.toLowerCase()))
+      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez puede dar VOBO Final.' });
+
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'Acta no encontrada.' });
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    if (!Array.isArray(meta.items) || meta.items.length === 0)
+      return res.status(400).json({ success: false, error: 'Acta sin items.' });
+
+    if (accion === 'completada') {
+      const faltantes = meta.items.filter(it => !it.etapas?.acuse?.completada);
+      if (faltantes.length) {
+        return res.status(400).json({
+          success: false,
+          error: `Hay ${faltantes.length} item(s) sin Acuse completado. No se puede dar VOBO Final.`
+        });
+      }
+    }
+
+    const now = new Date().toISOString();
+    for (const item of meta.items) {
+      if (!item.etapas) item.etapas = {};
+      if (!item.etapas.vobo_final) item.etapas.vobo_final = { completada: false, fecha: null };
+      const v = item.etapas.vobo_final;
+      if (accion === 'en_proceso') {
+        v.completada = false; v.fecha = null;
+        v.en_proceso = true;
+        v.fecha_cambio = now;
+        v.completado_por = null; v.completado_en = null;
+      } else if (accion === 'completada') {
+        v.completada = true; v.fecha = now;
+        v.en_proceso = false;
+        v.completado_por = usuario_nombre || usuario_email;
+        v.completado_en  = now;
+        v.fecha_cambio   = now;
+      } else { // reset
+        v.completada = false; v.fecha = null;
+        v.en_proceso = false;
+        v.completado_por = null; v.completado_en = null;
+        v.fecha_cambio = now;
+      }
+    }
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+    if (accion === 'completada') {
+      const proy   = meta.proyectoNombre || '';
+      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
+      transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: notifyTo(ELISA_NOTIFY),
+        subject: `${prefix} VOBO Final otorgado (acta completa)`,
+        html: `<p>Se ha otorgado VOBO Final al acta completa de <strong>${proy || meta.mesNombre}</strong>. Avance: 100%.</p>`
+      }).catch(err => console.warn('⚠ Email vobo_final bulk:', err.message));
+    }
+
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 /* ── Entregables: observación VOBO ─────────────── */
@@ -1136,14 +1548,25 @@ const obsImgUpload = multer({
   fileFilter: (_req, file, cb) => cb(null, file.mimetype.startsWith('image/'))
 });
 
+// Solo estos pueden crear observaciones iniciales y aceptar/rechazar
+const OBS_DECIDE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+
 app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single('imagen'), (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
     const num    = parseFloat(req.params.num);
     const texto  = (req.body.texto || '').trim();
     const imagen = req.file ? `/entregables/obs-imgs/${req.file.filename}` : null;
+    const usuario_email  = (req.body.usuario_email || '').toLowerCase().trim();
+    const usuario_nombre = (req.body.usuario_nombre || '').trim();
+    const cleanup = () => { if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); };
+
+    if (!OBS_DECIDE_ALLOWED.includes(usuario_email)) {
+      cleanup();
+      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Edna Servin pueden crear observaciones.' });
+    }
     if (!texto && !imagen) {
-      if (req.file) fs.unlinkSync(req.file.path);
+      cleanup();
       return res.status(400).json({ success: false, error: 'Texto o imagen requeridos.' });
     }
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
@@ -1151,7 +1574,14 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const item = meta.items?.find(it => it.num === num);
     if (!item) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
-    item.etapas.vobo.observaciones.push({ texto: texto || null, imagen, fecha: new Date().toISOString(), estado: 'pendiente' });
+    item.etapas.vobo.observaciones.push({
+      texto: texto || null,
+      imagen,
+      fecha: new Date().toISOString(),
+      estado: 'pendiente',
+      autor: { email: usuario_email, nombre: usuario_nombre || usuario_email },
+      replies: []
+    });
     item.etapas.vobo.rechazado        = true;
     item.etapas.vobo.completada       = false;
     item.etapas.vobo.fecha            = null;
@@ -1162,7 +1592,7 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     item.etapas.creacion.fecha        = null;
     item.etapas.creacion.en_proceso   = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-    // Notificar al owner que hay nuevas observaciones
+    // Notificar al owner que hay nuevas observaciones (correo + in-app)
     if (item.owner?.email) {
       const _proy   = meta.proyectoNombre || '';
       const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
@@ -1174,17 +1604,73 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
                <p>Por favor revisa el sistema.</p>`
       }).catch(err => console.warn('⚠ Email obs owner:', err.message));
     }
+    // Notificación in-app: responsable de entregable + responsable(s) de proyecto (dedup)
+    (async () => {
+      try {
+        const pool      = await getPool();
+        const usuariosNotificar = new Set();
+
+        if (item.owner?.email) {
+          const [u] = await pool.execute(
+            'SELECT id FROM usuarios WHERE email = ? AND activo = 1',
+            [item.owner.email.toLowerCase().trim()]
+          );
+          if (u[0]?.id) usuariosNotificar.add(u[0].id);
+        }
+        if (meta.proyecto_id) {
+          const [p] = await pool.execute(
+            'SELECT responsables FROM proyectos WHERE id = ?',
+            [meta.proyecto_id]
+          );
+          if (p[0]?.responsables) {
+            try {
+              const resps = JSON.parse(p[0].responsables);
+              for (const r of resps) {
+                if (r && Number(r.id)) usuariosNotificar.add(Number(r.id));
+              }
+            } catch {}
+          }
+        }
+
+        const titulo  = `Entregable #${item.num} con observaciones`;
+        const mensaje = `${meta.proyectoNombre || 'Proyecto'} · ${meta.mesNombre || ''} · "${item.nombre}"`;
+        const linkUrl = `modulo-entregables.html?proyecto_id=${encodeURIComponent(meta.proyecto_id || '')}&mes=${encodeURIComponent(meta.mes || '')}&item=${encodeURIComponent(item.num)}`;
+        const metaPayload = {
+          proyecto_id:     meta.proyecto_id,
+          proyecto_nombre: meta.proyectoNombre,
+          mes:             meta.mes,
+          mes_nombre:      meta.mesNombre,
+          año:             meta.año,
+          item_num:        item.num,
+          item_nombre:     item.nombre,
+          entregable_id:   meta.id,
+        };
+        for (const uid of usuariosNotificar) {
+          await crearNotificacion({
+            usuario_id: uid,
+            tipo:       'observacion_entregable',
+            titulo,
+            mensaje,
+            link_url:   linkUrl,
+            meta:       metaPayload,
+          });
+        }
+      } catch (err) { console.warn('⚠ Notif obs:', err.message); }
+    })();
     res.json({ success: true, imagen });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-/* ── Entregables: aceptar / rechazar observación ── */
+/* ── Entregables: aceptar / rechazar observación (solo Elisa o Edna) ── */
 app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
     const num    = parseFloat(req.params.num);
     const obsIdx = parseInt(req.params.obsIdx);
     const { estado, usuario_nombre } = req.body;
+    const usuario_email = (req.body.usuario_email || '').toLowerCase().trim();
+    if (!OBS_DECIDE_ALLOWED.includes(usuario_email))
+      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Edna Servin pueden aceptar/rechazar observaciones.' });
     if (!['aceptada', 'rechazada'].includes(estado))
       return res.status(400).json({ success: false, error: 'Estado inválido.' });
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
@@ -1198,21 +1684,79 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     if (estado === 'aceptada') {
       obs.aceptado_por = usuario_nombre || null;
       obs.aceptado_en  = new Date().toISOString();
+      obs.rechazado_por = null;
+      obs.rechazado_en  = null;
     } else {
       obs.aceptado_por = null;
       obs.aceptado_en  = null;
+      obs.rechazado_por = usuario_nombre || null;
+      obs.rechazado_en  = new Date().toISOString();
     }
-    if (estado === 'rechazada') {
-      item.etapas.revision.en_proceso = false;
-      item.etapas.creacion.completada = false;
-      item.etapas.creacion.fecha      = null;
-      item.etapas.creacion.en_proceso = false;
-    }
+    // Ya NO reseteamos creacion/revision al rechazar — la conversación continúa
     const todasAceptadas = item.etapas.vobo.observaciones.every(o => o.estado === 'aceptada');
     item.etapas.vobo.rechazado = !todasAceptadas;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true, rechazado: item.etapas.vobo.rechazado });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Entregables: responder en hilo de observación ── */
+// Pueden responder: Elisa, Edna, responsable de entregable (item.owner.email), responsables del proyecto
+app.post('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx/reply', obsImgUpload.single('imagen'), async (req, res) => {
+  const cleanup = () => { if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); };
+  try {
+    const id     = decodeURIComponent(req.params.id);
+    const num    = parseFloat(req.params.num);
+    const obsIdx = parseInt(req.params.obsIdx);
+    const texto  = (req.body.texto || '').trim();
+    const imagen = req.file ? `/entregables/obs-imgs/${req.file.filename}` : null;
+    const usuario_email  = (req.body.usuario_email || '').toLowerCase().trim();
+    const usuario_nombre = (req.body.usuario_nombre || '').trim();
+
+    if (!usuario_email) { cleanup(); return res.status(400).json({ success: false, error: 'usuario_email requerido.' }); }
+    if (!texto && !imagen) { cleanup(); return res.status(400).json({ success: false, error: 'Texto o imagen requeridos.' }); }
+
+    const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+    if (!fs.existsSync(metaPath)) { cleanup(); return res.status(404).json({ success: false, error: 'No encontrado.' }); }
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const item = meta.items?.find(it => it.num === num);
+    if (!item) { cleanup(); return res.status(404).json({ success: false, error: 'Item no encontrado.' }); }
+    const obs = item.etapas.vobo.observaciones[obsIdx];
+    if (!obs) { cleanup(); return res.status(404).json({ success: false, error: 'Observación no encontrada.' }); }
+
+    // Validar permiso: Elisa/Edna, owner, o responsable de proyecto
+    let permitido = OBS_DECIDE_ALLOWED.includes(usuario_email);
+    if (!permitido && item.owner?.email && item.owner.email.toLowerCase() === usuario_email) permitido = true;
+    if (!permitido && meta.proyecto_id) {
+      try {
+        const pool = await getPool();
+        const [pRows] = await pool.execute(
+          'SELECT responsables FROM proyectos WHERE id = ?', [meta.proyecto_id]
+        );
+        const responsables = pRows[0]?.responsables ? JSON.parse(pRows[0].responsables) : [];
+        const [uRows] = await pool.execute(
+          'SELECT id FROM usuarios WHERE email = ? AND activo = 1', [usuario_email]
+        );
+        const uid = uRows[0]?.id;
+        if (uid && responsables.some(r => Number(r.id) === Number(uid))) permitido = true;
+      } catch {}
+    }
+    if (!permitido) {
+      cleanup();
+      return res.status(403).json({ success: false, error: 'No tienes permiso para responder en esta observación.' });
+    }
+
+    if (!Array.isArray(obs.replies)) obs.replies = [];
+    const reply = {
+      texto: texto || null,
+      imagen,
+      fecha: new Date().toISOString(),
+      autor: { email: usuario_email, nombre: usuario_nombre || usuario_email }
+    };
+    obs.replies.push(reply);
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    res.json({ success: true, reply });
+  } catch (err) { cleanup(); res.status(500).json({ success: false, error: err.message }); }
 });
 
 /* ── Tareas: listar por usuario ─────────────────── */
@@ -2041,6 +2585,39 @@ async function ensureColumns() {
         : 'ALTER TABLE proyectos ADD responsables NVARCHAR(MAX) NULL';
       await pool.execute(sql, []);
       console.log('✔ Columna responsables añadida a proyectos');
+    }
+
+    // notificaciones table
+    try { await pool.execute('SELECT id FROM notificaciones WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? `CREATE TABLE notificaciones (
+             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+             usuario_id INT NOT NULL,
+             tipo VARCHAR(40) NOT NULL,
+             titulo VARCHAR(255) NOT NULL,
+             mensaje TEXT NULL,
+             link_url VARCHAR(500) NULL,
+             meta_json TEXT NULL,
+             leida TINYINT(1) NOT NULL DEFAULT 0,
+             leida_en DATETIME NULL,
+             creada_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+             INDEX idx_usuario_leida (usuario_id, leida, creada_en)
+           )`
+        : `CREATE TABLE notificaciones (
+             id INT IDENTITY(1,1) PRIMARY KEY,
+             usuario_id INT NOT NULL,
+             tipo NVARCHAR(40) NOT NULL,
+             titulo NVARCHAR(255) NOT NULL,
+             mensaje NVARCHAR(MAX) NULL,
+             link_url NVARCHAR(500) NULL,
+             meta_json NVARCHAR(MAX) NULL,
+             leida TINYINT NOT NULL DEFAULT 0,
+             leida_en DATETIME NULL,
+             creada_en DATETIME NOT NULL DEFAULT SYSDATETIME()
+           )`;
+      await pool.execute(sql, []);
+      console.log('✔ Tabla notificaciones creada');
     }
 
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }

@@ -202,6 +202,136 @@
     .vobo-obs-btn:hover { background:rgba(217,119,6,.45); }
     .ep-avance { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:52px; }
     .ep-avance-pct { font-size:11px; font-weight:800; color:#fff; }
+
+    /* ── Acciones globales (Carpeta/Acuse a nivel acta) ── */
+    .acta-actions {
+      display:flex; gap:14px; flex-wrap:wrap; padding:14px 32px 4px;
+      align-items:stretch;
+    }
+    .acta-action {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px 10px 12px; border-radius:10px;
+      background:rgba(0,174,239,.06); border:1px solid rgba(0,174,239,.18);
+      min-width:230px;
+    }
+    .acta-action-lbl {
+      display:flex; flex-direction:column; gap:1px; line-height:1.1;
+    }
+    .acta-action-title {
+      font-size:11px; font-weight:800; color:rgba(0,174,239,.85);
+      text-transform:uppercase; letter-spacing:.7px;
+    }
+    .acta-action-sub {
+      font-size:10px; font-weight:700; color:rgba(255,255,255,.45);
+    }
+    .acta-action-sub.done { color:#6EE7B7; }
+    .acta-action-sub.prog { color:#00AEEF; }
+    .acta-action .ep-btn { width:34px; height:34px; font-size:14px; }
+    .acta-action-bar {
+      flex:1; height:5px; background:rgba(255,255,255,.07);
+      border-radius:3px; overflow:hidden; min-width:60px; max-width:90px;
+    }
+    .acta-action-fill {
+      height:100%; border-radius:3px;
+      background:linear-gradient(90deg,#005D97,#00AEEF);
+      transition:width .4s;
+    }
+    .acta-action-pdf {
+      display:inline-flex; align-items:center; gap:5px;
+      background:rgba(0,174,239,.15); color:#00AEEF;
+      border:1px solid rgba(0,174,239,.35); border-radius:14px;
+      padding:3px 9px; font-size:10px; font-weight:800;
+      text-decoration:none; transition:background .15s;
+    }
+    .acta-action-pdf:hover { background:rgba(0,174,239,.28); }
+    .acta-action-revert {
+      background:transparent; border:1px solid rgba(217,119,6,.45);
+      color:#FCD34D; border-radius:14px; padding:3px 9px;
+      font-family:'Montserrat',sans-serif; font-size:10px; font-weight:800;
+      cursor:pointer; transition:background .15s;
+    }
+    .acta-action-revert:hover { background:rgba(217,119,6,.22); }
+
+    /* ── Tabla de proyectos (solo lectura, desplegable) ── */
+    .proyectos-section {
+      margin:24px 24px 8px; border-top:1px solid rgba(0,174,239,.12);
+      padding-top:16px;
+    }
+    .proyectos-toggle {
+      display:flex; align-items:center; gap:10px; padding:12px 16px;
+      background:rgba(0,174,239,.06); border:1px solid rgba(0,174,239,.18);
+      border-radius:10px; cursor:pointer; user-select:none;
+      font-family:'Montserrat',sans-serif; color:#fff;
+      transition:background .15s;
+    }
+    .proyectos-toggle:hover { background:rgba(0,174,239,.12); }
+    .proyectos-toggle .caret {
+      font-size:11px; color:#00AEEF; transition:transform .2s;
+      display:inline-flex; width:18px; height:18px; align-items:center; justify-content:center;
+      background:rgba(0,174,239,.15); border-radius:50%;
+    }
+    .proyectos-section.open .proyectos-toggle .caret { transform:rotate(180deg); }
+    .proyectos-toggle-title {
+      font-size:13px; font-weight:800; letter-spacing:.4px; text-transform:uppercase;
+      color:rgba(0,174,239,.85);
+    }
+    .proyectos-toggle-count {
+      margin-left:auto; font-size:11px; font-weight:700;
+      color:rgba(255,255,255,.45); background:rgba(255,255,255,.05);
+      padding:3px 10px; border-radius:12px;
+    }
+    .proyectos-body {
+      display:none; margin-top:14px; border-radius:10px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .proyectos-section.open .proyectos-body { display:block; }
+
+    .proyectos-table-wrap {
+      overflow-x:auto; background:rgba(7,21,36,.65);
+    }
+    .proyectos-table {
+      width:100%; border-collapse:collapse; min-width:1100px;
+      font-family:'Montserrat',sans-serif;
+    }
+    .proyectos-table thead {
+      background:rgba(0,174,239,.08);
+      position:sticky; top:0; z-index:1;
+    }
+    .proyectos-table th {
+      padding:12px 14px; text-align:left;
+      font-size:10px; font-weight:800; color:rgba(0,174,239,.75);
+      text-transform:uppercase; letter-spacing:.6px;
+      border-bottom:1px solid rgba(0,174,239,.18); white-space:nowrap;
+    }
+    .proyectos-table td {
+      padding:12px 14px; font-size:12px; font-weight:600;
+      color:rgba(255,255,255,.78); vertical-align:top;
+      border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .proyectos-table tr:hover td { background:rgba(0,174,239,.04); }
+    .proyectos-table .col-num { color:#00AEEF; font-weight:800; text-align:center; width:42px; }
+    .proyectos-table .nombre-cell { color:#fff; font-weight:800; min-width:180px; }
+    .proyectos-table .nombre-proy { color:rgba(255,255,255,.55); font-size:11px; margin-top:2px; font-weight:600; line-height:1.3; }
+    .proyectos-table .small  { font-size:11px; color:rgba(255,255,255,.55); }
+    .proyectos-table .resp-chips { display:flex; flex-direction:column; gap:3px; }
+    .proyectos-table .resp-chip {
+      background:rgba(0,174,239,.1); color:#00AEEF;
+      border:1px solid rgba(0,174,239,.25); border-radius:10px;
+      padding:2px 8px; font-size:10px; font-weight:700; width:fit-content;
+    }
+    .proyectos-table .pdf-link {
+      display:inline-flex; align-items:center; gap:4px;
+      background:rgba(0,174,239,.12); color:#00AEEF;
+      border:1px solid rgba(0,174,239,.35); border-radius:14px;
+      padding:3px 10px; font-size:10px; font-weight:800;
+      text-decoration:none; transition:background .15s;
+    }
+    .proyectos-table .pdf-link:hover { background:rgba(0,174,239,.22); }
+    .proyectos-table .pre-wrap { white-space:pre-wrap; max-width:260px; }
+    .proyectos-table .empty-row td {
+      text-align:center; padding:32px;
+      color:rgba(255,255,255,.25); font-size:13px; font-weight:600;
+    }
     .ep-avance-bar  { width:46px; height:5px; background:rgba(255,255,255,.1); border-radius:3px; }
     .ep-avance-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#005D97,#00AEEF); transition:width .3s; }
     /* VOBO modal */
@@ -286,6 +416,64 @@
     .vos-label { font-size:10px; font-weight:900; color:#34D399; letter-spacing:1.5px; text-transform:uppercase; }
     .vos-by    { font-size:10px; font-weight:700; color:rgba(255,255,255,.65); }
     .vos-date  { font-size:9px; color:rgba(255,255,255,.3); font-weight:600; }
+    /* ── Hilo de conversación de obs ── */
+    .vobo-obs-author {
+      display:flex; align-items:center; gap:6px; margin-bottom:4px;
+      font-size:10px; font-weight:800; color:#00AEEF;
+      text-transform:uppercase; letter-spacing:.5px;
+    }
+    .vobo-obs-author .author-dot {
+      width:6px; height:6px; border-radius:50%; background:#00AEEF;
+    }
+    .vobo-obs-stamp.rejected { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3); }
+    .vobo-obs-stamp.rejected .vos-check  { color:#F87171; }
+    .vobo-obs-stamp.rejected .vos-label  { color:#F87171; }
+    .vobo-replies {
+      margin-top:10px; padding-left:14px;
+      border-left:2px solid rgba(0,174,239,.25);
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .vobo-reply {
+      background:rgba(0,174,239,.05); border:1px solid rgba(0,174,239,.12);
+      border-radius:7px; padding:8px 10px;
+    }
+    .vobo-reply .vobo-obs-author { color:rgba(255,255,255,.75); }
+    .vobo-reply .vobo-obs-author .author-dot { background:rgba(255,255,255,.4); }
+    .vobo-reply.is-elisa .vobo-obs-author { color:#FCD34D; }
+    .vobo-reply.is-elisa .vobo-obs-author .author-dot { background:#FCD34D; }
+    .vobo-reply-texto { font-size:12px; color:rgba(255,255,255,.85); font-weight:500; line-height:1.4; }
+    .vobo-reply-fecha { font-size:9px; color:rgba(255,255,255,.3); font-weight:700; margin-top:4px; }
+    .vobo-reply-img   { max-width:120px; max-height:120px; object-fit:cover; border-radius:6px; margin-top:6px; cursor:pointer; }
+    .vobo-reply-form {
+      display:flex; gap:6px; margin-top:8px; padding-left:14px;
+    }
+    .vobo-reply-form input {
+      flex:1; padding:7px 10px; border:1px solid rgba(255,255,255,.12);
+      border-radius:6px; background:rgba(255,255,255,.04); color:#fff;
+      font-family:'Montserrat',sans-serif; font-size:11px; outline:none;
+    }
+    .vobo-reply-form input:focus { border-color:rgba(0,174,239,.45); }
+    .vobo-reply-form input::placeholder { color:rgba(255,255,255,.25); }
+    .vobo-reply-form button {
+      padding:7px 12px; border:none; border-radius:6px;
+      background:rgba(0,174,239,.25); color:#fff;
+      font-family:'Montserrat',sans-serif; font-size:11px; font-weight:800;
+      cursor:pointer; transition:background .15s;
+    }
+    .vobo-reply-form button:hover { background:#005D97; }
+    .vobo-reply-form button.img { background:rgba(255,255,255,.06); padding:7px 10px; }
+    .vobo-reply-img-preview {
+      display:none; margin:6px 0 0 14px; position:relative; width:90px;
+    }
+    .vobo-reply-img-preview.show { display:block; }
+    .vobo-reply-img-preview img { width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid rgba(0,174,239,.3); }
+    .vobo-reply-img-preview .rm-btn {
+      position:absolute; top:-6px; right:-6px;
+      background:#7F1D1D; color:#fff; border:none; border-radius:50%;
+      width:18px; height:18px; font-size:11px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; line-height:1;
+    }
+
     .voa-btn.reject-ghost {
       padding:2px 7px; font-size:10px; border-radius:4px; border:1px solid rgba(248,113,113,.18);
       background:transparent; color:rgba(248,113,113,.4); cursor:pointer; font-weight:700;
@@ -564,6 +752,11 @@
       <!-- Vista detalle -->
       <div id="entreg-vista-detalle">
         <div class="entreg-months" id="entreg-months"></div>
+
+        <!-- Acciones globales del acta (Carpeta y Acuse) — solo Elisa Mendez y Daniel Arias -->
+        <div class="acta-actions" id="acta-actions" style="display:none;"></div>
+        <input type="file" id="acta-acuse-pdf-input" accept=".pdf" style="display:none" />
+
         <div class="entreg-table-wrap">
           <table class="entreg-table">
             <thead>
@@ -597,6 +790,35 @@
       </div>
 
       <input type="file" id="ep-pdf-input" accept=".pdf" style="display:none" />
+
+      <!-- ── Desplegable: Tabla de proyectos (solo lectura) ── -->
+      <div class="proyectos-section" id="proyectos-section">
+        <div class="proyectos-toggle" id="proyectos-toggle">
+          <span class="caret">▾</span>
+          <span class="proyectos-toggle-title">📁 Listado de proyectos</span>
+          <span class="proyectos-toggle-count" id="proyectos-toggle-count">—</span>
+        </div>
+        <div class="proyectos-body">
+          <div class="proyectos-table-wrap">
+            <table class="proyectos-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nombre / Nombre Proyecto</th>
+                  <th>Procedimiento</th>
+                  <th>Contrato</th>
+                  <th>Responsables</th>
+                  <th>Vigencia</th>
+                  <th>Propuesta</th>
+                </tr>
+              </thead>
+              <tbody id="proyectos-tbody">
+                <tr class="empty-row"><td colspan="7">Cargando proyectos…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   </div>
@@ -621,13 +843,13 @@
     </div>
   </div>
 
-  <!-- ── PDF Preview Panel (lado izquierdo) ─────── -->
+  <!-- ── PDF Preview Panel (lado derecho) ─────── -->
 <div id="pdf-tooltip" style="
   display:none; position:fixed; z-index:9999;
-  top:0; left:0; width:45%; height:100vh;
-  background:#111827; border-right:1px solid rgba(255,255,255,.12);
-  box-shadow:6px 0 40px rgba(0,0,0,.7);
-  overflow:hidden; pointer-events:none;
+  top:0; right:0; width:45%; height:100vh;
+  background:#111827; border-left:1px solid rgba(255,255,255,.12);
+  box-shadow:-6px 0 40px rgba(0,0,0,.7);
+  overflow:hidden;
   flex-direction:column;">
   <div style="padding:10px 16px; background:#1f2937; font-size:11px; font-weight:700;
        color:rgba(255,255,255,.45); letter-spacing:.6px; text-transform:uppercase;
@@ -745,6 +967,7 @@
       if (!acta || !acta.items || !acta.items.length) {
         tbody.innerHTML = `<tr><td colspan="10"><div class="entreg-empty-state"><span class="ei">📂</span>No hay entregables para este mes.</div></td></tr>`;
         totalEl.style.display = 'none';
+        if (typeof renderActaActions === 'function') renderActaActions();
         return;
       }
       // Calcular avance total promedio
@@ -758,6 +981,16 @@
         const cells = ETAPAS.map((et, idx) => {
           const e    = item.etapas[et.key];
           const prev = prevDone(item.etapas, idx);
+
+          // Carpeta, Acuse y VOBO Final: SOLO LECTURA para todos (se controlan vía botones globales / acoplados a Acuse)
+          if (et.key === 'carpeta' || et.key === 'acuse' || et.key === 'vobo_final') {
+            let cls, icon;
+            if (e.completada)           { cls = 'done';   icon = '✓'; }
+            else if (e.en_proceso)      { cls = 'inprog'; icon = '⏳'; }
+            else                        { cls = 'lock';   icon = '·'; }
+            const pdfPrev = (et.key === 'acuse' && e.completada && e.pdf) ? `data-pdf-url="${escH(e.pdf)}" data-pdf="true"` : '';
+            return `<td><div class="ep-cell"><button class="ep-btn ${cls} ep-readonly" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${pdfPrev}${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
+          }
 
           // Rol usuario: etapas no permitidas → solo lectura (muestra estado real, no interactivo)
           if (esUsuarioRol && !ETAPAS_USUARIO.has(et.key)) {
@@ -858,6 +1091,7 @@
       </tr>`;
 
       if (entregVista === 'informe') renderInforme();
+      if (typeof renderActaActions === 'function') renderActaActions();
     }
 
     async function loadEntregables() {
@@ -878,6 +1112,7 @@
           proyects.map(p => `<option value="${p.id}">${escH(p.nombre)}</option>`).join('');
         if (prevSel && proyects.find(p => String(p.id) === prevSel)) sel.value = prevSel;
         updateProyectoInfoPanel();
+        if (typeof renderProyectosTable === 'function') renderProyectosTable();
 
         if (!dataE.success) return;
         let año = new Date().getFullYear();
@@ -957,6 +1192,42 @@
       }
       panel.classList.add('visible');
     }
+
+    /* ── Tabla de proyectos (desplegable solo lectura) ── */
+    function renderProyectosTable() {
+      const tbody = document.getElementById('proyectos-tbody');
+      const count = document.getElementById('proyectos-toggle-count');
+      const proys = allProyectosData || [];
+      count.textContent = `${proys.length} proyecto${proys.length === 1 ? '' : 's'}`;
+      if (!proys.length) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">No hay proyectos cargados.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = proys.map((p, i) => {
+        const resps = Array.isArray(p.responsables) ? p.responsables : [];
+        const respHtml = resps.length
+          ? `<div class="resp-chips">${resps.map(r => `<span class="resp-chip">${escH(r.nombre || '')}</span>`).join('')}</div>`
+          : `<span class="small">—</span>`;
+        const pdfHtml = p.pdf_url
+          ? `<a class="pdf-link" href="${escH(p.pdf_url)}" data-pdf-url="${escH(p.pdf_url)}" target="_blank" rel="noopener" download>📄 PDF</a>`
+          : `<span class="small">—</span>`;
+        const nombreProy = p.NombreProyecto && p.NombreProyecto !== p.nombre
+          ? `<div class="nombre-proy">${escH(p.NombreProyecto)}</div>` : '';
+        return `<tr>
+          <td class="col-num">${p.orden ?? (i + 1)}</td>
+          <td class="nombre-cell">${escH(p.nombre || '—')}${nombreProy}</td>
+          <td class="pre-wrap small">${escH(p.procedimiento || '—')}</td>
+          <td class="small">${escH(p.contrato || '—')}</td>
+          <td>${respHtml}</td>
+          <td class="small">${escH(fmtVigencia(p.vigencia_inicio, p.vigencia_fin))}</td>
+          <td>${pdfHtml}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('proyectos-toggle').addEventListener('click', () => {
+      document.getElementById('proyectos-section').classList.toggle('open');
+    });
 
     document.getElementById('entreg-select-proyecto').addEventListener('change', () => {
       activeId = null;
@@ -1170,8 +1441,214 @@
     });
 
     /* Clicks en etapas */
-    const CARPETA_ALLOWED = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx'];
+    const BULK_ALLOWED       = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+    const VOBO_FINAL_ALLOWED = ['elisa.mendez@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+    const OBS_DECIDE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+    function esObsDecider() {
+      return OBS_DECIDE_ALLOWED.includes((sessionUser().email || '').toLowerCase());
+    }
+    // Puede responder en el hilo: Elisa/Edna, dueño del entregable, o responsable del proyecto
+    function puedeResponderObs(acta, item) {
+      const email = (sessionUser().email || '').toLowerCase();
+      const uid   = sessionUser().id;
+      if (!email) return false;
+      if (OBS_DECIDE_ALLOWED.includes(email)) return true;
+      if (item?.owner?.email && item.owner.email.toLowerCase() === email) return true;
+      if (acta?.proyecto_id) {
+        const proy = (allProyectosData || []).find(p => String(p.id) === String(acta.proyecto_id));
+        const resps = Array.isArray(proy?.responsables) ? proy.responsables : [];
+        if (resps.some(r => Number(r.id) === Number(uid))) return true;
+      }
+      return false;
+    }
     function sessionUser() { try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch { return {}; } }
+    function esUsuarioBulkAllowed() {
+      return BULK_ALLOWED.includes((sessionUser().email || '').toLowerCase());
+    }
+    function esVoboFinalAllowed() {
+      return VOBO_FINAL_ALLOWED.includes((sessionUser().email || '').toLowerCase());
+    }
+
+    /* ── Estado agregado del acta para una etapa ── */
+    function actaEstadoEtapa(acta, key) {
+      const items = acta.items || [];
+      if (!items.length) return { estado:'vacio', completados:0, total:0 };
+      const total = items.length;
+      const completados = items.filter(it => it.etapas?.[key]?.completada).length;
+      const enProceso   = items.some(it => it.etapas?.[key]?.en_proceso);
+      let estado;
+      if (completados === total)           estado = 'completada';
+      else if (enProceso || completados>0) estado = 'en_proceso';
+      else                                 estado = 'vacio';
+      return { estado, completados, total };
+    }
+
+    /* ── Render barra global Carpeta + Acuse + VOBO Final ── */
+    function renderActaActions() {
+      const wrap = document.getElementById('acta-actions');
+      const acta = entregablesData.find(e => e.id === activeId);
+      const bulkAllowed   = esUsuarioBulkAllowed();
+      const voboAllowed   = esVoboFinalAllowed();
+      if (!acta || !acta.items?.length || (!bulkAllowed && !voboAllowed)) {
+        wrap.style.display='none'; wrap.innerHTML=''; return;
+      }
+
+      // Estados agregados
+      const carpEst   = actaEstadoEtapa(acta, 'carpeta');
+      const acuseEst  = actaEstadoEtapa(acta, 'acuse');
+      const voboEst   = actaEstadoEtapa(acta, 'vobo_final');
+      // Precondición carpeta: todos los items deben tener firma_externa completada
+      const firmaExtAll = acta.items.every(it => it.etapas?.firma_externa?.completada);
+      // Precondición acuse: todos los items deben tener carpeta completada
+      const carpAll   = carpEst.estado === 'completada';
+      // Precondición vobo_final: todos los items deben tener acuse completado
+      const acuseAll  = acuseEst.estado === 'completada';
+      // PDF acuse compartido
+      const acusePdf  = acta.items.find(it => it.etapas?.acuse?.pdf)?.etapas?.acuse?.pdf || null;
+
+      function bloque({ key, titulo, est, condicionLista, pdfPath }) {
+        let btnCls, btnIcon, btnAction, subTxt, subCls, extra = '';
+        if (est.estado === 'completada') {
+          btnCls='done'; btnIcon='✓'; btnAction='noop'; subCls='done';
+          subTxt = `Completada · ${est.total}/${est.total}`;
+          extra  = `<button class="acta-action-revert" data-key="${key}" data-act="reset">Revertir</button>`;
+          if (key === 'acuse' && pdfPath) {
+            extra = `<a class="acta-action-pdf" href="${escH(pdfPath)}" target="_blank" rel="noopener" data-pdf-url="${escH(pdfPath)}" data-pdf="true">📄 PDF</a>` + extra;
+          }
+        } else if (est.estado === 'en_proceso') {
+          btnCls='inprog'; btnIcon='⏳'; btnAction='completar';
+          subCls='prog';
+          subTxt = `En proceso · ${est.completados}/${est.total}`;
+          extra  = `<button class="acta-action-revert" data-key="${key}" data-act="reset">Cancelar</button>`;
+        } else {
+          if (condicionLista) { btnCls='avail'; btnIcon='·'; btnAction='en_proceso'; }
+          else                { btnCls='lock';  btnIcon='·'; btnAction='lock'; }
+          subCls=''; subTxt = condicionLista ? 'Pendiente' : 'Bloqueado';
+        }
+        const pct = est.total ? Math.round((est.completados/est.total)*100) : 0;
+        return `<div class="acta-action">
+          <button class="ep-btn ${btnCls}" data-key="${key}" data-act="${btnAction}" title="${titulo}">${btnIcon}</button>
+          <div class="acta-action-lbl">
+            <span class="acta-action-title">${titulo}</span>
+            <span class="acta-action-sub ${subCls}">${subTxt}</span>
+          </div>
+          <div class="acta-action-bar"><div class="acta-action-fill" style="width:${pct}%"></div></div>
+          ${extra}
+        </div>`;
+      }
+
+      let html = '';
+      if (bulkAllowed) {
+        html += bloque({ key:'carpeta', titulo:'Carpeta y Dig.', est:carpEst,  condicionLista:firmaExtAll, pdfPath:null });
+        html += bloque({ key:'acuse',   titulo:'Acuse',          est:acuseEst, condicionLista:carpAll,     pdfPath:acusePdf });
+      }
+      if (voboAllowed) {
+        html += bloque({ key:'vobo_final', titulo:'VOBO Final', est:voboEst, condicionLista:acuseAll, pdfPath:null });
+      }
+      wrap.innerHTML = html;
+      wrap.style.display = 'flex';
+    }
+
+    /* ── Handlers acciones globales ── */
+    document.getElementById('acta-actions').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const key = btn.dataset.key;
+      const act = btn.dataset.act;
+      if (!key || !act || act === 'lock' || act === 'noop') return;
+
+      const acta = entregablesData.find(a => a.id === activeId);
+      if (!acta) return;
+      const su = sessionUser();
+
+      const etiqueta = key === 'carpeta' ? 'Carpeta y Dig.'
+                     : key === 'acuse'   ? 'Acuse'
+                     : 'VOBO Final';
+
+      // Permisos
+      const necesitaVobo  = key === 'vobo_final';
+      const tienePermiso  = necesitaVobo ? esVoboFinalAllowed() : esUsuarioBulkAllowed();
+      if (!tienePermiso) {
+        Swal.fire({ icon:'error', title:'Sin permiso',
+          text: necesitaVobo
+            ? 'Solo Elisa Mendez puede dar VOBO Final.'
+            : `Solo Elisa Mendez o Daniel Arias pueden gestionar ${etiqueta}.`,
+          confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+        return;
+      }
+
+      // Confirmaciones
+      let confirmTxt = null;
+      if (act === 'reset')      confirmTxt = `¿Revertir ${etiqueta} de todos los entregables del acta?`;
+      if (act === 'en_proceso') confirmTxt = `¿Poner ${etiqueta} en proceso para todos los entregables del acta?`;
+      if (act === 'completar')  confirmTxt = `¿Marcar ${etiqueta} como COMPLETADO para todos los entregables del acta?`;
+      if (confirmTxt) {
+        const r = await Swal.fire({
+          icon:'question', title:'Confirmar', text:confirmTxt,
+          showCancelButton:true, confirmButtonText:'Sí, aplicar', cancelButtonText:'Cancelar',
+          confirmButtonColor:'#005D97', cancelButtonColor:'#6B7280',
+          background:'#0f172a', color:'#f1f5f9'
+        });
+        if (!r.isConfirmed) return;
+      }
+
+      // Acuse + completar → requiere PDF
+      if (key === 'acuse' && act === 'completar') {
+        const inp = document.getElementById('acta-acuse-pdf-input');
+        inp.value = '';
+        inp.dataset.actaId = activeId;
+        inp.click();
+        return;
+      }
+
+      // En proceso, completar (carpeta) o reset → PATCH JSON
+      try {
+        const accion = act === 'completar' ? 'completada' : act; // 'en_proceso' o 'reset' o 'completada'
+        const r = await fetch(`${API}/api/entregables/${encodeURIComponent(acta.id)}/etapa-bulk/${key}`, {
+          method:'PATCH',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ accion, usuario_email: su.email, usuario_nombre: su.nombre || '' })
+        });
+        const data = await r.json();
+        if (!data.success) {
+          Swal.fire({ icon:'error', title:'Error', text:data.error,
+            confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+          return;
+        }
+        await loadEntregables();
+      } catch (err) {
+        Swal.fire({ icon:'error', title:'Error', text:err.message,
+          confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+      }
+    });
+
+    /* Subida del PDF de acuse a nivel acta */
+    document.getElementById('acta-acuse-pdf-input').addEventListener('change', async function () {
+      const file   = this.files[0]; if (!file) return;
+      const actaId = this.dataset.actaId;
+      this.value = '';
+      const su = sessionUser();
+      const fd = new FormData();
+      fd.append('pdf', file);
+      fd.append('accion', 'completada');
+      fd.append('usuario_email',  su.email || '');
+      fd.append('usuario_nombre', su.nombre || '');
+      try {
+        const r = await fetch(`${API}/api/entregables/${encodeURIComponent(actaId)}/etapa-bulk/acuse`, {
+          method:'PATCH', body: fd
+        });
+        const data = await r.json();
+        if (!data.success) {
+          Swal.fire({ icon:'error', title:'Error', text:data.error,
+            confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+          return;
+        }
+        await loadEntregables();
+      } catch (err) {
+        Swal.fire({ icon:'error', title:'Error', text:err.message,
+          confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+      }
+    });
 
     document.getElementById('entreg-tbody').addEventListener('click', async e => {
       const obsBtn = e.target.closest('.vobo-obs-btn');
@@ -1183,6 +1660,9 @@
       const id    = btn.dataset.id;
       const num   = parseInt(btn.dataset.num);
       const etapa = btn.dataset.etapa;
+
+      // Carpeta, Acuse y VOBO Final: ya no son clickables por item
+      if (etapa === 'carpeta' || etapa === 'acuse' || etapa === 'vobo_final') return;
 
       // Rol usuario: solo puede usar etapas permitidas
       if (currentUserRol === 'usuario' && !ETAPAS_USUARIO.has(etapa)) return;
@@ -1394,17 +1874,6 @@ if (btn.dataset.pdf === 'true') {
       /* toggle etapa simple o VOBO */
       const nowDone = !item.etapas[etapa].completada;
 
-      // Restricción Carpeta y Dig.: solo usuarios autorizados
-      if (etapa === 'carpeta' && nowDone) {
-        const su = sessionUser();
-        if (!CARPETA_ALLOWED.includes((su.email || '').toLowerCase())) {
-          Swal.fire({ icon:'error', title:'Sin permiso',
-            text:'Solo Elisa Mendez o Daniel Arias pueden completar Carpeta y Dig.',
-            confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
-          return;
-        }
-      }
-
       if (!nowDone && hayPosterioresCompletas(etapa)) {
         const siguiente = ETAPAS.slice(ETAPAS.findIndex(e => e.key === etapa) + 1)
           .find(e => item.etapas[e.key]?.completada);
@@ -1496,10 +1965,48 @@ if (btn.dataset.pdf === 'true') {
     document.getElementById('vobo-input').addEventListener('paste', tryPasteImg);
     document.addEventListener('paste', tryPasteImg);
 
-    /* Clicks en lista de observaciones: imagen → abrir; accept/reject → actualizar estado */
+    /* Clicks en lista de observaciones: imagen → abrir; accept/reject; reply send/img */
+    const replyImgFiles = {}; // { [obsIdx]: File }
+
     document.getElementById('vobo-obs-list').addEventListener('click', async e => {
       const img = e.target.closest('.vobo-obs-img');
       if (img) { window.open(img.src, '_blank'); return; }
+
+      // Botón adjuntar imagen en reply
+      const replyImgBtn = e.target.closest('[data-reply-img-btn]');
+      if (replyImgBtn) {
+        const idx = parseInt(replyImgBtn.dataset.replyImgBtn);
+        const inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = 'image/*';
+        inp.onchange = () => {
+          const f = inp.files[0]; if (!f) return;
+          replyImgFiles[idx] = f;
+          const prev = document.getElementById('reply-img-prev-' + idx);
+          const reader = new FileReader();
+          reader.onload = ev => {
+            prev.querySelector('img').src = ev.target.result;
+            prev.classList.add('show');
+          };
+          reader.readAsDataURL(f);
+        };
+        inp.click();
+        return;
+      }
+      // Quitar imagen del reply
+      const rmReplyImg = e.target.closest('[data-rm-reply-img]');
+      if (rmReplyImg) {
+        const idx = parseInt(rmReplyImg.dataset.rmReplyImg);
+        delete replyImgFiles[idx];
+        document.getElementById('reply-img-prev-' + idx)?.classList.remove('show');
+        return;
+      }
+      // Enviar reply
+      const replySendBtn = e.target.closest('[data-reply-send]');
+      if (replySendBtn) {
+        const idx = parseInt(replySendBtn.dataset.replySend);
+        await sendReply(idx);
+        return;
+      }
 
       const btn = e.target.closest('.voa-btn');
       if (!btn || !voboCurrent) return;
@@ -1510,34 +2017,80 @@ if (btn.dataset.pdf === 'true') {
         const r = await fetch(
           `${API}/api/entregables/${encodeURIComponent(voboCurrent.id)}/items/${voboCurrent.num}/vobo/observacion/${idx}`,
           { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado, usuario_nombre: su.nombre || su.email || '' }) });
+            body: JSON.stringify({ estado, usuario_email: su.email || '', usuario_nombre: su.nombre || su.email || '' }) });
         const data = await r.json();
-        if (data.success) {
-          const acta = entregablesData.find(a => a.id === voboCurrent.id);
-          const item = acta?.items.find(it => it.num === voboCurrent.num);
-          if (item) {
-            const ob = item.etapas.vobo.observaciones[idx];
-            ob.estado = estado;
-            if (estado === 'aceptada') {
-              ob.aceptado_por = su.nombre || su.email || null;
-              ob.aceptado_en  = new Date().toISOString();
-            } else {
-              ob.aceptado_por = null;
-              ob.aceptado_en  = null;
-            }
-            item.etapas.vobo.rechazado = data.rechazado;
-            if (estado === 'rechazada') {
-              item.etapas.revision.en_proceso = false;
-              item.etapas.creacion.completada = false;
-              item.etapas.creacion.fecha      = null;
-              item.etapas.creacion.en_proceso = false;
-            }
-          }
-          renderVoboObs();
-          renderEntregables();
+        if (!data.success) {
+          Swal.fire({ icon:'error', title:'Sin permiso', text: data.error || 'Error', confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+          return;
         }
+        const acta = entregablesData.find(a => a.id === voboCurrent.id);
+        const item = acta?.items.find(it => it.num === voboCurrent.num);
+        if (item) {
+          const ob = item.etapas.vobo.observaciones[idx];
+          ob.estado = estado;
+          if (estado === 'aceptada') {
+            ob.aceptado_por = su.nombre || su.email || null;
+            ob.aceptado_en  = new Date().toISOString();
+            ob.rechazado_por = null; ob.rechazado_en = null;
+          } else {
+            ob.aceptado_por = null; ob.aceptado_en = null;
+            ob.rechazado_por = su.nombre || su.email || null;
+            ob.rechazado_en  = new Date().toISOString();
+          }
+          item.etapas.vobo.rechazado = data.rechazado;
+        }
+        renderVoboObs();
+        renderEntregables();
       } catch {}
     });
+
+    /* Enter en input de reply para enviar */
+    document.getElementById('vobo-obs-list').addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const form = e.target.closest('[data-reply-idx]');
+      if (!form || e.target.tagName !== 'INPUT') return;
+      const idx = parseInt(form.dataset.replyIdx);
+      e.preventDefault();
+      sendReply(idx);
+    });
+
+    async function sendReply(idx) {
+      if (!voboCurrent) return;
+      const form = document.querySelector(`[data-reply-idx="${idx}"]`);
+      if (!form) return;
+      const input = form.querySelector('input[type="text"]');
+      const texto = (input.value || '').trim();
+      const file  = replyImgFiles[idx];
+      if (!texto && !file) return;
+      const su = sessionUser();
+      const fd = new FormData();
+      fd.append('texto', texto);
+      fd.append('usuario_email',  su.email || '');
+      fd.append('usuario_nombre', su.nombre || '');
+      if (file) fd.append('imagen', file);
+      try {
+        const r = await fetch(
+          `${API}/api/entregables/${encodeURIComponent(voboCurrent.id)}/items/${voboCurrent.num}/vobo/observacion/${idx}/reply`,
+          { method: 'POST', body: fd }
+        );
+        const data = await r.json();
+        if (!data.success) {
+          Swal.fire({ icon:'error', title:'Sin permiso', text: data.error || 'Error', confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+          return;
+        }
+        const acta = entregablesData.find(a => a.id === voboCurrent.id);
+        const item = acta?.items.find(it => it.num === voboCurrent.num);
+        const ob   = item?.etapas.vobo.observaciones[idx];
+        if (ob) {
+          if (!Array.isArray(ob.replies)) ob.replies = [];
+          ob.replies.push(data.reply);
+        }
+        delete replyImgFiles[idx];
+        renderVoboObs();
+      } catch (err) {
+        Swal.fire({ icon:'error', title:'Error', text: err.message, confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+      }
+    }
 
     /* Modal VOBO */
     function openVoboModal(id, num, nombre) {
@@ -1557,44 +2110,99 @@ if (btn.dataset.pdf === 'true') {
       const item     = acta?.items.find(it => it.num === voboCurrent.num);
       const obs      = item?.etapas.vobo.observaciones || [];
       const aprobado = item?.etapas.vobo.completada === true;
-      const hayImgs  = obs.some(o => o.imagen);
+      const hayImgs  = obs.some(o => o.imagen || (o.replies || []).some(r => r.imagen));
       document.querySelector('.vobo-modal').classList.toggle('has-imgs', hayImgs);
+      const puedeDecidir   = esObsDecider();
+      const puedeResponder = puedeResponderObs(acta, item);
+
+      function renderReplies(o, idx) {
+        const replies = Array.isArray(o.replies) ? o.replies : [];
+        const repliesHtml = replies.map(r => {
+          const esElisa = OBS_DECIDE_ALLOWED.includes((r.autor?.email || '').toLowerCase());
+          return `<div class="vobo-reply ${esElisa ? 'is-elisa' : ''}">
+            <div class="vobo-obs-author"><span class="author-dot"></span>${escH(r.autor?.nombre || r.autor?.email || 'Anónimo')}</div>
+            ${r.texto ? `<div class="vobo-reply-texto">${escH(r.texto)}</div>` : ''}
+            ${r.imagen ? `<img src="${escH(r.imagen)}" class="vobo-obs-img vobo-reply-img" title="Clic para ampliar" />` : ''}
+            <div class="vobo-reply-fecha">${new Date(r.fecha).toLocaleString('es-MX')}</div>
+          </div>`;
+        }).join('');
+        const formHtml = (puedeResponder && !aprobado)
+          ? `<div class="vobo-reply-img-preview" id="reply-img-prev-${idx}">
+               <img src="" alt="" />
+               <button type="button" class="rm-btn" data-rm-reply-img="${idx}">✕</button>
+             </div>
+             <div class="vobo-reply-form" data-reply-idx="${idx}">
+               <button type="button" class="img" title="Adjuntar imagen" data-reply-img-btn="${idx}">📎</button>
+               <input type="text" placeholder="Responder…" maxlength="400" />
+               <button type="button" class="send" data-reply-send="${idx}">Enviar</button>
+             </div>`
+          : '';
+        return (replies.length || formHtml)
+          ? `<div class="vobo-replies">${repliesHtml}${formHtml}</div>`
+          : '';
+      }
+
       const el = document.getElementById('vobo-obs-list');
       el.innerHTML = obs.length
         ? obs.map((o, idx) => {
             const est = o.estado || 'pendiente';
+            const autorNombre = o.autor?.nombre || o.autor?.email || '';
+            // Sello principal según estado
+            let stampHtml = '';
+            if (est === 'aceptada') {
+              stampHtml = `<div class="vobo-obs-stamp">
+                <span class="vos-check">✓</span>
+                <div class="vos-info">
+                  <span class="vos-label">Aceptada</span>
+                  ${o.aceptado_por ? `<span class="vos-by">${escH(o.aceptado_por)}</span>` : ''}
+                  ${o.aceptado_en  ? `<span class="vos-date">${new Date(o.aceptado_en).toLocaleString('es-MX')}</span>` : ''}
+                </div>
+              </div>`;
+            } else if (est === 'rechazada') {
+              stampHtml = `<div class="vobo-obs-stamp rejected">
+                <span class="vos-check">✗</span>
+                <div class="vos-info">
+                  <span class="vos-label">Rechazada</span>
+                  ${o.rechazado_por ? `<span class="vos-by">${escH(o.rechazado_por)}</span>` : ''}
+                  ${o.rechazado_en  ? `<span class="vos-date">${new Date(o.rechazado_en).toLocaleString('es-MX')}</span>` : ''}
+                </div>
+              </div>`;
+            }
+            // Botones accept/reject solo para deciders
+            let actionsHtml = '';
+            if (puedeDecidir && !aprobado) {
+              if (est === 'aceptada') {
+                actionsHtml = `<button class="voa-btn reject-ghost" data-idx="${idx}" data-estado="rechazada">✗ Rechazar</button>`;
+              } else if (est === 'rechazada') {
+                actionsHtml = `<button class="voa-btn accept" data-idx="${idx}" data-estado="aceptada">✓ Aceptar</button>`;
+              } else {
+                actionsHtml = `<button class="voa-btn accept" data-idx="${idx}" data-estado="aceptada">✓ Aceptar</button>
+                               <button class="voa-btn reject" data-idx="${idx}" data-estado="rechazada">✗ Rechazar</button>`;
+              }
+            }
             return `<div class="vobo-obs-item">
+              ${autorNombre ? `<div class="vobo-obs-author"><span class="author-dot"></span>${escH(autorNombre)}</div>` : ''}
               ${o.texto ? `<div class="vobo-obs-texto">${escH(o.texto)}</div>` : ''}
               ${o.imagen ? `<img src="${escH(o.imagen)}" class="vobo-obs-img" title="Clic para ampliar" />` : ''}
               <div class="vobo-obs-footer">
                 <span class="vobo-obs-fecha">${new Date(o.fecha).toLocaleString('es-MX')}</span>
-                ${est === 'aceptada'
-                  ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                       <div class="vobo-obs-stamp">
-                         <span class="vos-check">✓</span>
-                         <div class="vos-info">
-                           <span class="vos-label">Aceptada</span>
-                           ${o.aceptado_por ? `<span class="vos-by">${escH(o.aceptado_por)}</span>` : ''}
-                           ${o.aceptado_en  ? `<span class="vos-date">${new Date(o.aceptado_en).toLocaleString('es-MX')}</span>` : ''}
-                         </div>
-                       </div>
-                       <button class="voa-btn reject-ghost" data-idx="${idx}" data-estado="rechazada">✗ Rechazar</button>
-                     </div>`
-                  : `<div class="vobo-obs-actions">
-                       <button class="voa-btn accept" data-idx="${idx}" data-estado="aceptada">✓ Aceptar</button>
-                       <button class="voa-btn reject${est==='rechazada'?' active':''}" data-idx="${idx}" data-estado="rechazada">✗ Rechazar</button>
-                     </div>`
-                }
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  ${stampHtml}
+                  ${actionsHtml ? `<div class="vobo-obs-actions">${actionsHtml}</div>` : ''}
+                </div>
               </div>
+              ${renderReplies(o, idx)}
             </div>`;
           }).join('')
         : '<div class="vobo-obs-empty">Sin observaciones aún.</div>';
       el.scrollTop = el.scrollHeight;
+
+      // Input global solo para deciders (crear obs nuevas)
       const row    = document.getElementById('vobo-input-row');
       const input  = document.getElementById('vobo-input');
       const send   = document.getElementById('vobo-send');
       const imgBtn = document.getElementById('vobo-img-btn');
-      if (currentUserRol === 'usuario') {
+      if (!puedeDecidir) {
         row.style.display = 'none';
       } else if (aprobado) {
         row.style.display  = '';
@@ -1626,8 +2234,11 @@ if (btn.dataset.pdf === 'true') {
       const texto = input.value.trim();
       if (!texto && !obsImgFile) return;
 
+      const su = sessionUser();
       const fd = new FormData();
       fd.append('texto', texto);
+      fd.append('usuario_email',  su.email || '');
+      fd.append('usuario_nombre', su.nombre || '');
       if (obsImgFile) fd.append('imagen', obsImgFile);
 
       try {
@@ -1635,12 +2246,18 @@ if (btn.dataset.pdf === 'true') {
           `${API}/api/entregables/${encodeURIComponent(voboCurrent.id)}/items/${voboCurrent.num}/vobo/observacion`,
           { method: 'POST', body: fd });
         const data = await r.json();
+        if (!data.success) {
+          Swal.fire({ icon:'error', title:'Sin permiso', text: data.error || 'Error', confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
+          return;
+        }
         if (data.success) {
           const acta = entregablesData.find(a => a.id === voboCurrent.id);
           const item = acta?.items.find(it => it.num === voboCurrent.num);
           if (item) {
             item.etapas.vobo.observaciones.push({
-              texto: texto || null, imagen: data.imagen || null, fecha: new Date().toISOString(), estado: 'pendiente'
+              texto: texto || null, imagen: data.imagen || null, fecha: new Date().toISOString(), estado: 'pendiente',
+              autor: { email: su.email, nombre: su.nombre || su.email },
+              replies: []
             });
             item.etapas.vobo.rechazado        = true;
             item.etapas.vobo.completada       = false;
@@ -1661,7 +2278,52 @@ if (btn.dataset.pdf === 'true') {
     document.getElementById('vobo-send').addEventListener('click', sendVoboObs);
     document.getElementById('vobo-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendVoboObs(); });
 
-    loadEntregables();
+    /* ── Deep-link desde notificaciones: ?proyecto_id=&mes=&item= ── */
+    function aplicarDeepLink() {
+      const qs = new URLSearchParams(location.search);
+      const proyectoId = qs.get('proyecto_id');
+      const mes        = qs.get('mes');
+      const itemNum    = qs.get('item');
+      if (!proyectoId && !mes && !itemNum) return;
+
+      const selProy = document.getElementById('entreg-select-proyecto');
+      if (proyectoId && [...selProy.options].some(o => o.value === proyectoId)) {
+        selProy.value = proyectoId;
+      }
+      if (mes) mesFilter = parseInt(mes);
+
+      // Recargar para aplicar filtro de proyecto
+      loadEntregables().then(() => {
+        // Seleccionar el acta correspondiente al mes
+        if (mes) {
+          const acta = entregablesData.find(e => String(e.mes) === String(mes));
+          if (acta) {
+            activeId = acta.id;
+            renderMonthPills();
+            renderEntregables();
+          }
+        }
+        // Highlight + scroll al entregable
+        if (itemNum) {
+          setTimeout(() => {
+            const row = document.querySelector(`tr[data-item-num="${itemNum}"]`);
+            if (row) {
+              row.scrollIntoView({ behavior:'smooth', block:'center' });
+              row.style.transition = 'background-color .3s';
+              row.style.backgroundColor = 'rgba(217,119,6,.35)';
+              setTimeout(() => { row.style.backgroundColor = ''; }, 2400);
+              // Abrir modal de observaciones si existe el botón
+              const obsBtn = row.querySelector('.vobo-obs-btn');
+              if (obsBtn) obsBtn.click();
+            }
+          }, 400);
+        }
+        // Limpiar URL (sin recargar)
+        try { history.replaceState(null, '', location.pathname); } catch {}
+      });
+    }
+
+    loadEntregables().then(() => { aplicarDeepLink(); });
   </script>
 
   <script>
@@ -1679,7 +2341,7 @@ if (btn.dataset.pdf === 'true') {
     }
 
     function hide() {
-      hideTimer = setTimeout(() => { tooltip.style.display = 'none'; }, 120);
+      hideTimer = setTimeout(() => { tooltip.style.display = 'none'; }, 220);
     }
 
     document.addEventListener('mouseover', e => {
@@ -1692,6 +2354,10 @@ if (btn.dataset.pdf === 'true') {
       const btn = e.target.closest('[data-pdf-url]');
       if (btn) hide();
     });
+
+    // Mantener abierto cuando el mouse está sobre el panel
+    tooltip.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+    tooltip.addEventListener('mouseleave', hide);
   })();
   </script>
 </body>

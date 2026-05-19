@@ -117,9 +117,9 @@
     }
     .btn-pdf-upload:hover { background:#E5E7EB; color:#374151; }
     #pdf-preview-panel {
-      display:none; position:fixed; top:0; left:0; width:48%; height:100vh;
-      background:#111827; border-right:1px solid rgba(255,255,255,.12);
-      box-shadow:6px 0 40px rgba(0,0,0,.6); z-index:9999;
+      display:none; position:fixed; top:0; right:0; width:48%; height:100vh;
+      background:#111827; border-left:1px solid rgba(255,255,255,.12);
+      box-shadow:-6px 0 40px rgba(0,0,0,.6); z-index:9999;
       flex-direction:column; pointer-events:none;
     }
     #pdf-preview-panel.show { display:flex; pointer-events:auto; }
@@ -770,7 +770,7 @@
       pdfPanel.classList.add('show');
     }
     function hidePdfPreview() {
-      pdfHideTimer = setTimeout(() => pdfPanel.classList.remove('show'), 150);
+      pdfHideTimer = setTimeout(() => pdfPanel.classList.remove('show'), 250);
     }
 
     document.getElementById('proj-tbody').addEventListener('mouseover', e => {

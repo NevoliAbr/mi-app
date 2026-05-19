@@ -66,7 +66,59 @@
       }
       #app-navbar .anb-dropdown-menu li a:hover,
       #app-navbar .anb-dropdown-menu li a.active { background: rgba(255,255,255,.13); color:#fff; }
-      #app-navbar .anb-user { display:flex; align-items:center; gap:12px; }
+      #app-navbar .anb-user { display:flex; align-items:center; gap:14px; }
+      #app-navbar .anb-bell {
+        position:relative; display:inline-flex; align-items:center; justify-content:center;
+        width:42px; height:42px;
+        background: transparent;
+        color: rgba(255,255,255,.88); text-decoration:none;
+        transition: transform .18s ease, color .18s ease;
+      }
+      #app-navbar .anb-bell:hover { color:#fff; transform: translateY(-1px); }
+      #app-navbar .anb-bell:hover svg { animation: anbBellShake .55s ease-in-out; }
+      #app-navbar .anb-bell.active { color:#00AEEF; }
+      #app-navbar .anb-bell svg {
+        width:26px; height:26px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+        position:relative; z-index:1;
+        transition: filter .18s ease;
+      }
+      #app-navbar .anb-bell:hover svg { filter: drop-shadow(0 3px 6px rgba(0,174,239,.55)); }
+      #app-navbar .anb-bell-badge {
+        position:absolute; top:-5px; right:-5px; min-width:22px; height:22px; padding:0 6px;
+        background: linear-gradient(145deg, #FB7185 0%, #DC2626 100%);
+        color:#fff; font-size:11px; font-weight:900; letter-spacing:.2px;
+        border-radius:11px; display:none; align-items:center; justify-content:center;
+        border:2px solid #005D97; line-height:1;
+        box-shadow: 0 2px 6px rgba(220,38,38,.55), 0 0 0 1px rgba(255,255,255,.15);
+        z-index:2;
+      }
+      #app-navbar .anb-bell-badge.show {
+        display:flex;
+        animation: anbBadgePop .35s cubic-bezier(.34,1.56,.64,1);
+      }
+      #app-navbar .anb-bell-badge::before {
+        content:''; position:absolute; inset:-4px; border-radius:50%;
+        border:2px solid rgba(248,113,113,.55);
+        animation: anbBadgePulse 1.8s ease-out infinite;
+      }
+      @keyframes anbBadgePop {
+        0%   { transform: scale(0); }
+        60%  { transform: scale(1.25); }
+        100% { transform: scale(1); }
+      }
+      @keyframes anbBadgePulse {
+        0%   { transform: scale(.8); opacity:.9; }
+        80%  { transform: scale(1.6); opacity:0; }
+        100% { transform: scale(1.6); opacity:0; }
+      }
+      @keyframes anbBellShake {
+        0%, 100% { transform: rotate(0); }
+        20% { transform: rotate(-12deg); }
+        40% { transform: rotate(10deg); }
+        60% { transform: rotate(-6deg); }
+        80% { transform: rotate(4deg); }
+      }
       #app-navbar .anb-greeting {
         color:#fff; font-size:12px; font-weight:700; letter-spacing:.4px;
         text-decoration:none; padding:6px 16px; border-radius:30px;
@@ -125,8 +177,18 @@
     let userHtml = '';
     if (session) {
       const nombre = (session.nombre || 'Perfil').replace(/</g, '&lt;');
+      const bellActive = path === 'notificaciones.html' ? ' active' : '';
+      const bellHtml =
+        '<a href="notificaciones.html" class="anb-bell' + bellActive + '" id="anb-bell" title="Notificaciones">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.2 6.5 2.3 7.7.4.5.7 1 .7 1.3 0 .6-.5 1-1 1H4c-.5 0-1-.4-1-1 0-.3.3-.8.7-1.3C4.8 14.5 6 12.5 6 8z" fill="currentColor" fill-opacity=".18"/>' +
+            '<path d="M14 19a2 2 0 0 1-4 0"/>' +
+          '</svg>' +
+          '<span class="anb-bell-badge" id="anb-bell-badge">0</span>' +
+        '</a>';
       userHtml =
         '<li class="anb-user">' +
+          bellHtml +
           '<a href="perfil.html" class="anb-greeting" title="Ver mi perfil">' + nombre + '</a>' +
           '<button class="anb-logout" id="anb-logout-btn" type="button">Cerrar sesión</button>' +
         '</li>';
@@ -159,6 +221,34 @@
       localStorage.removeItem('session');
       window.location.href = 'index.html';
     });
+
+    /* ── Notificaciones: badge ── */
+    if (session && session.id) {
+      const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+      const badge = document.getElementById('anb-bell-badge');
+
+      async function refreshBadge() {
+        if (!badge) return;
+        try {
+          const resp = await fetch(API + '/api/usuarios/' + session.id + '/notificaciones/unread-count', { cache: 'no-store' });
+          const data = await resp.json();
+          if (!data.success) return;
+          const n = Number(data.count) || 0;
+          if (n > 0) {
+            badge.textContent = n > 99 ? '99+' : String(n);
+            badge.classList.add('show');
+          } else {
+            badge.classList.remove('show');
+          }
+        } catch {}
+      }
+      window.__refreshNotifBadge = refreshBadge;
+      refreshBadge();
+      setInterval(refreshBadge, 30000);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') refreshBadge();
+      });
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

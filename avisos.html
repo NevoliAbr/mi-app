@@ -204,8 +204,31 @@
     }
     .btn-action:hover { opacity:.82; }
     .btn-del    { background:#FEE2E2; color:#991B1B; }
+    .btn-edit   { background:#EFF6FF; color:#005D97; }
     .btn-toggle { background:#F3F4F6; color:#374151; }
     .btn-toggle.activo { background:#DCFCE7; color:#166534; }
+
+    /* ── Edit mode indicator ──────────────────── */
+    .edit-mode-banner {
+      display:none; padding:10px 14px; background:#FEF3C7; color:#92400E;
+      border-radius:8px; font-size:12px; font-weight:700; margin-bottom:14px;
+      align-items:center; justify-content:space-between; gap:10px;
+    }
+    .edit-mode-banner.show { display:flex; }
+    .btn-cancel-edit {
+      background:#fff; border:1.5px solid #92400E; color:#92400E;
+      padding:5px 12px; border-radius:6px; font-family:'Montserrat',sans-serif;
+      font-size:11px; font-weight:800; cursor:pointer;
+    }
+    .btn-cancel-edit:hover { background:#FEF3C7; }
+
+    /* ── Existing images (edit mode) ──────────── */
+    .img-existing-label {
+      font-size:11px; font-weight:800; color:#6B7280;
+      text-transform:uppercase; letter-spacing:.6px; margin-top:10px;
+    }
+    .img-existing-item.removed img { opacity:.25; filter:grayscale(1); }
+    .img-existing-item.removed .img-remove { background:#16a34a; }
 
     .badge-estado {
       display:inline-flex; align-items:center; gap:4px;
@@ -250,9 +273,13 @@
   <!-- FORM -->
   <div class="form-card">
     <div class="form-card-header">
-      <h2>Nuevo Aviso</h2>
+      <h2 id="form-title">Nuevo Aviso</h2>
     </div>
     <div class="form-body">
+      <div class="edit-mode-banner" id="edit-banner">
+        <span>✏️ Editando aviso #<span id="edit-id"></span></span>
+        <button type="button" class="btn-cancel-edit" onclick="cancelEdit()">Cancelar edición</button>
+      </div>
       <form id="aviso-form" novalidate>
 
         <!-- Zona de imágenes -->
@@ -263,6 +290,10 @@
             <div class="img-upload-icon">🖼️</div>
             <div class="img-upload-text">Haz clic para seleccionar imágenes</div>
             <div class="img-upload-sub">JPG, PNG, GIF, WEBP · Máx. 5 MB por imagen</div>
+          </div>
+          <div id="img-existing-wrap" style="display:none;">
+            <div class="img-existing-label">Imágenes actuales</div>
+            <div class="img-previews" id="img-existing"></div>
           </div>
           <div class="img-previews" id="img-previews"></div>
         </div>
@@ -328,6 +359,11 @@ function isFB(url) {
 const FB_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
   <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.514c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
 </svg>`;
+
+/* ── Estado de edición ────────────────────────── */
+let editingId         = null;
+let avisosCache       = [];
+let existingImages    = []; // [{ruta, removed:false}]
 
 /* ── Selección de imágenes ────────────────────── */
 let selectedFiles = [];
@@ -399,29 +435,105 @@ document.getElementById('aviso-form').addEventListener('submit', async function(
   if (link) fd.append('link', link);
   selectedFiles.forEach(f => fd.append('imagenes', f));
 
+  const isEdit = editingId !== null;
+  if (isEdit) {
+    const removedRutas = existingImages.filter(i => i.removed).map(i => i.ruta);
+    fd.append('imagenes_eliminadas', JSON.stringify(removedRutas));
+  }
+
   btn.disabled = true;
-  btn.textContent = 'Publicando…';
+  btn.textContent = isEdit ? 'Guardando…' : 'Publicando…';
 
   try {
-    const resp = await fetch(`${API}/api/avisos`, { method:'POST', body: fd });
+    const url    = isEdit ? `${API}/api/avisos/${editingId}` : `${API}/api/avisos`;
+    const method = isEdit ? 'PUT' : 'POST';
+    const resp = await fetch(url, { method, body: fd });
     const data = await resp.json();
     if (!data.success) throw new Error(data.error || 'Error al publicar.');
-    showMsg('¡Aviso publicado correctamente!', 'ok');
-    document.getElementById('f-titulo').value = '';
-    document.getElementById('f-texto').value  = '';
-    document.getElementById('f-fecha').value  = todayStr;
-    document.getElementById('f-link').value   = '';
-    document.getElementById('link-preview').innerHTML = '';
-    selectedFiles = [];
-    renderPreviews();
+    showMsg(isEdit ? '¡Aviso actualizado correctamente!' : '¡Aviso publicado correctamente!', 'ok');
+    cancelEdit();
     loadAvisos();
   } catch (err) {
     showMsg(err.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Publicar Aviso';
+    btn.textContent = editingId !== null ? 'Guardar Cambios' : 'Publicar Aviso';
   }
 });
+
+/* ── Edit mode ────────────────────────────────── */
+function startEdit(id) {
+  const a = avisosCache.find(x => x.id === id);
+  if (!a) return;
+
+  editingId = id;
+  document.getElementById('f-titulo').value = a.titulo || '';
+  document.getElementById('f-texto').value  = a.texto || '';
+  document.getElementById('f-fecha').value  = a.fecha_fin ? a.fecha_fin.split('T')[0] : '';
+  document.getElementById('f-fecha').min    = ''; // permitir mantener fechas pasadas en edición
+  document.getElementById('f-link').value   = a.link || '';
+  previewLink();
+
+  selectedFiles = [];
+  renderPreviews();
+
+  existingImages = (a.imagenes || []).map(ruta => ({ ruta, removed: false }));
+  renderExisting();
+
+  document.getElementById('form-title').textContent = 'Editar Aviso';
+  document.getElementById('edit-id').textContent    = id;
+  document.getElementById('edit-banner').classList.add('show');
+  document.getElementById('btn-submit').textContent = 'Guardar Cambios';
+
+  document.getElementById('form-msg').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  editingId      = null;
+  existingImages = [];
+  selectedFiles  = [];
+
+  document.getElementById('f-titulo').value = '';
+  document.getElementById('f-texto').value  = '';
+  document.getElementById('f-fecha').value  = todayStr;
+  document.getElementById('f-fecha').min    = todayStr;
+  document.getElementById('f-link').value   = '';
+  document.getElementById('link-preview').innerHTML = '';
+
+  renderPreviews();
+  renderExisting();
+
+  document.getElementById('form-title').textContent = 'Nuevo Aviso';
+  document.getElementById('edit-banner').classList.remove('show');
+  document.getElementById('btn-submit').textContent = 'Publicar Aviso';
+}
+
+function renderExisting() {
+  const wrap      = document.getElementById('img-existing-wrap');
+  const container = document.getElementById('img-existing');
+  container.innerHTML = '';
+
+  if (!existingImages.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+
+  existingImages.forEach((img, i) => {
+    const item = document.createElement('div');
+    item.className = 'img-preview-item img-existing-item' + (img.removed ? ' removed' : '');
+    item.innerHTML = `
+      <img src="${API}${img.ruta}" alt="img" />
+      <button type="button" class="img-remove" onclick="toggleExisting(${i})" title="${img.removed ? 'Restaurar' : 'Quitar'}">${img.removed ? '↺' : '×'}</button>`;
+    container.appendChild(item);
+  });
+}
+
+function toggleExisting(index) {
+  existingImages[index].removed = !existingImages[index].removed;
+  renderExisting();
+}
 
 function showMsg(text, type) {
   const el = document.getElementById('form-msg');
@@ -439,6 +551,7 @@ async function loadAvisos() {
     if (!data.success) throw new Error(data.error);
 
     const avisos = data.avisos;
+    avisosCache = avisos;
     countEl.textContent = `${avisos.length} aviso${avisos.length !== 1 ? 's' : ''}`;
 
     if (avisos.length === 0) {
@@ -478,6 +591,7 @@ async function loadAvisos() {
             </div>
           </div>
           <div class="aviso-actions">
+            <button class="btn-action btn-edit" onclick="startEdit(${a.id})">✏️ Editar</button>
             ${!vencido ? `
               <button class="btn-action btn-toggle ${a.activo ? 'activo' : ''}"
                 onclick="toggleActivo(${a.id}, ${a.activo ? 0 : 1})">

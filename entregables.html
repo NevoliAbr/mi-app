@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -227,7 +228,7 @@
       </div>
 
       <!-- Descargar modelo -->
-      <a href="/Carga.xlsx" download="Carga.xlsx" class="btn-template">⬇ Descargar archivo modelo</a>
+      <a href="/public/Carga.xlsx" download="Carga.xlsx" class="btn-template">⬇ Descargar archivo modelo</a>
 
       <!-- Submit -->
       <button type="button" class="btn-submit" id="btn-upload">Cargar Entregable</button>
@@ -281,22 +282,13 @@
           .map(e => ({ proyecto_id: e.proyecto_id, mes: e.mes }));
       }
     } catch {}
-    checkDuplicado();
   })();
 
-  function checkDuplicado() {
-    const mes     = parseInt(document.getElementById('select-mes').value);
-    const proyId  = parseInt(document.getElementById('select-proyecto').value);
-    if (mes && proyId && combosExistentes.some(c => c.proyecto_id == proyId && c.mes == mes)) {
-      showAlert('⚠ Ya hay entregables cargados para este proyecto y mes. Si subes un nuevo archivo, se borrarán todos los avances registrados.', 'warning');
-    } else {
-      const el = document.getElementById('alert-msg');
-      if (el.classList.contains('warning')) el.className = 'alert';
-    }
+  function esDuplicado() {
+    const mes    = parseInt(document.getElementById('select-mes').value);
+    const proyId = parseInt(document.getElementById('select-proyecto').value);
+    return !!(mes && proyId && combosExistentes.some(c => c.proyecto_id == proyId && c.mes == mes));
   }
-
-  document.getElementById('select-mes').addEventListener('change', checkDuplicado);
-  document.getElementById('select-proyecto').addEventListener('change', checkDuplicado);
 
   /* ── Mostrar nombre de archivo ── */
   document.getElementById('file-input').addEventListener('change', function () {
@@ -329,6 +321,29 @@
     if (!proyId) return showAlert('Selecciona un proyecto.', 'error');
     if (!file)   return showAlert('Selecciona un archivo .xlsx.', 'error');
     if (!mes)    return showAlert('Selecciona el mes correspondiente.', 'error');
+
+    // Si ya existe entregable para este proyecto+mes, pedir confirmación
+    if (esDuplicado()) {
+      const proySel = document.getElementById('select-proyecto');
+      const mesSel  = document.getElementById('select-mes');
+      const proyTxt = proySel.options[proySel.selectedIndex]?.text || '';
+      const mesTxt  = mesSel.options[mesSel.selectedIndex]?.text  || '';
+      const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Ya existe un entregable cargado',
+        html: `Ya hay entregables cargados para <strong>${proyTxt}</strong> en <strong>${mesTxt} ${sessionAño}</strong>.<br><br>
+               Si subes este nuevo archivo, <strong>se borrarán todos los avances registrados</strong> del archivo anterior.<br><br>
+               ¿Deseas continuar?`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, reemplazar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#C41010',
+        cancelButtonColor:  '#6B7280',
+        focusCancel: true,
+        reverseButtons: true,
+      });
+      if (!result.isConfirmed) return;
+    }
 
     const fd = new FormData();
     fd.append('archivo',      file);
