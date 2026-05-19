@@ -26,7 +26,7 @@ function notifyTo(emails) {
 }
 
 // Destinatarios principales de notificaciones de seguimiento
-const ELISA_NOTIFY = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+const ELISA_NOTIFY = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx'];
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
