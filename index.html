@@ -177,10 +177,25 @@
     .reel-card {
       background:#fff; border-radius:18px;
       width:100%; max-width:540px;
-      padding:32px 34px;
       box-shadow:0 24px 60px rgba(0,0,0,.4);
       border-left:5px solid #00AEEF;
+      overflow:hidden;
     }
+    .reel-card-body { padding:32px 34px; }
+    /* Imagen(es) dentro de la tarjeta */
+    .reel-card-media {
+      width:100%; background:#001525;
+      display:flex; align-items:center; justify-content:center;
+      max-height:300px; overflow:hidden;
+    }
+    .reel-card-media img {
+      width:100%; max-height:300px; object-fit:contain; display:block;
+    }
+    .reel-card-media.multi {
+      display:grid; grid-template-columns:repeat(2, 1fr); gap:2px;
+      max-height:320px;
+    }
+    .reel-card-media.multi img { width:100%; height:160px; object-fit:cover; }
     .reel-card-badge {
       display:inline-flex; align-items:center; gap:6px;
       background:#EFF6FF; color:#005D97;
@@ -493,6 +508,75 @@
       align-items: center;
       gap: 12px;
     }
+    .nav-bell {
+      position:relative; display:inline-flex; align-items:center; justify-content:center;
+      width:42px; height:42px; background:transparent;
+      color:rgba(255,255,255,.88); text-decoration:none;
+      transition:transform .18s ease, color .18s ease;
+    }
+    .nav-bell:hover { color:#fff; transform:translateY(-1px); }
+    .nav-bell:hover svg { animation:navBellShake .55s ease-in-out; }
+    .nav-bell svg {
+      width:26px; height:26px;
+      filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+      position:relative; z-index:1; transition:filter .18s ease;
+    }
+    .nav-bell:hover svg { filter:drop-shadow(0 3px 6px rgba(0,174,239,.55)); }
+    .nav-bell-badge {
+      position:absolute; top:-5px; right:-5px; min-width:22px; height:22px; padding:0 6px;
+      background:linear-gradient(145deg, #FB7185 0%, #DC2626 100%);
+      color:#fff; font-size:11px; font-weight:900; letter-spacing:.2px;
+      border-radius:11px; display:none; align-items:center; justify-content:center;
+      border:2px solid #005D97; line-height:1;
+      box-shadow:0 2px 6px rgba(220,38,38,.55), 0 0 0 1px rgba(255,255,255,.15);
+      z-index:2;
+    }
+    .nav-bell-badge.show { display:flex; animation:navBadgePop .35s cubic-bezier(.34,1.56,.64,1); }
+    /* Lado izquierdo (logo + avisos) */
+    .nav-left { display:flex; align-items:center; gap:14px; }
+    /* Avisos activos (botón visible junto al logo) */
+    .nav-avisos {
+      position:relative; display:inline-flex; align-items:center; gap:8px;
+      padding:8px 16px 8px 13px; border-radius:24px;
+      background:linear-gradient(145deg, rgba(56,189,248,.30) 0%, rgba(2,132,199,.30) 100%);
+      border:1.5px solid rgba(56,189,248,.55);
+      color:#fff; text-decoration:none;
+      box-shadow:0 2px 10px rgba(2,132,199,.25);
+      transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .nav-avisos:hover {
+      background:linear-gradient(145deg, rgba(56,189,248,.5) 0%, rgba(2,132,199,.5) 100%);
+      box-shadow:0 4px 16px rgba(2,132,199,.45);
+      transform:translateY(-1px);
+    }
+    .nav-avisos:hover svg { animation:navBellShake .55s ease-in-out; }
+    .nav-avisos svg {
+      width:22px; height:22px;
+      filter:drop-shadow(0 1px 2px rgba(0,0,0,.3)); flex-shrink:0;
+    }
+    .nav-avisos-label {
+      font-size:12px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; white-space:nowrap;
+    }
+    .nav-avisos-badge {
+      min-width:21px; height:21px; padding:0 6px;
+      background:#fff; color:#0284C7;
+      font-size:11px; font-weight:900; letter-spacing:.2px;
+      border-radius:11px; display:none; align-items:center; justify-content:center;
+      line-height:1; box-shadow:0 1px 4px rgba(0,0,0,.25);
+    }
+    .nav-avisos-badge.show { display:flex; animation:navBadgePop .35s cubic-bezier(.34,1.56,.64,1); }
+    @media (max-width:640px) {
+      .nav-avisos-label { display:none; }
+      .nav-avisos { padding:8px 12px; }
+    }
+    .nav-bell-badge::before {
+      content:''; position:absolute; inset:-4px; border-radius:50%;
+      border:2px solid rgba(248,113,113,.55);
+      animation:navBadgePulse 1.8s ease-out infinite;
+    }
+    @keyframes navBadgePop { 0%{transform:scale(0);} 60%{transform:scale(1.25);} 100%{transform:scale(1);} }
+    @keyframes navBadgePulse { 0%{transform:scale(.8);opacity:.9;} 80%{transform:scale(1.6);opacity:0;} 100%{transform:scale(1.6);opacity:0;} }
+    @keyframes navBellShake { 0%,100%{transform:rotate(0);} 20%{transform:rotate(-12deg);} 40%{transform:rotate(10deg);} 60%{transform:rotate(-6deg);} 80%{transform:rotate(4deg);} }
     #user-greeting {
       color: #fff;
       font-size: 12px;
@@ -655,9 +739,20 @@
 
   <!-- ══ NAVBAR ══════════════════════════════════════ -->
   <nav>
-    <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
-      <img src="logo.png" alt="Logo" class="logo-img" />
-    </a>
+    <div class="nav-left">
+      <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+        <img src="logo.png" alt="Logo" class="logo-img" />
+      </a>
+      <a href="#avisos-section" class="nav-avisos" id="nav-avisos" title="Ver avisos activos" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 10.5v3a1 1 0 0 0 1 1h2.5L11 18V6L6.5 10.5H4a1 1 0 0 0-1 0z" fill="currentColor" fill-opacity=".25"/>
+          <path d="M15 8.5a4 4 0 0 1 0 7"/>
+          <path d="M17.5 6a7 7 0 0 1 0 12"/>
+        </svg>
+        <span class="nav-avisos-label">Avisos</span>
+        <span class="nav-avisos-badge" id="nav-avisos-badge">0</span>
+      </a>
+    </div>
     <ul class="nav-menu">
       <li id="nav-creacion" class="nav-dropdown" style="display:none">
         <button type="button" class="nav-dropdown-toggle" id="nav-creacion-toggle">Creación <span class="nav-caret">&#9662;</span></button>
@@ -674,6 +769,7 @@
           <li id="nav-mod-entregables"><a href="modulo-entregables.html">Módulo Entregables</a></li>
         </ul>
       </li>
+      <li id="nav-btn-proyectos" style="display:none"><a href="proyectos.html">Proyectos</a></li>
       <li id="nav-btn-analitica" style="display:none"><a href="analitica.html">Dashboards</a></li>
       <li id="nav-btn-task"     style="display:none"><a href="task.html">📋 Tasks</a></li>
       <li id="nav-btn3" style="display:none"><a href="#" id="btn3">Descargar</a></li>
@@ -681,6 +777,13 @@
       <li id="auth-reg"><a href="#" id="btn5">Regístrate</a></li>
       <li id="auth-login"><a href="#" id="iniciar-sesion">Inicia sesión</a></li>
       <li id="auth-user" style="display:none">
+        <a href="notificaciones.html" class="nav-bell" id="nav-bell" title="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.2 6.5 2.3 7.7.4.5.7 1 .7 1.3 0 .6-.5 1-1 1H4c-.5 0-1-.4-1-1 0-.3.3-.8.7-1.3C4.8 14.5 6 12.5 6 8z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M14 19a2 2 0 0 1-4 0"/>
+          </svg>
+          <span class="nav-bell-badge" id="nav-bell-badge">0</span>
+        </a>
         <a href="perfil.html" id="user-greeting" title="Ver mi perfil"></a>
         <button id="btn-logout">Cerrar sesión</button>
       </li>
@@ -932,7 +1035,55 @@
       document.getElementById('nav-mod-seguimiento').style.display = segVisible ? '' : 'none';
       document.getElementById('nav-mod-entregables').style.display = entVisible ? '' : 'none';
       document.getElementById('nav-modulos').style.display = (segVisible || entVisible) ? '' : 'none';
+
+      // Proyectos: visible para cualquier usuario con sesión (excepto sinrol)
+      document.getElementById('nav-btn-proyectos').style.display = (loggedIn && !esSinRol) ? '' : 'none';
+
+      // Botón de avisos (lado izquierdo): visible con sesión
+      document.getElementById('nav-avisos').style.display = loggedIn ? 'inline-flex' : 'none';
+
+      // Campana de notificaciones + avisos
+      if (loggedIn && user.id) refreshNotifBadge(user.id);
+      if (loggedIn) refreshAvisosBadge();
     }
+
+    /* ── Badge de notificaciones ── */
+    async function refreshNotifBadge(userId) {
+      const badge = document.getElementById('nav-bell-badge');
+      if (!badge) return;
+      try {
+        const resp = await fetch(`${API}/api/usuarios/${userId}/notificaciones/unread-count`, { cache: 'no-store' });
+        const data = await resp.json();
+        if (!data.success) return;
+        const n = Number(data.count) || 0;
+        if (n > 0) { badge.textContent = n > 99 ? '99+' : String(n); badge.classList.add('show'); }
+        else { badge.classList.remove('show'); }
+      } catch {}
+    }
+    /* ── Badge de avisos activos ── */
+    async function refreshAvisosBadge() {
+      const badge = document.getElementById('nav-avisos-badge');
+      if (!badge) return;
+      try {
+        const resp = await fetch(`${API}/api/avisos`, { cache: 'no-store' });
+        const data = await resp.json();
+        if (!data.success) return;
+        const n = (data.avisos || []).length;
+        if (n > 0) { badge.textContent = n > 99 ? '99+' : String(n); badge.classList.add('show'); }
+        else { badge.classList.remove('show'); }
+      } catch {}
+    }
+    (function () {
+      const s = JSON.parse(localStorage.getItem('session') || 'null');
+      if (s && s.id) {
+        refreshAvisosBadge();
+        setInterval(() => refreshNotifBadge(s.id), 30000);
+        setInterval(refreshAvisosBadge, 60000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') { refreshNotifBadge(s.id); refreshAvisosBadge(); }
+        });
+      }
+    })();
 
     function setSession(user) {
       localStorage.setItem('session', JSON.stringify(user));
@@ -1290,21 +1441,12 @@
 
     function buildSlide(av) {
       const imgs = av.imagenes || [];
-      const noMedia = imgs.length === 0;
       let mediaHtml = '';
       if (imgs.length === 1) {
-        mediaHtml = `
-          <div class="reel-slide-bg">
-            <img src="${API}${imgs[0]}" alt="${escH(av.titulo)}" />
-            <div class="reel-slide-overlay"></div>
-          </div>`;
-      } else {
-        const strip = imgs.slice(0,3).map(r => `<img src="${API}${r}" alt="" />`).join('');
-        mediaHtml = `
-          <div class="reel-slide-bg" style="position:relative">
-            <div class="reel-imgs-strip">${strip}</div>
-            <div class="reel-slide-overlay" style="position:absolute;inset:0"></div>
-          </div>`;
+        mediaHtml = `<div class="reel-card-media"><img src="${API}${imgs[0]}" alt="${escH(av.titulo)}" /></div>`;
+      } else if (imgs.length > 1) {
+        const strip = imgs.slice(0,4).map(r => `<img src="${API}${r}" alt="" />`).join('');
+        mediaHtml = `<div class="reel-card-media multi">${strip}</div>`;
       }
 
       const linkHtml = av.link
@@ -1315,10 +1457,12 @@
            </a>`
         : '';
 
-      if (noMedia) {
-        return `
-          <div class="reel-slide no-media">
-            <div class="reel-card">
+      // Mismo modelo de tarjeta para todos; si hay imagen, se muestra dentro
+      return `
+        <div class="reel-slide no-media">
+          <div class="reel-card${imgs.length ? ' has-media' : ''}">
+            ${mediaHtml}
+            <div class="reel-card-body">
               <span class="reel-card-badge">📢 Aviso</span>
               <div class="reel-card-titulo">${escH(av.titulo)}</div>
               ${av.texto ? `<div class="reel-card-texto">${escH(av.texto)}</div>` : ''}
@@ -1326,19 +1470,6 @@
                 <span class="reel-card-date">🗓️ Hasta: ${fmtDate(av.fecha_fin)}</span>
                 ${linkHtml}
               </div>
-            </div>
-          </div>`;
-      }
-
-      return `
-        <div class="reel-slide">
-          ${mediaHtml}
-          <div class="reel-slide-info">
-            <div class="reel-slide-titulo">${escH(av.titulo)}</div>
-            ${av.texto ? `<div class="reel-slide-texto">${escH(av.texto)}</div>` : ''}
-            <div class="reel-slide-footer">
-              <span class="reel-date">Hasta: ${fmtDate(av.fecha_fin)}</span>
-              ${linkHtml}
             </div>
           </div>
         </div>`;

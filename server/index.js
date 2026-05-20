@@ -545,6 +545,23 @@ app.post('/api/avisos', upload.array('imagenes', 10), async (req, res) => {
       );
     }
 
+    // Notificar in-app a todos los usuarios activos sobre el nuevo aviso (no bloquea)
+    (async () => {
+      try {
+        const [usuarios] = await pool.execute('SELECT id FROM usuarios WHERE activo = 1');
+        for (const u of usuarios) {
+          await crearNotificacion({
+            usuario_id: u.id,
+            tipo:       'aviso_nuevo',
+            titulo:     'Nuevo aviso publicado',
+            mensaje:    titulo.trim(),
+            link_url:   'index.html',
+            meta:       { aviso_id: avisoId },
+          });
+        }
+      } catch (err) { console.warn('⚠ Notif aviso nuevo:', err.message); }
+    })();
+
     res.status(201).json({ success: true, avisoId });
   } catch (err) {
     for (const file of (req.files || [])) {

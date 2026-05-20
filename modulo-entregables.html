@@ -251,87 +251,6 @@
       cursor:pointer; transition:background .15s;
     }
     .acta-action-revert:hover { background:rgba(217,119,6,.22); }
-
-    /* ── Tabla de proyectos (solo lectura, desplegable) ── */
-    .proyectos-section {
-      margin:24px 24px 8px; border-top:1px solid rgba(0,174,239,.12);
-      padding-top:16px;
-    }
-    .proyectos-toggle {
-      display:flex; align-items:center; gap:10px; padding:12px 16px;
-      background:rgba(0,174,239,.06); border:1px solid rgba(0,174,239,.18);
-      border-radius:10px; cursor:pointer; user-select:none;
-      font-family:'Montserrat',sans-serif; color:#fff;
-      transition:background .15s;
-    }
-    .proyectos-toggle:hover { background:rgba(0,174,239,.12); }
-    .proyectos-toggle .caret {
-      font-size:11px; color:#00AEEF; transition:transform .2s;
-      display:inline-flex; width:18px; height:18px; align-items:center; justify-content:center;
-      background:rgba(0,174,239,.15); border-radius:50%;
-    }
-    .proyectos-section.open .proyectos-toggle .caret { transform:rotate(180deg); }
-    .proyectos-toggle-title {
-      font-size:13px; font-weight:800; letter-spacing:.4px; text-transform:uppercase;
-      color:rgba(0,174,239,.85);
-    }
-    .proyectos-toggle-count {
-      margin-left:auto; font-size:11px; font-weight:700;
-      color:rgba(255,255,255,.45); background:rgba(255,255,255,.05);
-      padding:3px 10px; border-radius:12px;
-    }
-    .proyectos-body {
-      display:none; margin-top:14px; border-radius:10px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.06);
-    }
-    .proyectos-section.open .proyectos-body { display:block; }
-
-    .proyectos-table-wrap {
-      overflow-x:auto; background:rgba(7,21,36,.65);
-    }
-    .proyectos-table {
-      width:100%; border-collapse:collapse; min-width:1100px;
-      font-family:'Montserrat',sans-serif;
-    }
-    .proyectos-table thead {
-      background:rgba(0,174,239,.08);
-      position:sticky; top:0; z-index:1;
-    }
-    .proyectos-table th {
-      padding:12px 14px; text-align:left;
-      font-size:10px; font-weight:800; color:rgba(0,174,239,.75);
-      text-transform:uppercase; letter-spacing:.6px;
-      border-bottom:1px solid rgba(0,174,239,.18); white-space:nowrap;
-    }
-    .proyectos-table td {
-      padding:12px 14px; font-size:12px; font-weight:600;
-      color:rgba(255,255,255,.78); vertical-align:top;
-      border-bottom:1px solid rgba(255,255,255,.04);
-    }
-    .proyectos-table tr:hover td { background:rgba(0,174,239,.04); }
-    .proyectos-table .col-num { color:#00AEEF; font-weight:800; text-align:center; width:42px; }
-    .proyectos-table .nombre-cell { color:#fff; font-weight:800; min-width:180px; }
-    .proyectos-table .nombre-proy { color:rgba(255,255,255,.55); font-size:11px; margin-top:2px; font-weight:600; line-height:1.3; }
-    .proyectos-table .small  { font-size:11px; color:rgba(255,255,255,.55); }
-    .proyectos-table .resp-chips { display:flex; flex-direction:column; gap:3px; }
-    .proyectos-table .resp-chip {
-      background:rgba(0,174,239,.1); color:#00AEEF;
-      border:1px solid rgba(0,174,239,.25); border-radius:10px;
-      padding:2px 8px; font-size:10px; font-weight:700; width:fit-content;
-    }
-    .proyectos-table .pdf-link {
-      display:inline-flex; align-items:center; gap:4px;
-      background:rgba(0,174,239,.12); color:#00AEEF;
-      border:1px solid rgba(0,174,239,.35); border-radius:14px;
-      padding:3px 10px; font-size:10px; font-weight:800;
-      text-decoration:none; transition:background .15s;
-    }
-    .proyectos-table .pdf-link:hover { background:rgba(0,174,239,.22); }
-    .proyectos-table .pre-wrap { white-space:pre-wrap; max-width:260px; }
-    .proyectos-table .empty-row td {
-      text-align:center; padding:32px;
-      color:rgba(255,255,255,.25); font-size:13px; font-weight:600;
-    }
     .ep-avance-bar  { width:46px; height:5px; background:rgba(255,255,255,.1); border-radius:3px; }
     .ep-avance-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#005D97,#00AEEF); transition:width .3s; }
     /* VOBO modal */
@@ -790,35 +709,6 @@
       </div>
 
       <input type="file" id="ep-pdf-input" accept=".pdf" style="display:none" />
-
-      <!-- ── Desplegable: Tabla de proyectos (solo lectura) ── -->
-      <div class="proyectos-section" id="proyectos-section">
-        <div class="proyectos-toggle" id="proyectos-toggle">
-          <span class="caret">▾</span>
-          <span class="proyectos-toggle-title">📁 Listado de proyectos</span>
-          <span class="proyectos-toggle-count" id="proyectos-toggle-count">—</span>
-        </div>
-        <div class="proyectos-body">
-          <div class="proyectos-table-wrap">
-            <table class="proyectos-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre / Nombre Proyecto</th>
-                  <th>Procedimiento</th>
-                  <th>Contrato</th>
-                  <th>Responsables</th>
-                  <th>Vigencia</th>
-                  <th>Propuesta</th>
-                </tr>
-              </thead>
-              <tbody id="proyectos-tbody">
-                <tr class="empty-row"><td colspan="7">Cargando proyectos…</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
   </div>
@@ -1112,7 +1002,6 @@
           proyects.map(p => `<option value="${p.id}">${escH(p.nombre)}</option>`).join('');
         if (prevSel && proyects.find(p => String(p.id) === prevSel)) sel.value = prevSel;
         updateProyectoInfoPanel();
-        if (typeof renderProyectosTable === 'function') renderProyectosTable();
 
         if (!dataE.success) return;
         let año = new Date().getFullYear();
@@ -1192,42 +1081,6 @@
       }
       panel.classList.add('visible');
     }
-
-    /* ── Tabla de proyectos (desplegable solo lectura) ── */
-    function renderProyectosTable() {
-      const tbody = document.getElementById('proyectos-tbody');
-      const count = document.getElementById('proyectos-toggle-count');
-      const proys = allProyectosData || [];
-      count.textContent = `${proys.length} proyecto${proys.length === 1 ? '' : 's'}`;
-      if (!proys.length) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">No hay proyectos cargados.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = proys.map((p, i) => {
-        const resps = Array.isArray(p.responsables) ? p.responsables : [];
-        const respHtml = resps.length
-          ? `<div class="resp-chips">${resps.map(r => `<span class="resp-chip">${escH(r.nombre || '')}</span>`).join('')}</div>`
-          : `<span class="small">—</span>`;
-        const pdfHtml = p.pdf_url
-          ? `<a class="pdf-link" href="${escH(p.pdf_url)}" data-pdf-url="${escH(p.pdf_url)}" target="_blank" rel="noopener" download>📄 PDF</a>`
-          : `<span class="small">—</span>`;
-        const nombreProy = p.NombreProyecto && p.NombreProyecto !== p.nombre
-          ? `<div class="nombre-proy">${escH(p.NombreProyecto)}</div>` : '';
-        return `<tr>
-          <td class="col-num">${p.orden ?? (i + 1)}</td>
-          <td class="nombre-cell">${escH(p.nombre || '—')}${nombreProy}</td>
-          <td class="pre-wrap small">${escH(p.procedimiento || '—')}</td>
-          <td class="small">${escH(p.contrato || '—')}</td>
-          <td>${respHtml}</td>
-          <td class="small">${escH(fmtVigencia(p.vigencia_inicio, p.vigencia_fin))}</td>
-          <td>${pdfHtml}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    document.getElementById('proyectos-toggle').addEventListener('click', () => {
-      document.getElementById('proyectos-section').classList.toggle('open');
-    });
 
     document.getElementById('entreg-select-proyecto').addEventListener('change', () => {
       activeId = null;

@@ -18,6 +18,7 @@
     const entVisible  = !!session && !esRestringido && !esSinRol;
     const dashVisible = !!session && !esUsuario && !esRestringido && !esSinRol;
     const taskVisible = !!session && !esUsuario && !esSinRol;
+    const proyVisible = !!session && !esSinRol;
 
     /* ── CSS (todo scopeado a #app-navbar) ── */
     const css = `
@@ -119,6 +120,45 @@
         60% { transform: rotate(-6deg); }
         80% { transform: rotate(4deg); }
       }
+      /* ── Lado izquierdo (logo + avisos) ── */
+      #app-navbar .anb-left { display:flex; align-items:center; gap:14px; }
+      /* ── Avisos activos (botón visible junto al logo) ── */
+      #app-navbar .anb-avisos {
+        position:relative; display:inline-flex; align-items:center; gap:8px;
+        padding:8px 16px 8px 13px; border-radius:24px;
+        background:linear-gradient(145deg, rgba(56,189,248,.30) 0%, rgba(2,132,199,.30) 100%);
+        border:1.5px solid rgba(56,189,248,.55);
+        color:#fff; text-decoration:none;
+        box-shadow:0 2px 10px rgba(2,132,199,.25);
+        transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+      }
+      #app-navbar .anb-avisos:hover {
+        background:linear-gradient(145deg, rgba(56,189,248,.5) 0%, rgba(2,132,199,.5) 100%);
+        box-shadow:0 4px 16px rgba(2,132,199,.45);
+        transform:translateY(-1px);
+      }
+      #app-navbar .anb-avisos:hover svg { animation:anbBellShake .55s ease-in-out; }
+      #app-navbar .anb-avisos svg {
+        width:22px; height:22px;
+        filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
+        flex-shrink:0;
+      }
+      #app-navbar .anb-avisos-label {
+        font-size:12px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+        white-space:nowrap;
+      }
+      #app-navbar .anb-avisos-badge {
+        min-width:21px; height:21px; padding:0 6px;
+        background:#fff; color:#0284C7;
+        font-size:11px; font-weight:900; letter-spacing:.2px;
+        border-radius:11px; display:none; align-items:center; justify-content:center;
+        line-height:1; box-shadow:0 1px 4px rgba(0,0,0,.25);
+      }
+      #app-navbar .anb-avisos-badge.show { display:flex; animation:anbBadgePop .35s cubic-bezier(.34,1.56,.64,1); }
+      @media (max-width:760px) {
+        #app-navbar .anb-avisos-label { display:none; }
+        #app-navbar .anb-avisos { padding:8px 12px; }
+      }
       #app-navbar .anb-greeting {
         color:#fff; font-size:12px; font-weight:700; letter-spacing:.4px;
         text-decoration:none; padding:6px 16px; border-radius:30px;
@@ -170,6 +210,7 @@
         '</li>'
       );
     }
+    if (proyVisible) items.push('<li><a href="proyectos.html"' + act('proyectos.html') + '>Proyectos</a></li>');
     if (dashVisible) items.push('<li><a href="analitica.html"' + act('analitica.html') + '>Dashboards</a></li>');
     if (taskVisible) items.push('<li><a href="task.html"' + act('task.html') + '>&#128203; Tasks</a></li>');
     if (esSuperusuario) items.push('<li><a href="admin.html"' + act('admin.html') + '>Administración</a></li>');
@@ -194,11 +235,27 @@
         '</li>';
     }
 
+    // Botón de avisos activos (lado izquierdo, junto al logo) — solo con sesión
+    const avisosLeftHtml = session
+      ? '<a href="index.html" class="anb-avisos" id="anb-avisos" title="Ver avisos activos">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M3 10.5v3a1 1 0 0 0 1 1h2.5L11 18V6L6.5 10.5H4a1 1 0 0 0-1 0z" fill="currentColor" fill-opacity=".25"/>' +
+            '<path d="M15 8.5a4 4 0 0 1 0 7"/>' +
+            '<path d="M17.5 6a7 7 0 0 1 0 12"/>' +
+          '</svg>' +
+          '<span class="anb-avisos-label">Avisos</span>' +
+          '<span class="anb-avisos-badge" id="anb-avisos-badge">0</span>' +
+        '</a>'
+      : '';
+
     const nav = document.createElement('div');
     nav.id = 'app-navbar';
     nav.setAttribute('role', 'navigation');
     nav.innerHTML =
-      '<a href="index.html" class="anb-logo"><img src="logo.png" alt="Logo" onerror="this.style.display=\'none\'" /></a>' +
+      '<div class="anb-left">' +
+        '<a href="index.html" class="anb-logo"><img src="logo.png" alt="Logo" onerror="this.style.display=\'none\'" /></a>' +
+        avisosLeftHtml +
+      '</div>' +
       '<ul class="anb-menu">' + items.join('') + userHtml + '</ul>';
     document.body.insertBefore(nav, document.body.firstChild);
 
@@ -222,10 +279,11 @@
       window.location.href = 'index.html';
     });
 
-    /* ── Notificaciones: badge ── */
+    /* ── Notificaciones + Avisos: badges ── */
     if (session && session.id) {
       const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
-      const badge = document.getElementById('anb-bell-badge');
+      const badge       = document.getElementById('anb-bell-badge');
+      const avisosBadge = document.getElementById('anb-avisos-badge');
 
       async function refreshBadge() {
         if (!badge) return;
@@ -242,11 +300,28 @@
           }
         } catch {}
       }
+      async function refreshAvisos() {
+        if (!avisosBadge) return;
+        try {
+          const resp = await fetch(API + '/api/avisos', { cache: 'no-store' });
+          const data = await resp.json();
+          if (!data.success) return;
+          const n = (data.avisos || []).length;
+          if (n > 0) {
+            avisosBadge.textContent = n > 99 ? '99+' : String(n);
+            avisosBadge.classList.add('show');
+          } else {
+            avisosBadge.classList.remove('show');
+          }
+        } catch {}
+      }
       window.__refreshNotifBadge = refreshBadge;
       refreshBadge();
+      refreshAvisos();
       setInterval(refreshBadge, 30000);
+      setInterval(refreshAvisos, 60000);
       document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible') refreshBadge();
+        if (document.visibilityState === 'visible') { refreshBadge(); refreshAvisos(); }
       });
     }
   }
