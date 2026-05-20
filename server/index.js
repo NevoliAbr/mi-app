@@ -8,7 +8,12 @@ const fs         = require('fs');
 const crypto     = require('crypto');
 const XLSX       = require('xlsx');
 const nodemailer = require('nodemailer');
-const { getPool, switchDB, getDBType, getDBInfo } = require('./db');
+const _db = require('./db');
+const getPool = _db.getPool;
+// Fallbacks por si producción usa una versión vieja de db.js que solo exporta getPool
+const getDBType  = _db.getDBType  || (() => 'mysql');
+const getDBInfo  = _db.getDBInfo  || (() => ({ type: 'mysql', label: 'MySQL', connected: true }));
+const switchDB   = _db.switchDB   || (async () => { throw new Error('switchDB no disponible en esta versión de db.js'); });
 
 /* ── Mailer (Plesk SMTP) ─────────────────────────── */
 const transporter = nodemailer.createTransport({
