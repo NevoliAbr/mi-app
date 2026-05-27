@@ -33,15 +33,148 @@ function notifyTo(emails) {
 // Destinatarios principales de notificaciones de seguimiento
 const ELISA_NOTIFY = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx'];
 
+// ── Facultades (permisos por área) ──
+// Catálogo de áreas. Cada facultad se puede asignar por usuario con Ver y/o Modificar.
+// grupo: 'general' o 'administracion' (las admin se agrupan en un desplegable).
+const FACULTADES = [
+  // Generales
+  { clave: 'avisos',             nombre: 'Avisos',                descripcion: 'Crear y gestionar avisos',     grupo: 'general',        orden: 1 },
+  { clave: 'carga_entregables',  nombre: 'Carga de entregables',  descripcion: 'Subir actas de entregables',   grupo: 'general',        orden: 2 },
+  { clave: 'carga_projects',     nombre: 'Carga de projects',     descripcion: 'Subir archivos de projects',   grupo: 'general',        orden: 3 },
+  { clave: 'proyectos',          nombre: 'Proyectos (consulta)',  descripcion: 'Ver el listado de proyectos',  grupo: 'general',        orden: 4 },
+  { clave: 'seguimiento',        nombre: 'Módulo de Seguimiento', descripcion: 'Ver el módulo de seguimiento', grupo: 'general',        orden: 5 },
+  { clave: 'dashboards',         nombre: 'Dashboards',            descripcion: 'Ver analítica y dashboards',   grupo: 'general',        orden: 6 },
+  { clave: 'tasks',              nombre: 'Tasks',                 descripcion: 'Tablero de tareas',            grupo: 'general',        orden: 7 },
+  // Módulo Entregables (sub-facultades)
+  { clave: 'modulo_entregables', nombre: 'Ver y trabajar',        descripcion: 'Ver y trabajar entregables',            grupo: 'entregables',    orden: 8 },
+  { clave: 'eliminar_proyecto',  nombre: 'Eliminar proyecto',     descripcion: 'Eliminar actas/proyectos en el módulo', grupo: 'entregables',    orden: 9 },
+  // Administración (sub-secciones)
+  { clave: 'admin_usuarios',     nombre: 'Usuarios',              descripcion: 'Gestión de usuarios',          grupo: 'administracion', orden: 10 },
+  { clave: 'admin_proyectos',    nombre: 'Proyectos',             descripcion: 'Administración de proyectos',   grupo: 'administracion', orden: 11 },
+  { clave: 'admin_tareas',       nombre: 'Tareas',                descripcion: 'Administración de tareas',      grupo: 'administracion', orden: 12 },
+  { clave: 'admin_sistemas',     nombre: 'Sistemas',              descripcion: 'Administración de sistemas',    grupo: 'administracion', orden: 13 },
+  { clave: 'admin_facultades',   nombre: 'Facultades',            descripcion: 'Gestión de facultades',         grupo: 'administracion', orden: 14 },
+  { clave: 'correos_entregables', nombre: 'Correos Entregables',  descripcion: 'Ver historial y configurar destinatarios de correos', grupo: 'administracion', orden: 15 },
+];
+// Claves de administración (para visibilidad del menú "Administración")
+const FACULTADES_ADMIN = FACULTADES.filter(f => f.grupo === 'administracion').map(f => f.clave);
+// Usuarios con TODAS las facultades siempre (no se pueden quedar bloqueados)
+const SUPER_USERS = ['nevoli.gonzalez@lcg.mx', 'elisa.mendez@lcg.mx'];
+
+// Resuelve las facultades efectivas de un usuario: { clave: { ver, mod } }
+async function resolverFacultades(pool, userId, email) {
+  const out = {};
+  const isSuper = SUPER_USERS.includes((email || '').toLowerCase().trim());
+  for (const f of FACULTADES) out[f.clave] = { ver: isSuper, mod: isSuper };
+  if (isSuper) return out;
+  try {
+    const [rows] = await pool.execute(
+      `SELECT f.clave, uf.puede_ver, uf.puede_modificar
+       FROM usuario_facultades uf
+       JOIN facultades f ON f.id = uf.facultad_id
+       WHERE uf.usuario_id = ?`,
+      [userId]
+    );
+    for (const r of rows) {
+      if (out[r.clave] !== undefined) {
+        const mod = !!r.puede_modificar;
+        out[r.clave] = { ver: mod || !!r.puede_ver, mod }; // modificar implica ver
+      }
+    }
+  } catch (err) { console.warn('⚠ resolverFacultades:', err.message); }
+  return out;
+}
+
+// Resuelve las facultades del que hace la petición (id en header X-User-Id; email se toma de la DB)
+async function callerFacultades(req) {
+  const id = parseInt(req.headers['x-user-id']) || null;
+  if (!id) return null;
+  try {
+    const pool = await getPool();
+    const [u] = await pool.execute('SELECT email FROM usuarios WHERE id = ? AND activo = 1', [id]);
+    if (!u.length) return null;
+    return await resolverFacultades(pool, id, u[0].email);
+  } catch { return null; }
+}
+
+// Mapeo tipo → clave de config_correos_etapas
+const TIPO_A_CONFIG_ETAPA = {
+  creacion:             'creacion',
+  revision:             'revision_completada',
+  observacion_vobo:     'revision_observacion',
+  vobo:                 'vobo',
+  impresion:            'impresion',
+  firma_interna:        'firma_interna',
+  firma_externa:        'firma_externa',
+  firma_externa_80pct:  'firma_externa',
+  carpeta:              'carpeta',
+  carpeta_bulk:         'carpeta',
+  acuse:                'acuse',
+  acuse_pdf:            'acuse',
+  acuse_bulk:           'acuse',
+  vobo_final_bulk:      'vobo_final',
+};
+
+// Envía el correo a los destinatarios configurados para esa etapa y lo registra en historial
+async function queueCorreo(tipo, opts, actaId = null) {
+  try {
+    const configEtapa = TIPO_A_CONFIG_ETAPA[tipo];
+    if (!configEtapa) return;
+    const pool = await getPool();
+    const [cfgRows] = await pool.execute(
+      'SELECT email FROM config_correos_etapas WHERE etapa = ?', [configEtapa]
+    );
+    if (!cfgRows.length) return;
+    const dest   = cfgRows.map(r => r.email).join(', ');
+    const asunto = opts.subject || '';
+    const html   = opts.html   || '';
+    let enviado = 0;
+    try {
+      await transporter.sendMail({ from: process.env.SMTP_FROM, to: notifyTo(dest), subject: asunto, html });
+      enviado = 1;
+    } catch (se) { console.warn('⚠ correo no enviado:', se.message); }
+    await pool.execute(
+      'INSERT INTO correos_entregables (tipo, acta_id, destinatarios, asunto, html, enviado, fecha_envio) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [tipo, actaId || null, dest, asunto, html, enviado, enviado ? new Date() : null]
+    );
+  } catch (e) { console.warn('⚠ queueCorreo:', e.message); }
+}
+
+// Middleware: exige que el solicitante tenga la facultad (tipo 'mod' por defecto)
+function requireFacultad(clave, tipo = 'mod') {
+  return async (req, res, next) => {
+    const facs = await callerFacultades(req);
+    if (!facs) return res.status(401).json({ success: false, error: 'No autenticado.' });
+    const f = facs[clave];
+    const ok = f && (tipo === 'mod' ? f.mod : f.ver);
+    if (!ok) return res.status(403).json({ success: false, error: 'No tienes permiso para esta acción.' });
+    next();
+  };
+}
+
 const app  = express();
 const PORT = process.env.PORT || 3001;
+
+// Compresión gzip/brotli (si el paquete está instalado)
+try { app.use(require('compression')()); }
+catch (e) { console.warn('⚠ compression no instalado (npm i compression):', e.message); }
 
 app.use(cors());
 app.use(express.json());
 
 /* ── Servir archivos HTML estáticos ─────────────── */
+// Cache: imágenes/fuentes 30d; el resto (HTML/JS/CSS) revalida con ETag.
+const staticCache = {
+  setHeaders: (res, filePath) => {
+    if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 días
+    } else {
+      res.setHeader('Cache-Control', 'no-cache'); // revalida (HTML/JS/CSS)
+    }
+  }
+};
 const publicDir = path.join(__dirname, '..');
-app.use(express.static(publicDir));
+app.use(express.static(publicDir, staticCache));
 
 /* ── Directorios ────────────────────────────────── */
 const uploadsDir     = path.join(__dirname, 'uploads');
@@ -69,8 +202,8 @@ const upload = multer({
       : cb(new Error('Solo se permiten imágenes.'))
 });
 
-app.use('/uploads',        express.static(uploadsDir));
-app.use('/entregables',    express.static(entregablesDir));
+app.use('/uploads',        express.static(uploadsDir,     { maxAge: '30d' }));
+app.use('/entregables',    express.static(entregablesDir, { maxAge: '30d' }));
 app.use('/proyectos-pdfs', express.static(proyectosPdfDir));
 
 /* ── Multer: xlsx projects ──────────────────────── */
@@ -146,11 +279,13 @@ app.get('/api/proyectos', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, orden, nombre, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin, responsables, pdf_url FROM proyectos WHERE activo = 1 ORDER BY orden, nombre'
+      'SELECT id, orden, nombre, nombre_corto, NombreProyecto, procedimiento, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, pdf_url FROM proyectos WHERE activo = 1 ORDER BY orden, nombre'
     );
     const proyectos = rows.map(r => ({
       ...r,
-      responsables: r.responsables ? JSON.parse(r.responsables) : [],
+      firmantes_cliente: r.firmantes_cliente ? JSON.parse(r.firmantes_cliente) : [],
+      firmantes_interno: r.firmantes_interno ? JSON.parse(r.firmantes_interno) : [],
+      responsables:      r.responsables      ? JSON.parse(r.responsables)      : [],
     }));
     res.json({ success: true, proyectos });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -173,7 +308,7 @@ app.get('/api/admin/proyectos', async (_req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-app.post('/api/admin/proyectos', async (req, res) => {
+app.post('/api/admin/proyectos', requireFacultad('admin_proyectos'), async (req, res) => {
   const orden              = req.body.orden != null ? parseInt(req.body.orden) || null : null;
   const nombre             = (req.body.nombre          || '').trim();
   const nombre_corto       = (req.body.nombre_corto    || '').trim() || null;
@@ -196,7 +331,7 @@ app.post('/api/admin/proyectos', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-app.patch('/api/admin/proyectos/:id', async (req, res) => {
+app.patch('/api/admin/proyectos/:id', requireFacultad('admin_proyectos'), async (req, res) => {
   const orden              = req.body.orden != null ? parseInt(req.body.orden) || null : null;
   const nombre             = (req.body.nombre          || '').trim();
   const nombre_corto       = (req.body.nombre_corto    || '').trim() || null;
@@ -219,7 +354,7 @@ app.patch('/api/admin/proyectos/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-app.patch('/api/admin/proyectos/:id/activo', async (req, res) => {
+app.patch('/api/admin/proyectos/:id/activo', requireFacultad('admin_proyectos'), async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute('UPDATE proyectos SET activo = ? WHERE id = ?', [req.body.activo ? 1 : 0, parseInt(req.params.id)]);
@@ -227,7 +362,7 @@ app.patch('/api/admin/proyectos/:id/activo', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-app.delete('/api/admin/proyectos/:id', async (req, res) => {
+app.delete('/api/admin/proyectos/:id', requireFacultad('admin_proyectos'), async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute('DELETE FROM proyectos WHERE id = ?', [parseInt(req.params.id)]);
@@ -247,7 +382,7 @@ const proyectoPdfUpload = multer({
   }
 });
 
-app.post('/api/admin/proyectos/:id/pdf', proyectoPdfUpload.single('pdf'), async (req, res) => {
+app.post('/api/admin/proyectos/:id/pdf', requireFacultad('admin_proyectos'), proyectoPdfUpload.single('pdf'), async (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
   try {
     const id      = parseInt(req.params.id);
@@ -279,8 +414,8 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     const [result] = await pool.execute(
-      'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)',
-      [nombre.trim(), email.toLowerCase().trim(), hash, 'sinrol']
+      'INSERT INTO usuarios (nombre, email, password_hash) VALUES (?, ?, ?)',
+      [nombre.trim(), email.toLowerCase().trim(), hash]
     );
 
     res.status(201).json({ success: true, message: 'Cuenta creada correctamente.', userId: result.insertId });
@@ -297,7 +432,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, nombre, email, password_hash, rol, color FROM usuarios WHERE email = ? AND activo = 1',
+      'SELECT id, nombre, email, password_hash, color FROM usuarios WHERE email = ? AND activo = 1',
       [email.toLowerCase().trim()]
     );
 
@@ -317,7 +452,9 @@ app.post('/api/auth/login', async (req, res) => {
       await pool.execute('UPDATE usuarios SET color = ? WHERE id = ?', [color, user.id]);
     }
 
-    res.json({ success: true, user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, color } });
+    const facultades = await resolverFacultades(pool, user.id, user.email);
+
+    res.json({ success: true, user: { id: user.id, nombre: user.nombre, email: user.email, color, facultades } });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -422,30 +559,91 @@ app.get('/api/admin/usuarios', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY creado_en DESC'
+      'SELECT id, nombre, email, activo, creado_en FROM usuarios ORDER BY creado_en DESC'
     );
     res.json({ success: true, usuarios: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-/* ── Admin: Cambiar rol (solo superusuarios) ── */
-app.patch('/api/admin/usuarios/:id/rol', async (req, res) => {
-  const ROLES_VALIDOS = ['superusuario', 'usuario', 'operacional', 'desarrollolead', 'sinrol'];
-  const { rol } = req.body;
-  if (!ROLES_VALIDOS.includes(rol))
-    return res.status(400).json({ success: false, error: 'Rol no válido.' });
+/* ── Facultades: catálogo ───────────────────────── */
+app.get('/api/facultades', async (_req, res) => {
   try {
     const pool = await getPool();
-    await pool.execute(
-      'UPDATE usuarios SET rol = ? WHERE id = ?',
-      [rol, parseInt(req.params.id)]
+    const [rows] = await pool.execute(
+      'SELECT id, clave, nombre, descripcion, grupo, orden FROM facultades ORDER BY orden, id'
     );
+    res.json({ success: true, facultades: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Facultades efectivas de un usuario (para refrescar sesión) ── */
+app.get('/api/usuarios/:id/facultades', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+    const [u] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [id]);
+    const email = u[0]?.email || '';
+    const facultades = await resolverFacultades(pool, id, email);
+    res.json({ success: true, facultades, esSuper: SUPER_USERS.includes(email.toLowerCase()) });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Admin: facultades asignadas a un usuario (matriz) ── */
+app.get('/api/admin/usuarios/:id/facultades', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+    const [u] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [id]);
+    const email = (u[0]?.email || '').toLowerCase();
+    const esSuper = SUPER_USERS.includes(email);
+    const [cat] = await pool.execute('SELECT id, clave, nombre, descripcion, grupo, orden FROM facultades ORDER BY orden, id');
+    const [asig] = await pool.execute(
+      'SELECT facultad_id, puede_ver, puede_modificar FROM usuario_facultades WHERE usuario_id = ?',
+      [id]
+    );
+    const map = {};
+    for (const a of asig) map[a.facultad_id] = a;
+    const facultades = cat.map(f => {
+      const a = map[f.id];
+      const mod = esSuper || !!(a && a.puede_modificar);
+      const ver = esSuper || mod || !!(a && a.puede_ver);
+      return { ...f, puede_ver: ver ? 1 : 0, puede_modificar: mod ? 1 : 0 };
+    });
+    res.json({ success: true, facultades, esSuper });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Admin: guardar facultades de un usuario ── */
+app.put('/api/admin/usuarios/:id/facultades', requireFacultad('admin_facultades'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    const id   = parseInt(req.params.id);
+    const items = Array.isArray(req.body.facultades) ? req.body.facultades : [];
+
+    const [u] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [id]);
+    if (!u.length) return res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
+    if (SUPER_USERS.includes((u[0].email || '').toLowerCase()))
+      return res.status(400).json({ success: false, error: 'Este usuario siempre tiene todas las facultades.' });
+
+    // Reemplazar todas las asignaciones del usuario
+    await pool.execute('DELETE FROM usuario_facultades WHERE usuario_id = ?', [id]);
+    for (const it of items) {
+      const facultadId = parseInt(it.facultad_id);
+      if (!facultadId) continue;
+      const mod = it.puede_modificar ? 1 : 0;
+      const ver = (it.puede_ver || mod) ? 1 : 0;
+      if (!ver && !mod) continue; // no guardar filas vacías
+      await pool.execute(
+        'INSERT INTO usuario_facultades (usuario_id, facultad_id, puede_ver, puede_modificar) VALUES (?, ?, ?, ?)',
+        [id, facultadId, ver, mod]
+      );
+    }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 /* ── Admin: Resetear contraseña ─────────────────── */
-app.patch('/api/admin/usuarios/:id/reset-password', async (req, res) => {
+app.patch('/api/admin/usuarios/:id/reset-password', requireFacultad('admin_usuarios'), async (req, res) => {
   try {
     const pool = await getPool();
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
@@ -458,7 +656,7 @@ app.patch('/api/admin/usuarios/:id/reset-password', async (req, res) => {
 });
 
 /* ── Admin: Activar / desactivar ────────────────── */
-app.patch('/api/admin/usuarios/:id/activo', async (req, res) => {
+app.patch('/api/admin/usuarios/:id/activo', requireFacultad('admin_usuarios'), async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute(
@@ -470,7 +668,7 @@ app.patch('/api/admin/usuarios/:id/activo', async (req, res) => {
 });
 
 /* ── Admin: Eliminar usuario ────────────────────── */
-app.delete('/api/admin/usuarios/:id', async (req, res) => {
+app.delete('/api/admin/usuarios/:id', requireFacultad('admin_usuarios'), async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute('UPDATE usuarios SET activo = 0 WHERE id = ?', [parseInt(req.params.id)]);
@@ -522,7 +720,7 @@ app.get('/api/admin/avisos', async (_req, res) => {
 });
 
 /* ── Avisos: POST crear ──────────────────────────── */
-app.post('/api/avisos', upload.array('imagenes', 10), async (req, res) => {
+app.post('/api/avisos', requireFacultad('avisos'), upload.array('imagenes', 10), async (req, res) => {
   const { titulo, texto, fecha_fin, link } = req.body;
 
   if (!titulo || !fecha_fin)
@@ -572,7 +770,7 @@ app.post('/api/avisos', upload.array('imagenes', 10), async (req, res) => {
 });
 
 /* ── Avisos: PUT actualizar ─────────────────────── */
-app.put('/api/avisos/:id', upload.array('imagenes', 10), async (req, res) => {
+app.put('/api/avisos/:id', requireFacultad('avisos'), upload.array('imagenes', 10), async (req, res) => {
   const avisoId = parseInt(req.params.id);
   const { titulo, texto, fecha_fin, link, imagenes_eliminadas } = req.body;
 
@@ -622,7 +820,7 @@ app.put('/api/avisos/:id', upload.array('imagenes', 10), async (req, res) => {
 });
 
 /* ── Avisos: DELETE ─────────────────────────────── */
-app.delete('/api/avisos/:id', async (req, res) => {
+app.delete('/api/avisos/:id', requireFacultad('avisos'), async (req, res) => {
   try {
     const pool    = await getPool();
     const avisoId = parseInt(req.params.id);
@@ -645,7 +843,7 @@ app.delete('/api/avisos/:id', async (req, res) => {
 });
 
 /* ── Avisos: PATCH activo ───────────────────────── */
-app.patch('/api/avisos/:id/activo', async (req, res) => {
+app.patch('/api/avisos/:id/activo', requireFacultad('avisos'), async (req, res) => {
   try {
     const pool = await getPool();
     await pool.execute(
@@ -787,7 +985,7 @@ app.get('/api/projects/:id/tasks', (req, res) => {
 });
 
 /* ── Projects: subir xlsx ───────────────────────── */
-app.post('/api/projects/upload', xlsxUpload.single('archivo'), (req, res) => {
+app.post('/api/projects/upload', requireFacultad('carga_projects'), xlsxUpload.single('archivo'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
 
   const nombre = (req.body.nombre || '').trim().replace(/[\\/:*?"<>|]/g, '_');
@@ -841,7 +1039,7 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 /* ── Entregables: subir ─────────────────────────── */
-app.post('/api/entregables/upload', entregUpload.single('archivo'), async (req, res) => {
+app.post('/api/entregables/upload', requireFacultad('carga_entregables'), entregUpload.single('archivo'), async (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
 
   const mes         = parseInt(req.body.mes);
@@ -1021,11 +1219,38 @@ app.patch('/api/entregables/:id/extra', (req, res) => {
 });
 
 /* ── Entregables: eliminar ──────────────────────── */
-app.delete('/api/entregables/:id', (req, res) => {
+app.delete('/api/entregables/:id', requireFacultad('eliminar_proyecto'), async (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const xlsxPath = path.join(entregablesDir, `${id}.xlsx`);
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
+
+    // Leer meta antes de borrar para el log
+    let actaNombre = id, numItems = 0, detalle = null;
+    if (fs.existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+        actaNombre = [meta.mesNombre, meta.proyectoNombre].filter(Boolean).join(' · ') || id;
+        numItems   = meta.items?.length || 0;
+        detalle    = JSON.stringify({ items: meta.items?.map(it => ({ num: it.num, nombre: it.nombre })) });
+      } catch {}
+    }
+
+    // Registrar en log
+    try {
+      const pool = await getPool();
+      const uid  = parseInt(req.headers['x-user-id']) || null;
+      let email  = null;
+      if (uid) {
+        const [u] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [uid]);
+        if (u.length) email = u[0].email;
+      }
+      await pool.execute(
+        'INSERT INTO log_eliminaciones (usuario_id, usuario_email, tipo, acta_id, acta_nombre, detalle) VALUES (?, ?, ?, ?, ?, ?)',
+        [uid, email, 'acta', id, actaNombre, detalle]
+      );
+    } catch (logErr) { console.warn('⚠ log_eliminaciones:', logErr.message); }
+
     if (fs.existsSync(xlsxPath)) fs.unlinkSync(xlsxPath);
     if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
     res.json({ success: true });
@@ -1033,7 +1258,7 @@ app.delete('/api/entregables/:id', (req, res) => {
 });
 
 /* ── Entregables: actualizar etapa ─────────────── */
-app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
+app.patch('/api/entregables/:id/items/:num/etapa', requireFacultad('modulo_entregables'), (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
@@ -1077,50 +1302,54 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
       item.etapas[etapa].fecha_cambio = new Date().toISOString();
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
-    // Correos de notificación (no bloquean la respuesta)
+    // Enviar correo de notificación a destinatarios configurados
     if (completada) {
       const proy   = meta.proyectoNombre || '';
       const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      const to3    = ['elisa.mendez@lcg.mx', 'moises.quintero@lcg.mx', 'daniel.arias@lcg.mx'];
       const mailMap = {
         creacion: {
-          to: notifyTo(ELISA_NOTIFY),
-          subject: `${prefix} Elaboración terminada – Favor de revisar`,
-          html: `<p>El archivo en elaboración ha sido terminado. Favor de revisar.</p>
-                 <p><strong>Entregable:</strong> ${item.nombre}<br><strong>Número:</strong> ${item.num}</p>`
+          subject: `${prefix} Elaboración terminada – #${item.num}`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha completado la etapa de <strong>Elaboración</strong>. Favor de revisar.</p>`
+        },
+        revision: {
+          subject: `${prefix} Revisión completada – #${item.num}`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha completado la etapa de <strong>Revisión</strong>.</p>`
+        },
+        vobo: {
+          subject: `${prefix} VoBo otorgado – #${item.num}`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha recibido <strong>Visto Bueno</strong>.</p>`
+        },
+        impresion: {
+          subject: `${prefix} Impresión completada – #${item.num}`,
+          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha completado la etapa de <strong>Impresión</strong>.</p>`
         },
         firma_interna: {
-          to: notifyTo(to3),
-          subject: `${prefix} Entregable #${item.num} salió de Firma Interna`,
+          subject: `${prefix} Firma Interna completada – #${item.num}`,
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Interna</strong>.</p>`
         },
         firma_externa: {
-          to: notifyTo(to3),
-          subject: `${prefix} Entregable #${item.num} salió de Firma Externa`,
+          subject: `${prefix} Firma Externa completada – #${item.num}`,
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Externa</strong>.</p>`
         },
         carpeta: {
-          to: notifyTo(ELISA_NOTIFY),
           subject: `${prefix} Carpeta y digitalización terminada – #${item.num}`,
-          html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> con número <strong>#${item.num}</strong> se ha elaborado y terminado.</p>`
+          html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> con número <strong>#${item.num}</strong> ha sido completada.</p>`
         },
         acuse: {
-          to: notifyTo(ELISA_NOTIFY),
           subject: `${prefix} Acuse pendiente de VoBo – #${item.num}`,
           html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
         }
       };
-      const opts = mailMap[etapa];
-      if (opts) transporter.sendMail({ from: process.env.SMTP_FROM, ...opts })
-                            .catch(err => console.warn('⚠ Email etapa:', err.message));
-      // Notificar al owner cuando VOBO completado
+      const mailOpts = mailMap[etapa];
+      if (mailOpts) queueCorreo(etapa, mailOpts, req.params.id);
+      // Notificar siempre al owner cuando VOBO es otorgado
       if (etapa === 'vobo' && item.owner?.email) {
         transporter.sendMail({
           from: process.env.SMTP_FROM,
           to: notifyTo(item.owner.email),
           subject: `${prefix} Entregable #${item.num} – Visto Bueno otorgado`,
           html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha recibido Visto Bueno.</p>`
-        }).catch(err => console.warn('⚠ Email vobo owner:', err.message));
+        }).catch(e => console.warn('⚠ vobo owner mail:', e.message));
       }
     }
 
@@ -1132,13 +1361,12 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
         fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
         const proy   = meta.proyectoNombre || '';
         const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-        transporter.sendMail({
-          from: process.env.SMTP_FROM,
-          to: notifyTo(ELISA_NOTIFY),
+        queueCorreo('firma_externa_80pct', {
+          to: ELISA_NOTIFY,
           subject: `${prefix} 80% completado — Listo para Carpeta y Digitalización`,
           html: `<p>Se ha completado el <strong>80%</strong> del proyecto <strong>${proy || meta.mesNombre}</strong>.</p>
                  <p>Todos los entregables tienen Firma Externa completada. Listo para <strong>Carpeta y Digitalización</strong>.</p>`
-        }).catch(err => console.warn('⚠ Email 80%:', err.message));
+        }, req.params.id);
       } else if (!todosFirmados && meta.notif_80_sent) {
         // Si alguien revierte un firma_externa, reseteamos el flag para que se reenvíe al volver al 100%
         meta.notif_80_sent = false;
@@ -1151,7 +1379,7 @@ app.patch('/api/entregables/:id/items/:num/etapa', (req, res) => {
 });
 
 /* ── Entregables: renombrar item ───────────────── */
-app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
+app.patch('/api/entregables/:id/items/:num/nombre', requireFacultad('modulo_entregables'), (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
@@ -1194,7 +1422,7 @@ app.patch('/api/entregables/:id/items/:num/nombre', (req, res) => {
 });
 
 /* ── Entregables: eliminar item ────────────────── */
-app.delete('/api/entregables/:id/items/:num', (req, res) => {
+app.delete('/api/entregables/:id/items/:num', requireFacultad('modulo_entregables'), async (req, res) => {
   try {
     const id       = decodeURIComponent(req.params.id);
     const num      = parseFloat(req.params.num);
@@ -1203,6 +1431,25 @@ app.delete('/api/entregables/:id/items/:num', (req, res) => {
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const idx  = meta.items?.findIndex(it => it.num === num);
     if (idx === -1 || idx === undefined) return res.status(404).json({ success: false, error: 'Item no encontrado.' });
+    const item = meta.items[idx];
+
+    // Registrar en log
+    try {
+      const pool     = await getPool();
+      const uid      = parseInt(req.headers['x-user-id']) || null;
+      let email      = null;
+      if (uid) {
+        const [u] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [uid]);
+        if (u.length) email = u[0].email;
+      }
+      const actaNombre = [meta.mesNombre, meta.proyectoNombre].filter(Boolean).join(' · ') || id;
+      const detalle    = JSON.stringify({ num: item.num, nombre: item.nombre, etapas: item.etapas });
+      await pool.execute(
+        'INSERT INTO log_eliminaciones (usuario_id, usuario_email, tipo, acta_id, acta_nombre, detalle) VALUES (?, ?, ?, ?, ?, ?)',
+        [uid, email, 'item', id, actaNombre, detalle]
+      );
+    } catch (logErr) { console.warn('⚠ log_eliminaciones:', logErr.message); }
+
     meta.items.splice(idx, 1);
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
@@ -1210,7 +1457,7 @@ app.delete('/api/entregables/:id/items/:num', (req, res) => {
 });
 
 /* ── Entregables: agregar item ─────────────────── */
-app.post('/api/entregables/:id/items', (req, res) => {
+app.post('/api/entregables/:id/items', requireFacultad('modulo_entregables'), (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
     const nombre = (req.body.nombre || '').trim();
@@ -1266,7 +1513,7 @@ const pdfUpload = multer({
   }
 });
 
-app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), (req, res) => {
+app.post('/api/entregables/:id/items/:num/pdf/:etapa', requireFacultad('modulo_entregables'), pdfUpload.single('pdf'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió archivo.' });
   try {
     const id       = decodeURIComponent(req.params.id);
@@ -1299,12 +1546,11 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', pdfUpload.single('pdf'), 
     if (etapa === 'acuse') {
       const _proy   = meta.proyectoNombre || '';
       const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
-      transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: notifyTo(ELISA_NOTIFY),
+      queueCorreo('acuse_pdf', {
+        to: ELISA_NOTIFY,
         subject: `${_prefix} Acuse pendiente de VoBo – #${item.num}`,
         html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
-      }).catch(err => console.warn('⚠ Email acuse PDF:', err.message));
+      }, req.params.id);
     }
     res.json({ success: true, pdf: ruta });
   } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
@@ -1375,16 +1621,15 @@ app.patch('/api/entregables/:id/etapa-bulk/carpeta', (req, res) => {
     }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
-    // Correo único al completar
+    // Encolar correo al completar
     if (accion === 'completada') {
       const proy   = meta.proyectoNombre || '';
       const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: notifyTo(ELISA_NOTIFY),
+      queueCorreo('carpeta_bulk', {
+        to: ELISA_NOTIFY,
         subject: `${prefix} Carpeta y digitalización terminada (acta completa)`,
         html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> se completó para todos los entregables del acta.</p>`
-      }).catch(err => console.warn('⚠ Email carpeta bulk:', err.message));
+      }, req.params.id);
     }
 
     res.json({ success: true });
@@ -1469,16 +1714,15 @@ app.patch('/api/entregables/:id/etapa-bulk/acuse', pdfUpload.single('pdf'), (req
     }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
-    // Correo único al completar
+    // Encolar correo al completar
     if (accion === 'completada') {
       const proy   = meta.proyectoNombre || '';
       const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: notifyTo(ELISA_NOTIFY),
+      queueCorreo('acuse_bulk', {
+        to: ELISA_NOTIFY,
         subject: `${prefix} Acuse pendiente de VoBo (acta completa)`,
         html: `<p>Se ha subido el acuse del acta completa de <strong>${proy || meta.mesNombre}</strong>. Favor de dar visto bueno.</p>`
-      }).catch(err => console.warn('⚠ Email acuse bulk:', err.message));
+      }, req.params.id);
     }
 
     res.json({ success: true, pdf: pdfRuta });
@@ -1544,12 +1788,11 @@ app.patch('/api/entregables/:id/etapa-bulk/vobo_final', (req, res) => {
     if (accion === 'completada') {
       const proy   = meta.proyectoNombre || '';
       const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: notifyTo(ELISA_NOTIFY),
+      queueCorreo('vobo_final_bulk', {
+        to: ELISA_NOTIFY,
         subject: `${prefix} VOBO Final otorgado (acta completa)`,
         html: `<p>Se ha otorgado VOBO Final al acta completa de <strong>${proy || meta.mesNombre}</strong>. Avance: 100%.</p>`
-      }).catch(err => console.warn('⚠ Email vobo_final bulk:', err.message));
+      }, req.params.id);
     }
 
     res.json({ success: true });
@@ -1614,17 +1857,16 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     item.etapas.creacion.fecha        = null;
     item.etapas.creacion.en_proceso   = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-    // Notificar al owner que hay nuevas observaciones (correo + in-app)
+    // Encolar correo al owner sobre nuevas observaciones
     if (item.owner?.email) {
       const _proy   = meta.proyectoNombre || '';
       const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
-      transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: notifyTo(item.owner.email),
+      queueCorreo('observacion_vobo', {
+        to: item.owner.email,
         subject: `${_prefix} Entregable #${item.num} – Nuevas observaciones`,
         html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> tiene nuevas observaciones de VOBO.</p>
                <p>Por favor revisa el sistema.</p>`
-      }).catch(err => console.warn('⚠ Email obs owner:', err.message));
+      }, req.params.id);
     }
     // Notificación in-app: responsable de entregable + responsable(s) de proyecto (dedup)
     (async () => {
@@ -1797,7 +2039,7 @@ app.get('/api/usuarios/:id/tareas', async (req, res) => {
 });
 
 /* ── Tareas: crear ──────────────────────────────── */
-app.post('/api/usuarios/:id/tareas', async (req, res) => {
+app.post('/api/usuarios/:id/tareas', requireFacultad('admin_tareas'), async (req, res) => {
   const { tarea, estatus, fecha_inicio, fecha_fin, observaciones, proyecto_id } = req.body;
   if (!tarea?.trim()) return res.status(400).json({ success: false, error: 'La tarea es requerida.' });
   const ESTATUS = ['iniciada','en desarrollo','terminada','en pruebas','liberado'];
@@ -1815,7 +2057,7 @@ app.post('/api/usuarios/:id/tareas', async (req, res) => {
 });
 
 /* ── Tareas: actualizar estatus ─────────────────── */
-app.patch('/api/tareas/:id/estatus', async (req, res) => {
+app.patch('/api/tareas/:id/estatus', requireFacultad('admin_tareas'), async (req, res) => {
   const ESTATUS = ['iniciada','en desarrollo','terminada','en pruebas','liberado'];
   const { estatus } = req.body;
   if (!ESTATUS.includes(estatus)) return res.status(400).json({ success: false, error: 'Estatus inválido.' });
@@ -1847,7 +2089,7 @@ app.get('/api/admin/sistema/db-info', (_req, res) => {
 });
 
 /* ── Sistema: Cambiar motor de DB ───────────────────── */
-app.post('/api/admin/sistema/db-switch', async (req, res) => {
+app.post('/api/admin/sistema/db-switch', requireFacultad('admin_sistemas'), async (req, res) => {
   const { type } = req.body;
   try {
     await switchDB(type);
@@ -1857,8 +2099,99 @@ app.post('/api/admin/sistema/db-switch', async (req, res) => {
   }
 });
 
+/* ── Admin: Log de eliminaciones ────────────────────── */
+app.get('/api/admin/log-eliminaciones', requireFacultad('admin_sistemas', 'ver'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      'SELECT id, fecha, usuario_email, tipo, acta_nombre, detalle FROM log_eliminaciones ORDER BY fecha DESC LIMIT 500'
+    );
+    res.json({ success: true, log: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Admin: Config destinatarios por etapa ───────────── */
+app.get('/api/admin/config-correos-etapas', requireFacultad('correos_entregables', 'ver'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT id, etapa, email FROM config_correos_etapas ORDER BY etapa, email');
+    res.json({ success: true, config: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.post('/api/admin/config-correos-etapas', requireFacultad('correos_entregables'), async (req, res) => {
+  const etapa = (req.body.etapa || '').trim();
+  const email = (req.body.email || '').trim().toLowerCase();
+  if (!etapa || !email) return res.status(400).json({ success: false, error: 'Etapa y email requeridos.' });
+  try {
+    const pool = await getPool();
+    const [exists] = await pool.execute(
+      'SELECT id FROM config_correos_etapas WHERE etapa = ? AND email = ?', [etapa, email]
+    );
+    if (exists.length) return res.json({ success: true, id: exists[0].id });
+    const [result] = await pool.execute(
+      'INSERT INTO config_correos_etapas (etapa, email) VALUES (?, ?)', [etapa, email]
+    );
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.delete('/api/admin/config-correos-etapas/:id', requireFacultad('correos_entregables'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute('DELETE FROM config_correos_etapas WHERE id = ?', [parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+/* ── Admin: Correos Entregables (historial) ──────────── */
+app.get('/api/admin/correos-entregables', requireFacultad('correos_entregables', 'ver'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      'SELECT id, fecha, tipo, acta_id, destinatarios, asunto, enviado, fecha_envio FROM correos_entregables ORDER BY fecha DESC LIMIT 500'
+    );
+    res.json({ success: true, correos: rows });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.get('/api/admin/correos-entregables/:id/html', requireFacultad('correos_entregables', 'ver'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT html FROM correos_entregables WHERE id = ?', [parseInt(req.params.id)]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'No encontrado.' });
+    res.json({ success: true, html: rows[0].html });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.post('/api/admin/correos-entregables/:id/enviar', requireFacultad('correos_entregables'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT * FROM correos_entregables WHERE id = ?', [parseInt(req.params.id)]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Correo no encontrado.' });
+    const c = rows[0];
+    if (c.enviado) return res.status(400).json({ success: false, error: 'Este correo ya fue enviado.' });
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to:   notifyTo(c.destinatarios),
+      subject: c.asunto,
+      html: c.html,
+    });
+    await pool.execute('UPDATE correos_entregables SET enviado = 1, fecha_envio = NOW() WHERE id = ?', [parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.delete('/api/admin/correos-entregables/:id', requireFacultad('correos_entregables'), async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.execute('DELETE FROM correos_entregables WHERE id = ?', [parseInt(req.params.id)]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Sistema: Probar SMTP ────────────────────────────── */
-app.post('/api/admin/sistema/test-smtp', async (req, res) => {
+app.post('/api/admin/sistema/test-smtp', requireFacultad('admin_sistemas'), async (req, res) => {
   const { to } = req.body;
   if (!to) return res.status(400).json({ success: false, error: 'Destinatario requerido.' });
   try {
@@ -1945,7 +2278,7 @@ app.get('/api/usuarios', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute(
-      'SELECT id, nombre, email, rol FROM usuarios WHERE activo = 1 ORDER BY nombre'
+      'SELECT id, nombre, email FROM usuarios WHERE activo = 1 ORDER BY nombre'
     );
     res.json({ success: true, usuarios: rows });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -2174,8 +2507,7 @@ app.get('/api/kanban/boards', async (req, res) => {
   try {
     const pool   = await getPool();
     const userId = req.query.usuario_id ? parseInt(req.query.usuario_id) : null;
-    const rol    = req.query.rol || '';
-    const verTodo = rol === 'superusuario' || rol === 'desarrollolead';
+    const verTodo = req.query.verTodo === '1' || req.query.verTodo === 'true';
     const where  = verTodo
       ? 'WHERE activo=1'
       : userId
@@ -2641,6 +2973,100 @@ async function ensureColumns() {
       await pool.execute(sql, []);
       console.log('✔ Tabla notificaciones creada');
     }
+
+    // facultades table (catálogo)
+    try { await pool.execute('SELECT id FROM facultades WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? `CREATE TABLE facultades (
+             id INT AUTO_INCREMENT PRIMARY KEY,
+             clave VARCHAR(50) NOT NULL UNIQUE,
+             nombre VARCHAR(100) NOT NULL,
+             descripcion VARCHAR(255) NULL,
+             grupo VARCHAR(30) NOT NULL DEFAULT 'general',
+             orden INT NOT NULL DEFAULT 0
+           )`
+        : `CREATE TABLE facultades (
+             id INT IDENTITY(1,1) PRIMARY KEY,
+             clave NVARCHAR(50) NOT NULL UNIQUE,
+             nombre NVARCHAR(100) NOT NULL,
+             descripcion NVARCHAR(255) NULL,
+             grupo NVARCHAR(30) NOT NULL DEFAULT 'general',
+             orden INT NOT NULL DEFAULT 0
+           )`;
+      await pool.execute(sql, []);
+      console.log('✔ Tabla facultades creada');
+    }
+    // grupo en facultades (para tablas ya existentes)
+    try { await pool.execute('SELECT grupo FROM facultades WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? "ALTER TABLE facultades ADD COLUMN grupo VARCHAR(30) NOT NULL DEFAULT 'general'"
+        : "ALTER TABLE facultades ADD grupo NVARCHAR(30) NOT NULL DEFAULT 'general'";
+      await pool.execute(sql, []);
+      console.log('✔ Columna grupo añadida a facultades');
+    }
+
+    // usuario_facultades table (asignaciones)
+    try { await pool.execute('SELECT usuario_id FROM usuario_facultades WHERE 1=0', []); }
+    catch {
+      const sql = dbType === 'mysql'
+        ? `CREATE TABLE usuario_facultades (
+             usuario_id INT NOT NULL,
+             facultad_id INT NOT NULL,
+             puede_ver TINYINT(1) NOT NULL DEFAULT 0,
+             puede_modificar TINYINT(1) NOT NULL DEFAULT 0,
+             PRIMARY KEY (usuario_id, facultad_id)
+           )`
+        : `CREATE TABLE usuario_facultades (
+             usuario_id INT NOT NULL,
+             facultad_id INT NOT NULL,
+             puede_ver TINYINT NOT NULL DEFAULT 0,
+             puede_modificar TINYINT NOT NULL DEFAULT 0,
+             PRIMARY KEY (usuario_id, facultad_id)
+           )`;
+      await pool.execute(sql, []);
+      console.log('✔ Tabla usuario_facultades creada');
+    }
+
+    // Seed/sincroniza catálogo de facultades desde el código
+    for (const f of FACULTADES) {
+      try {
+        const [ex] = await pool.execute('SELECT id FROM facultades WHERE clave = ?', [f.clave]);
+        if (ex.length === 0) {
+          await pool.execute(
+            'INSERT INTO facultades (clave, nombre, descripcion, grupo, orden) VALUES (?, ?, ?, ?, ?)',
+            [f.clave, f.nombre, f.descripcion, f.grupo, f.orden]
+          );
+        } else {
+          await pool.execute(
+            'UPDATE facultades SET nombre = ?, descripcion = ?, grupo = ?, orden = ? WHERE clave = ?',
+            [f.nombre, f.descripcion, f.grupo, f.orden, f.clave]
+          );
+        }
+      } catch (err) { console.warn('⚠ seed facultad', f.clave, err.message); }
+    }
+    // Limpia facultades obsoletas (claves que ya no están en el catálogo) + asignaciones huérfanas
+    try {
+      const claves = FACULTADES.map(f => f.clave);
+      const placeholders = claves.map(() => '?').join(',');
+      const [obsoletas] = await pool.execute(
+        `SELECT id FROM facultades WHERE clave NOT IN (${placeholders})`, claves
+      );
+      for (const o of obsoletas) {
+        await pool.execute('DELETE FROM usuario_facultades WHERE facultad_id = ?', [o.id]);
+        await pool.execute('DELETE FROM facultades WHERE id = ?', [o.id]);
+      }
+      if (obsoletas.length) console.log(`✔ ${obsoletas.length} facultad(es) obsoleta(s) eliminada(s)`);
+    } catch (err) { console.warn('⚠ limpieza facultades:', err.message); }
+
+    // rol: ya no se usa (sistema de facultades). Lo hacemos nullable para no romper INSERT.
+    try {
+      const sql = dbType === 'mysql'
+        ? 'ALTER TABLE usuarios MODIFY rol VARCHAR(20) NULL'
+        : 'ALTER TABLE usuarios ALTER COLUMN rol NVARCHAR(20) NULL';
+      await pool.execute(sql, []);
+    } catch {}
 
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }
 }

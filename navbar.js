@@ -3,22 +3,73 @@
    Uso: <script src="navbar.js"></script>
    ─────────────────────────────────────────────────────────── */
 (function () {
-  function init() {
+  /* ── Wrapper de fetch: adjunta identidad del usuario en peticiones a /api/ ──
+     Permite que el backend valide facultades por usuario. */
+  (function patchFetch() {
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem('session') || 'null'); } catch {}
+    if (!s || !s.id || window.__fetchPatched) return;
+    window.__fetchPatched = true;
+    const _fetch = window.fetch;
+    window.fetch = function (input, init) {
+      try {
+        const url = typeof input === 'string' ? input : (input && input.url) || '';
+        if (url.indexOf('/api/') !== -1) {
+          init = init || {};
+          const h = new Headers(init.headers || (typeof input === 'object' && input && input.headers) || {});
+          if (!h.has('X-User-Id'))    h.set('X-User-Id', String(s.id));
+          if (!h.has('X-User-Email')) h.set('X-User-Email', s.email || '');
+          init.headers = h;
+        }
+      } catch {}
+      return _fetch.call(this, input, init);
+    };
+  })();
+
+  async function init() {
     if (document.getElementById('app-navbar')) return;
 
     /* ── Sesión y roles ── */
     let session = null;
     try { session = JSON.parse(localStorage.getItem('session') || 'null'); } catch {}
-    const rol = (session && session.rol) || null;
-    const esSuperusuario = rol === 'superusuario';
-    const esUsuario      = rol === 'usuario';
-    const esRestringido  = rol === 'desarrollolead' || rol === 'operacional';
-    const esSinRol       = rol === 'sinrol';
-    const segVisible  = !!session && !esUsuario && !esRestringido && !esSinRol;
-    const entVisible  = !!session && !esRestringido && !esSinRol;
-    const dashVisible = !!session && !esUsuario && !esRestringido && !esSinRol;
-    const taskVisible = !!session && !esUsuario && !esSinRol;
-    const proyVisible = !!session && !esSinRol;
+
+    /* ── Refrescar facultades desde el server (sin re-login) ── */
+    if (session && session.id) {
+      try {
+        const _API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        const _r = await fetch(_API + '/api/usuarios/' + session.id + '/facultades', { cache: 'no-store' });
+        const _d = await _r.json();
+        if (_d && _d.success && _d.facultades) {
+          session.facultades = _d.facultades;
+          try { localStorage.setItem('session', JSON.stringify(session)); } catch {}
+        }
+      } catch {}
+    }
+
+    /* ── Facultades ── */
+    const facultades = (session && session.facultades) || {};
+    function fac(clave, tipo) {
+      const f = facultades[clave];
+      return !!(f && (tipo === 'mod' ? f.mod : f.ver));
+    }
+    const facAvisos      = !!session && fac('avisos', 'ver');
+    const facCargaEnt    = !!session && fac('carga_entregables', 'ver');
+    const facCargaProj   = !!session && fac('carga_projects', 'ver');
+    const facCreacion    = facAvisos || facCargaEnt || facCargaProj;
+    const segVisible     = !!session && fac('seguimiento', 'ver');
+    const entVisible     = !!session && fac('modulo_entregables', 'ver');
+    const dashVisible    = !!session && fac('dashboards', 'ver');
+    const taskVisible    = !!session && fac('tasks', 'ver');
+    const proyVisible    = !!session && fac('proyectos', 'ver');
+    const ADMIN_PAGES = [
+      ['admin_usuarios',   'admin.html'],
+      ['admin_proyectos',  'proyectos-admin.html'],
+      ['admin_tareas',     'tareas-admin.html'],
+      ['admin_sistemas',   'sistemas-admin.html'],
+      ['admin_facultades', 'facultades-admin.html'],
+    ];
+    const adminFirst   = ADMIN_PAGES.find(([c]) => fac(c, 'ver'));
+    const adminVisible = !!session && !!adminFirst;
 
     /* ── CSS (todo scopeado a #app-navbar) ── */
     const css = `
@@ -187,15 +238,15 @@
     const act = (href) => path === href.toLowerCase() ? ' class="active"' : '';
 
     const items = [];
-    if (esSuperusuario) {
+    if (facCreacion) {
+      let subC = '';
+      if (facCargaProj) subC += '<li><a href="projects.html"' + act('projects.html') + '>Cargar projects</a></li>';
+      if (facAvisos)    subC += '<li><a href="avisos.html"' + act('avisos.html') + '>Crear Avisos</a></li>';
+      if (facCargaEnt)  subC += '<li><a href="entregables.html"' + act('entregables.html') + '>Carga de entregables</a></li>';
       items.push(
         '<li class="anb-dropdown">' +
           '<button type="button" class="anb-dropdown-toggle">Creación <span class="anb-caret">&#9662;</span></button>' +
-          '<ul class="anb-dropdown-menu">' +
-            '<li><a href="projects.html"' + act('projects.html') + '>Cargar projects</a></li>' +
-            '<li><a href="avisos.html"' + act('avisos.html') + '>Crear Avisos</a></li>' +
-            '<li><a href="entregables.html"' + act('entregables.html') + '>Carga de entregables</a></li>' +
-          '</ul>' +
+          '<ul class="anb-dropdown-menu">' + subC + '</ul>' +
         '</li>'
       );
     }
@@ -213,7 +264,7 @@
     if (proyVisible) items.push('<li><a href="proyectos.html"' + act('proyectos.html') + '>Proyectos</a></li>');
     if (dashVisible) items.push('<li><a href="analitica.html"' + act('analitica.html') + '>Dashboards</a></li>');
     if (taskVisible) items.push('<li><a href="task.html"' + act('task.html') + '>&#128203; Tasks</a></li>');
-    if (esSuperusuario) items.push('<li><a href="admin.html"' + act('admin.html') + '>Administración</a></li>');
+    if (adminVisible) items.push('<li><a href="' + adminFirst[1] + '"' + act(adminFirst[1]) + '>Administración</a></li>');
 
     let userHtml = '';
     if (session) {
@@ -324,6 +375,21 @@
         if (document.visibilityState === 'visible') { refreshBadge(); refreshAvisos(); }
       });
     }
+
+    /* ── Ocultar pestañas de Administración sin facultad ── */
+    const ADMIN_TAB_FAC = {
+      'admin.html':                'admin_usuarios',
+      'proyectos-admin.html':      'admin_proyectos',
+      'tareas-admin.html':         'admin_tareas',
+      'sistemas-admin.html':       'admin_sistemas',
+      'facultades-admin.html':     'admin_facultades',
+      'correos-entregables.html':  'correos_entregables',
+    };
+    document.querySelectorAll('.admin-tabs a.btn-nav-tab').forEach(function (a) {
+      const href = (a.getAttribute('href') || '').toLowerCase();
+      const clave = ADMIN_TAB_FAC[href];
+      if (clave && !fac(clave, 'ver')) a.style.display = 'none';
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

@@ -6,8 +6,8 @@
   <title>Módulo Entregables</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
+  <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#001829; }
@@ -755,17 +755,20 @@
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
     function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    /* ── Verificar sesión y rol ── */
-    let currentUserRol = null;
+    /* ── Verificar sesión y facultad ── */
+    let currentFac = {};          // facultades del usuario
+    let puedeModEntregables = false; // facultad modulo_entregables.mod
+    let puedeEliminarProyecto = false; // facultad eliminar_proyecto.mod
     (function () {
       const saved = localStorage.getItem('session');
       if (!saved) { window.location.href = 'index.html'; return; }
       try {
         const user = JSON.parse(saved);
-        currentUserRol = user?.rol || null;
-        const esRestringido = currentUserRol === 'desarrollolead' || currentUserRol === 'operacional';
-        const esSinRol      = currentUserRol === 'sinrol';
-        if (esRestringido || esSinRol) { window.location.href = 'index.html'; }
+        currentFac = user?.facultades || {};
+        const f = currentFac['modulo_entregables'];
+        if (!f || !f.ver) { window.location.href = 'index.html'; return; }
+        puedeModEntregables = !!f.mod;
+        puedeEliminarProyecto = !!(currentFac['eliminar_proyecto'] && currentFac['eliminar_proyecto'].mod);
       } catch {
         localStorage.removeItem('session');
         window.location.href = 'index.html';
@@ -835,7 +838,7 @@
 
     function renderMonthPills() {
       const sorted      = [...entregablesData].sort((a, b) => a.mes - b.mes);
-      const esSu        = currentUserRol === 'superusuario';
+      const esSu        = puedeEliminarProyecto;
       const mostrarProy = !document.getElementById('entreg-select-proyecto').value;
       const actasVisibles = mesFilter ? sorted.filter(e => e.mes == mesFilter) : sorted;
       document.getElementById('entreg-months').innerHTML = actasVisibles.map(e =>
@@ -867,7 +870,7 @@
       totalFil.style.width   = avg + '%';
       tbody.innerHTML = acta.items.map(item => {
         const pct   = etapaProgress(item.etapas);
-        const esUsuarioRol = currentUserRol === 'usuario';
+        const soloLectura = !puedeModEntregables;
         const cells = ETAPAS.map((et, idx) => {
           const e    = item.etapas[et.key];
           const prev = prevDone(item.etapas, idx);
@@ -882,8 +885,8 @@
             return `<td><div class="ep-cell"><button class="ep-btn ${cls} ep-readonly" style="cursor:default" data-id="${escH(acta.id)}" data-num="${item.num}" data-etapa="${et.key}" ${pdfPrev}${etapaTip(e)}>${icon}</button>${etapaDate(e)}</div></td>`;
           }
 
-          // Rol usuario: etapas no permitidas → solo lectura (muestra estado real, no interactivo)
-          if (esUsuarioRol && !ETAPAS_USUARIO.has(et.key)) {
+          // Sin facultad de modificar: todas las etapas en solo lectura
+          if (soloLectura) {
             if (et.key === 'revision') {
               const done = e.completada, enP = e.en_proceso === true;
               let cls, icon;
@@ -1025,7 +1028,7 @@
           return;
         }
         const sorted      = [...entregablesData].sort((a, b) => a.mes - b.mes);
-        const esSu        = currentUserRol === 'superusuario';
+        const esSu        = puedeEliminarProyecto;
         const mostrarProy = !proyFiltro;
 
         // Select de mes: opciones únicas por número de mes
@@ -1517,8 +1520,8 @@
       // Carpeta, Acuse y VOBO Final: ya no son clickables por item
       if (etapa === 'carpeta' || etapa === 'acuse' || etapa === 'vobo_final') return;
 
-      // Rol usuario: solo puede usar etapas permitidas
-      if (currentUserRol === 'usuario' && !ETAPAS_USUARIO.has(etapa)) return;
+      // Sin facultad de modificar: no puede cambiar etapas
+      if (!puedeModEntregables) return;
 
       const acta  = entregablesData.find(a => a.id === id);
       const item  = acta?.items.find(it => it.num === num);

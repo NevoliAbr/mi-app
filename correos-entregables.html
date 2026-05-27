@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Correos Entregables – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    .admin-tabs {
+      background:#004f80; padding:10px 40px; display:flex; gap:6px; flex-wrap:wrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.15); position:sticky; top:64px; z-index:900;
+    }
+    .btn-nav-tab {
+      background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
+      padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; text-decoration:none;
+      transition:background .15s, border-color .15s;
+    }
+    .btn-nav-tab:hover  { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.7); }
+    .btn-nav-tab.active { background:rgba(255,255,255,.22); border-color:#fff; }
+
+    .page-header {
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
+      padding:32px 40px 28px; color:white;
+    }
+    .page-header h1 { font-size:24px; font-weight:900; letter-spacing:-.5px; display:flex; align-items:center; gap:10px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    main { padding:28px 24px 60px; max-width:1300px; margin:0 auto; }
+
+    /* Tabs internos */
+    .inner-tabs { display:flex; gap:6px; margin-bottom:24px; }
+    .inner-tab {
+      padding:9px 22px; border-radius:24px; font-size:13px; font-weight:700;
+      cursor:pointer; border:2px solid #E5E7EB; background:#fff; color:#6B7280;
+      transition:.15s;
+    }
+    .inner-tab:hover  { border-color:#005D97; color:#005D97; }
+    .inner-tab.active { background:#005D97; border-color:#005D97; color:#fff; }
+    .tab-panel { display:none; }
+    .tab-panel.show { display:block; }
+
+    /* ── Configuración ── */
+    .etapas-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap:16px;
+    }
+    .etapa-card {
+      background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+    .etapa-card-head {
+      padding:14px 18px 12px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:2px solid #F3F4F6;
+    }
+    .etapa-card-head-left { display:flex; align-items:center; gap:10px; }
+    .pct-badge {
+      background:#003E66; color:#00AEEF; border-radius:8px;
+      padding:3px 9px; font-size:11px; font-weight:800; letter-spacing:.4px;
+    }
+    .etapa-label { font-size:14px; font-weight:800; color:#1A1A1A; }
+    .etapa-sub   { font-size:11px; font-weight:600; color:#6B7280; margin-top:1px; }
+    .email-count { font-size:11px; font-weight:700; color:#9CA3AF; }
+
+    .etapa-card-body { padding:12px 18px 14px; }
+    .email-list { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; min-height:24px; }
+    .email-row {
+      display:flex; align-items:center; justify-content:space-between;
+      background:#F8FAFC; border:1px solid #E5E7EB; border-radius:8px;
+      padding:6px 10px; gap:8px;
+    }
+    .email-text { font-size:12px; font-weight:600; color:#374151; word-break:break-all; }
+    .btn-rm {
+      background:none; border:none; color:#9CA3AF; cursor:pointer; font-size:14px;
+      padding:0 2px; line-height:1; flex-shrink:0; transition:color .15s;
+    }
+    .btn-rm:hover { color:#DC2626; }
+    .no-emails { font-size:12px; color:#D1D5DB; font-weight:600; text-align:center; padding:6px 0; }
+    .add-email-row { display:flex; gap:6px; }
+    .add-email-input {
+      flex:1; border:2px solid #E5E7EB; border-radius:8px; padding:7px 12px;
+      font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600;
+      color:#374151; outline:none; transition:border-color .15s;
+    }
+    .add-email-input:focus { border-color:#005D97; }
+    .btn-add {
+      background:#005D97; color:#fff; border:none; border-radius:8px;
+      padding:7px 14px; font-family:'Montserrat',sans-serif; font-size:12px;
+      font-weight:700; cursor:pointer; white-space:nowrap; transition:.15s;
+    }
+    .btn-add:hover { background:#003E66; }
+
+    /* ── Historial ── */
+    .hist-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+    .filter-btns  { display:flex; gap:6px; }
+    .filter-btn {
+      background:#fff; border:2px solid #E5E7EB; border-radius:20px;
+      padding:6px 16px; font-family:'Montserrat',sans-serif; font-size:12px;
+      font-weight:700; color:#6B7280; cursor:pointer; transition:.15s;
+    }
+    .filter-btn:hover { border-color:#005D97; color:#005D97; }
+    .filter-btn.active { background:#005D97; border-color:#005D97; color:#fff; }
+    .count-badge { font-size:12px; color:#6B7280; font-weight:700; margin-left:auto; }
+
+    .table-card  { background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.08); overflow:hidden; }
+    .table-wrap  { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:800px; }
+    thead { background:#F8FAFC; }
+    th {
+      padding:12px 16px; text-align:left; font-size:10px; font-weight:800;
+      color:#6B7280; text-transform:uppercase; letter-spacing:.6px;
+      border-bottom:2px solid #E5E7EB; white-space:nowrap;
+    }
+    td { padding:12px 16px; font-size:13px; font-weight:500; color:#374151; border-bottom:1px solid #F0F0F0; vertical-align:middle; }
+    tbody tr:hover td { background:#F9FAFB; }
+
+    .tipo-chip {
+      display:inline-block; border-radius:10px; padding:2px 10px;
+      font-size:11px; font-weight:700; white-space:nowrap;
+    }
+    .c-creacion            { background:#EFF6FF; color:#1D4ED8; }
+    .c-revision            { background:#F0FDF4; color:#166534; }
+    .c-vobo                { background:#F5F3FF; color:#5B21B6; }
+    .c-impresion           { background:#FFF7ED; color:#9A3412; }
+    .c-firma_interna       { background:#ECFDF5; color:#065F46; }
+    .c-firma_externa       { background:#F0FDF4; color:#166534; }
+    .c-firma_externa_80pct { background:#ECFDF5; color:#065F46; }
+    .c-carpeta,.c-carpeta_bulk { background:#FFF7ED; color:#9A3412; }
+    .c-acuse,.c-acuse_pdf,.c-acuse_bulk { background:#FEF3C7; color:#92400E; }
+    .c-vobo_final_bulk     { background:#FDF2F8; color:#9D174D; }
+    .c-observacion_vobo    { background:#FFF1F2; color:#BE123C; }
+
+    .badge-ok  { background:#DCFCE7; color:#166534; border:1px solid #86EFAC; border-radius:8px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .badge-err { background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; border-radius:8px; padding:2px 10px; font-size:11px; font-weight:700; }
+
+    .btn-enviar {
+      background:#005D97; color:#fff; border:none; border-radius:8px;
+      padding:5px 13px; font-family:'Montserrat',sans-serif; font-size:12px;
+      font-weight:700; cursor:pointer; transition:.15s;
+    }
+    .btn-enviar:hover    { background:#003E66; }
+    .btn-enviar:disabled { background:#9CA3AF; cursor:not-allowed; }
+    .btn-preview {
+      background:#F3F4F6; color:#374151; border:1.5px solid #E5E7EB; border-radius:8px;
+      padding:5px 11px; font-family:'Montserrat',sans-serif; font-size:12px;
+      font-weight:700; cursor:pointer; transition:.15s;
+    }
+    .btn-preview:hover { background:#E5E7EB; }
+    .btn-del {
+      background:transparent; color:#DC2626; border:1.5px solid #FECACA; border-radius:8px;
+      padding:5px 9px; font-family:'Montserrat',sans-serif; font-size:12px;
+      font-weight:700; cursor:pointer; transition:.15s;
+    }
+    .btn-del:hover { background:#FEF2F2; border-color:#DC2626; }
+    .act-row { display:flex; gap:5px; align-items:center; }
+
+    .empty-state { padding:50px 24px; text-align:center; color:#9CA3AF; font-size:13px; font-weight:600; }
+    .empty-icon  { font-size:38px; margin-bottom:10px; }
+
+    /* Modal */
+    #modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+      z-index:9998; align-items:center; justify-content:center;
+    }
+    #modal-overlay.show { display:flex; }
+    #modal-box {
+      background:#fff; border-radius:16px; max-width:680px; width:94%;
+      max-height:84vh; display:flex; flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);
+    }
+    #modal-header {
+      padding:16px 20px; border-bottom:1px solid #E5E7EB;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    #modal-title { font-size:13px; font-weight:800; color:#1A1A1A; }
+    #modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:#6B7280; }
+    #modal-body  { flex:1; overflow:auto; padding:20px; }
+    #modal-iframe { width:100%; height:380px; border:1px solid #E5E7EB; border-radius:8px; }
+
+    @media (max-width:700px) {
+      .page-header { padding:24px 16px; }
+      main { padding:16px 10px 40px; }
+      .admin-tabs { padding:10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="navbar.js"></script>
+<div class="admin-tabs">
+  <a href="admin.html" class="btn-nav-tab">👥 Usuarios</a>
+  <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+  <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
+  <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
+  <a href="facultades-admin.html" class="btn-nav-tab">🔐 Facultades</a>
+  <a href="correos-entregables.html" class="btn-nav-tab active">✉️ Correos Entregables</a>
+</div>
+
+<div class="page-header">
+  <h1>✉️ Correos Entregables</h1>
+  <p>Configura quién recibe notificaciones por correo al completar cada etapa.</p>
+</div>
+<div class="header-stripe"></div>
+
+<main>
+  <div class="inner-tabs">
+    <button class="inner-tab active" data-tab="config">Configuración</button>
+    <button class="inner-tab" data-tab="historial">Historial</button>
+  </div>
+
+  <!-- ── TAB: Configuración ── -->
+  <div class="tab-panel show" id="tab-config">
+    <div class="etapas-grid" id="etapas-grid">
+      <!-- generado por JS -->
+    </div>
+  </div>
+
+  <!-- ── TAB: Historial ── -->
+  <div class="tab-panel" id="tab-historial">
+    <div class="hist-toolbar">
+      <div class="filter-btns">
+        <button class="filter-btn active" data-filter="todos">Todos</button>
+        <button class="filter-btn" data-filter="ok">Enviados</button>
+        <button class="filter-btn" data-filter="err">Con error</button>
+      </div>
+      <div class="count-badge" id="count">—</div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Etapa</th>
+              <th>Acta</th>
+              <th>Destinatarios</th>
+              <th>Asunto</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="7" class="empty-state"><div class="empty-icon">⏳</div>Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal preview -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-header">
+      <span id="modal-title">Vista previa</span>
+      <button id="modal-close">✕</button>
+    </div>
+    <div id="modal-body">
+      <iframe id="modal-iframe" sandbox="allow-same-origin"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const session = JSON.parse(localStorage.getItem('session') || 'null');
+if (!session) { window.location.replace('index.html'); }
+const _fce = session?.facultades?.correos_entregables;
+if (!_fce?.ver) { window.location.replace('index.html'); }
+const canMod = !!_fce?.mod;
+
+const API     = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+const HEADERS = { 'Content-Type': 'application/json', 'X-User-Id': session?.id || '' };
+
+/* ─── Definición de etapas ─── */
+const ETAPAS = [
+  { key: 'creacion',             label: 'Elaboración',           pct: '10%',  sub: null },
+  { key: 'revision_completada',  label: 'Revisión',              pct: '20%',  sub: 'Al completarse' },
+  { key: 'revision_observacion', label: 'Revisión',              pct: '20%',  sub: 'Con observaciones' },
+  { key: 'vobo',                 label: 'VoBo',                  pct: '30%',  sub: null },
+  { key: 'impresion',            label: 'Impresión',             pct: '40%',  sub: null },
+  { key: 'firma_interna',        label: 'Firma Interna',         pct: '50%',  sub: null },
+  { key: 'firma_externa',        label: 'Firma Externa',         pct: '60%',  sub: null },
+  { key: 'carpeta',              label: 'Carpeta y Dig.',        pct: '80%',  sub: null },
+  { key: 'acuse',                label: 'Acuse',                 pct: '95%',  sub: null },
+  { key: 'vobo_final',           label: 'VoBo Final',            pct: '100%', sub: null },
+];
+
+const TIPO_LABELS = {
+  creacion: 'Elaboración', revision: 'Revisión', vobo: 'VoBo',
+  impresion: 'Impresión', firma_interna: 'Firma Interna',
+  firma_externa: 'Firma Externa', firma_externa_80pct: 'Firma Externa 80%',
+  carpeta: 'Carpeta (individual)', carpeta_bulk: 'Carpeta (acta)',
+  acuse: 'Acuse', acuse_pdf: 'Acuse PDF', acuse_bulk: 'Acuse (acta)',
+  vobo_final_bulk: 'VoBo Final', observacion_vobo: 'Observación VoBo',
+};
+
+function escH(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtFecha(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('es-MX', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+/* ─── CONFIGURACIÓN ─── */
+let configRows = []; // [{ id, etapa, email }]
+
+async function loadConfig() {
+  try {
+    const res  = await fetch(`${API}/api/admin/config-correos-etapas`, { headers: HEADERS });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    configRows = data.config || [];
+    renderConfig();
+  } catch (err) {
+    document.getElementById('etapas-grid').innerHTML =
+      `<p style="color:#DC2626;font-size:13px">Error al cargar configuración: ${escH(err.message)}</p>`;
+  }
+}
+
+function renderConfig() {
+  const grid = document.getElementById('etapas-grid');
+  grid.innerHTML = ETAPAS.map(e => {
+    const emails = configRows.filter(r => r.etapa === e.key);
+    const emailsHtml = emails.length
+      ? emails.map(r => `
+          <div class="email-row">
+            <span class="email-text">${escH(r.email)}</span>
+            ${canMod ? `<button class="btn-rm" title="Eliminar" onclick="removeEmail(${r.id})">✕</button>` : ''}
+          </div>`).join('')
+      : `<div class="no-emails">Sin destinatarios</div>`;
+    return `
+      <div class="etapa-card">
+        <div class="etapa-card-head">
+          <div class="etapa-card-head-left">
+            <span class="pct-badge">${escH(e.pct)}</span>
+            <div>
+              <div class="etapa-label">${escH(e.label)}</div>
+              ${e.sub ? `<div class="etapa-sub">${escH(e.sub)}</div>` : ''}
+            </div>
+          </div>
+          <span class="email-count">${emails.length} correo${emails.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="etapa-card-body">
+          <div class="email-list">${emailsHtml}</div>
+          ${canMod ? `
+          <div class="add-email-row">
+            <input class="add-email-input" type="email" placeholder="correo@ejemplo.com"
+              id="inp-${escH(e.key)}"
+              onkeydown="if(event.key==='Enter') addEmail('${escH(e.key)}')" />
+            <button class="btn-add" onclick="addEmail('${escH(e.key)}')">+ Agregar</button>
+          </div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function addEmail(etapa) {
+  const inp   = document.getElementById(`inp-${etapa}`);
+  const email = (inp?.value || '').trim().toLowerCase();
+  if (!email) return;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Correo inválido.'); return; }
+  if (configRows.some(r => r.etapa === etapa && r.email === email)) {
+    alert('Ese correo ya está registrado en esta etapa.'); return;
+  }
+  try {
+    const res  = await fetch(`${API}/api/admin/config-correos-etapas`, {
+      method: 'POST', headers: HEADERS,
+      body: JSON.stringify({ etapa, email })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    configRows.push({ id: data.id, etapa, email });
+    if (inp) inp.value = '';
+    renderConfig();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function removeEmail(id) {
+  if (!confirm('¿Eliminar este correo de la etapa?')) return;
+  try {
+    const res  = await fetch(`${API}/api/admin/config-correos-etapas/${id}`, {
+      method: 'DELETE', headers: HEADERS
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    configRows = configRows.filter(r => r.id !== id);
+    renderConfig();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+/* ─── HISTORIAL ─── */
+let correos = [];
+let filtroHist = 'todos';
+
+async function loadHistorial() {
+  try {
+    const res  = await fetch(`${API}/api/admin/correos-entregables`, { headers: HEADERS });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    correos = data.correos || [];
+    renderHistorial();
+  } catch (err) {
+    document.getElementById('tbody').innerHTML =
+      `<tr><td colspan="7" class="empty-state" style="color:#DC2626">Error: ${escH(err.message)}</td></tr>`;
+  }
+}
+
+function renderHistorial() {
+  const tbody = document.getElementById('tbody');
+  const lista = filtroHist === 'ok'  ? correos.filter(c =>  c.enviado)
+              : filtroHist === 'err' ? correos.filter(c => !c.enviado)
+              : correos;
+
+  document.getElementById('count').textContent = `${lista.length} registro${lista.length === 1 ? '' : 's'}`;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-icon">📭</div>Sin registros.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(c => {
+    const label = TIPO_LABELS[c.tipo] || c.tipo;
+    const badge = c.enviado
+      ? `<span class="badge-ok">✓ Enviado</span>`
+      : `<span class="badge-err">✗ Error</span>`;
+    const acciones = `<div class="act-row">
+      ${!c.enviado ? `<button class="btn-enviar" onclick="reenviar(${c.id},this)">Reintentar</button>` : ''}
+      <button class="btn-preview" onclick="preview(${c.id})">👁</button>
+      <button class="btn-del" onclick="borrar(${c.id})">✕</button>
+    </div>`;
+    return `<tr>
+      <td style="white-space:nowrap;font-size:11px">${escH(fmtFecha(c.fecha))}</td>
+      <td><span class="tipo-chip c-${escH(c.tipo)}">${escH(label)}</span></td>
+      <td style="font-size:11px;color:#9CA3AF;max-width:130px;word-break:break-all">${escH(c.acta_id||'—')}</td>
+      <td style="font-size:11px;color:#6B7280;max-width:180px;word-break:break-all">${escH(c.destinatarios||'—')}</td>
+      <td style="font-size:12px;max-width:260px">${escH(c.asunto||'—')}</td>
+      <td>${badge}</td>
+      <td>${acciones}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function reenviar(id, btn) {
+  if (!confirm('¿Reintentar el envío de este correo?')) return;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const res  = await fetch(`${API}/api/admin/correos-entregables/${id}/enviar`, {
+      method: 'POST', headers: HEADERS
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    const c = correos.find(x => x.id === id);
+    if (c) { c.enviado = 1; c.fecha_envio = new Date().toISOString(); }
+    renderHistorial();
+  } catch (err) {
+    btn.disabled = false; btn.textContent = 'Reintentar';
+    alert('Error: ' + err.message);
+  }
+}
+
+async function borrar(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  try {
+    const res  = await fetch(`${API}/api/admin/correos-entregables/${id}`, {
+      method: 'DELETE', headers: HEADERS
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    correos = correos.filter(c => c.id !== id);
+    renderHistorial();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function preview(id) {
+  const c = correos.find(x => x.id === id);
+  document.getElementById('modal-title').textContent = c?.asunto || 'Vista previa';
+  document.getElementById('modal-overlay').classList.add('show');
+  try {
+    const res  = await fetch(`${API}/api/admin/correos-entregables/${id}/html`, { headers: HEADERS });
+    const data = await res.json();
+    document.getElementById('modal-iframe').srcdoc = data.html ||
+      '<p style="font-family:Arial;padding:16px;color:#9CA3AF">Sin contenido HTML.</p>';
+  } catch (err) {
+    document.getElementById('modal-iframe').srcdoc =
+      `<p style="color:red;font-family:Arial;padding:16px">Error: ${err.message}</p>`;
+  }
+}
+
+/* ─── Tabs internos ─── */
+document.querySelectorAll('.inner-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('show'));
+    btn.classList.add('active');
+    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('show');
+    if (btn.dataset.tab === 'historial' && !correos.length) loadHistorial();
+  });
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filtroHist = btn.dataset.filter;
+    renderHistorial();
+  });
+});
+
+/* ─── Modal ─── */
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('modal-iframe').srcdoc = '';
+}
+
+/* ─── Init ─── */
+loadConfig();
+</script>
+</body>
+</html>

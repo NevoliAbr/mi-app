@@ -6,7 +6,7 @@
   <title>Crear Avisos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     /* ── Palette ──
        #005D97  azul corporativo (primario)
@@ -271,7 +271,7 @@
 <main>
 
   <!-- FORM -->
-  <div class="form-card">
+  <div class="form-card" id="form-card">
     <div class="form-card-header">
       <h2 id="form-title">Nuevo Aviso</h2>
     </div>
@@ -343,11 +343,20 @@
 </main>
 
 <script>
-/* ── Guard: solo superusuario ─────────────────── */
+/* ── Guard: facultad avisos ───────────────────── */
 const session = JSON.parse(localStorage.getItem('session') || 'null');
-if (!session || session.rol !== 'superusuario') {
+function _fac(c, t) { const f = session && session.facultades && session.facultades[c]; return !!(f && (t === 'mod' ? f.mod : f.ver)); }
+if (!session || !_fac('avisos', 'ver')) {
   window.location.replace('index.html');
 }
+const puedeModAvisos = _fac('avisos', 'mod');
+// Sin facultad de modificar: ocultar el formulario de creación/edición
+document.addEventListener('DOMContentLoaded', () => {
+  if (!puedeModAvisos) {
+    const fc = document.getElementById('form-card');
+    if (fc) fc.style.display = 'none';
+  }
+});
 
 /* ── Utilidades ───────────────────────────────── */
 const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
@@ -590,6 +599,7 @@ async function loadAvisos() {
               ${linkHtml}
             </div>
           </div>
+          ${puedeModAvisos ? `
           <div class="aviso-actions">
             <button class="btn-action btn-edit" onclick="startEdit(${a.id})">✏️ Editar</button>
             ${!vencido ? `
@@ -598,7 +608,7 @@ async function loadAvisos() {
                 ${a.activo ? '⏸ Pausar' : '▶ Activar'}
               </button>` : ''}
             <button class="btn-action btn-del" onclick="deleteAviso(${a.id})">🗑 Eliminar</button>
-          </div>
+          </div>` : ''}
         </div>`;
     }).join('');
   } catch (err) {

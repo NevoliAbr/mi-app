@@ -6,7 +6,7 @@
   <title>Proyectos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -41,7 +41,7 @@
       box-shadow:0 1px 6px rgba(0,0,0,.08); overflow:hidden;
     }
     .table-wrap { overflow-x:auto; }
-    table { width:100%; border-collapse:collapse; min-width:1050px; }
+    table { width:100%; border-collapse:collapse; min-width:1400px; }
     thead { background:#F8FAFC; }
     th {
       padding:14px 16px; text-align:left;
@@ -57,11 +57,22 @@
     .col-num { color:#005D97; font-weight:800; text-align:center; width:48px; }
     .nombre-cell { color:#1A1A1A; font-weight:800; min-width:180px; }
     .nombre-proy { color:#9CA3AF; font-size:11px; margin-top:2px; font-weight:600; line-height:1.3; }
+    .nombre-corto { color:#6B7280; font-size:11px; margin-top:2px; font-weight:600; }
     .small { font-size:12px; color:#6B7280; }
     .pre-wrap { white-space:pre-wrap; max-width:280px; }
     .resp-chips { display:flex; flex-direction:column; gap:4px; }
     .resp-chip {
       background:#EFF6FF; color:#005D97; border:1px solid #BFDBFE;
+      border-radius:12px; padding:2px 9px; font-size:11px; font-weight:700;
+      width:fit-content;
+    }
+    .firm-chip {
+      background:#F0FDF4; color:#166534; border:1px solid #BBF7D0;
+      border-radius:12px; padding:2px 9px; font-size:11px; font-weight:700;
+      width:fit-content;
+    }
+    .firm-ext-chip {
+      background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA;
       border-radius:12px; padding:2px 9px; font-size:11px; font-weight:700;
       width:fit-content;
     }
@@ -128,12 +139,14 @@
             <th>Procedimiento</th>
             <th>Contrato</th>
             <th>Responsables</th>
+            <th>Firmantes Interno</th>
+            <th>Firmantes Cliente</th>
             <th>Vigencia</th>
             <th>Propuesta</th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="7" class="empty-state"><div class="empty-icon">⏳</div>Cargando proyectos…</td></tr>
+          <tr><td colspan="9" class="empty-state"><div class="empty-icon">⏳</div>Cargando proyectos…</td></tr>
         </tbody>
       </table>
     </div>
@@ -171,7 +184,7 @@ function render(list) {
   const tbody = document.getElementById('tbody');
   document.getElementById('count').textContent = `${list.length} proyecto${list.length === 1 ? '' : 's'}`;
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-icon">📭</div>No hay proyectos.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><div class="empty-icon">📭</div>No hay proyectos.</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map((p, i) => {
@@ -179,17 +192,29 @@ function render(list) {
     const respHtml = resps.length
       ? `<div class="resp-chips">${resps.map(r => `<span class="resp-chip">${escH(r.nombre || '')}</span>`).join('')}</div>`
       : `<span class="small">—</span>`;
+    const firmInt = Array.isArray(p.firmantes_interno) ? p.firmantes_interno : [];
+    const firmIntHtml = firmInt.length
+      ? `<div class="resp-chips">${firmInt.map(f => `<span class="firm-chip">${escH(f.nombre || '')}</span>`).join('')}</div>`
+      : `<span class="small">—</span>`;
+    const firmCli = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente : [];
+    const firmCliHtml = firmCli.length
+      ? `<div class="resp-chips">${firmCli.map(f => `<span class="firm-ext-chip">${escH(f.nombre || '')}</span>`).join('')}</div>`
+      : `<span class="small">—</span>`;
     const pdfHtml = p.pdf_url
       ? `<a class="pdf-link" href="${escH(p.pdf_url)}" data-pdf-url="${escH(p.pdf_url)}" target="_blank" rel="noopener" download>📄 PDF</a>`
       : `<span class="small">—</span>`;
     const nombreProy = p.NombreProyecto && p.NombreProyecto !== p.nombre
       ? `<div class="nombre-proy">${escH(p.NombreProyecto)}</div>` : '';
+    const nombreCorto = p.nombre_corto
+      ? `<div class="nombre-corto">${escH(p.nombre_corto)}</div>` : '';
     return `<tr>
       <td class="col-num">${p.orden ?? (i + 1)}</td>
-      <td class="nombre-cell">${escH(p.nombre || '—')}${nombreProy}</td>
+      <td class="nombre-cell">${escH(p.nombre || '—')}${nombreProy}${nombreCorto}</td>
       <td class="pre-wrap small">${escH(p.procedimiento || '—')}</td>
       <td class="small">${escH(p.contrato || '—')}</td>
       <td>${respHtml}</td>
+      <td>${firmIntHtml}</td>
+      <td>${firmCliHtml}</td>
       <td class="small">${escH(fmtVigencia(p.vigencia_inicio, p.vigencia_fin))}</td>
       <td>${pdfHtml}</td>
     </tr>`;
@@ -219,7 +244,7 @@ async function load() {
     proyectos = data.proyectos || [];
     render(proyectos);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:#991B1B;">Error: ${escH(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="color:#991B1B;">Error: ${escH(err.message)}</td></tr>`;
   }
 }
 

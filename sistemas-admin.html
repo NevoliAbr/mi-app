@@ -6,7 +6,7 @@
   <title>Sistemas – Administración</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -122,6 +122,42 @@
     .btn-test:hover    { background:#003E66; }
     .btn-test:disabled { background:#9CA3AF; cursor:not-allowed; }
 
+    /* ── Log eliminaciones ── */
+    .log-section { margin-top:32px; }
+    .log-section-head {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:14px; flex-wrap:wrap; gap:10px;
+    }
+    .log-section-title { font-size:14px; font-weight:800; color:#1A1A1A; }
+    .log-filter-btns { display:flex; gap:6px; }
+    .log-filter-btn {
+      background:#fff; border:1.5px solid #E5E7EB; border-radius:16px;
+      padding:5px 14px; font-family:'Montserrat',sans-serif; font-size:11px;
+      font-weight:700; color:#6B7280; cursor:pointer; transition:.15s;
+    }
+    .log-filter-btn:hover  { border-color:#005D97; color:#005D97; }
+    .log-filter-btn.active { background:#005D97; border-color:#005D97; color:#fff; }
+    .btn-refresh {
+      background:#F3F4F6; border:1.5px solid #E5E7EB; border-radius:8px;
+      padding:5px 12px; font-family:'Montserrat',sans-serif; font-size:11px;
+      font-weight:700; color:#6B7280; cursor:pointer; transition:.15s;
+    }
+    .btn-refresh:hover { background:#E5E7EB; }
+    .log-table-wrap { overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+    .log-table { width:100%; border-collapse:collapse; min-width:620px; }
+    .log-table thead { background:#F8FAFC; }
+    .log-table th {
+      padding:11px 14px; text-align:left; font-size:10px; font-weight:800;
+      color:#6B7280; text-transform:uppercase; letter-spacing:.5px;
+      border-bottom:2px solid #E5E7EB; white-space:nowrap;
+    }
+    .log-table td { padding:11px 14px; font-size:12px; color:#374151; border-bottom:1px solid #F0F0F0; vertical-align:top; }
+    .log-table tbody tr:hover td { background:#F9FAFB; }
+    .badge-acta { background:#EFF6FF; color:#1D4ED8; border-radius:8px; padding:2px 9px; font-size:11px; font-weight:700; }
+    .badge-item { background:#FEF3C7; color:#92400E; border-radius:8px; padding:2px 9px; font-size:11px; font-weight:700; }
+    .log-detalle { font-size:11px; color:#6B7280; margin-top:3px; }
+    .log-empty   { padding:40px; text-align:center; color:#D1D5DB; font-size:13px; font-weight:600; }
+
     /* ── Toast ── */
     .toast {
       position:fixed; bottom:24px; right:24px; z-index:999;
@@ -147,6 +183,8 @@
   <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
   <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
   <a href="sistemas-admin.html" class="btn-nav-tab active">⚙️ Sistemas</a>
+  <a href="facultades-admin.html" class="btn-nav-tab">🔐 Facultades</a>
+  <a href="correos-entregables.html" class="btn-nav-tab">✉️ Correos Entregables</a>
 </div>
 
 <div class="page-header">
@@ -217,7 +255,7 @@
         <span id="smtp-badge" class="smtp-badge ok">● Configurado</span>
       </div>
 
-      <div style="margin-top:20px">
+      <div id="smtp-test-section" style="margin-top:20px;display:none">
         <label style="display:block;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">Destinatario de prueba</label>
         <input type="email" id="smtp-test-email" placeholder="correo@ejemplo.com"
           style="width:100%;padding:10px 14px;border:1.5px solid #D1D5DB;border-radius:8px;
@@ -231,12 +269,53 @@
     </div>
 
   </div>
+
+  <!-- ── Log de eliminaciones ── -->
+  <div class="log-section">
+    <div class="log-section-head">
+      <span class="log-section-title">🗑️ Log de eliminaciones</span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="log-filter-btns">
+          <button class="log-filter-btn active" data-lf="todos">Todos</button>
+          <button class="log-filter-btn" data-lf="acta">Actas</button>
+          <button class="log-filter-btn" data-lf="item">Items</button>
+        </div>
+        <button class="btn-refresh" onclick="loadLog()">↻ Actualizar</button>
+      </div>
+    </div>
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Tipo</th>
+            <th>Acta / Item eliminado</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody">
+          <tr><td colspan="4" class="log-empty">Cargando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+  const API     = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+  const _sess   = JSON.parse(localStorage.getItem('session') || 'null');
+  const HEADERS = { 'Content-Type': 'application/json', 'X-User-Id': _sess?.id || '' };
+
+  /* Guard: facultad admin_sistemas */
+  const _sessionSA = JSON.parse(localStorage.getItem('session') || 'null');
+  (function () {
+    const f = _sessionSA && _sessionSA.facultades && _sessionSA.facultades['admin_sistemas'];
+    if (!_sessionSA || !f || !f.ver) window.location.replace('index.html');
+  })();
+  const puedeModSistemas = !!(_sessionSA && _sessionSA.facultades && _sessionSA.facultades['admin_sistemas'] && _sessionSA.facultades['admin_sistemas'].mod);
 
   /* ── Cargar info de DB ── */
   async function loadDBInfo() {
@@ -261,10 +340,20 @@
 
     document.getElementById('btn-mssql').classList.toggle('active', db.type === 'mssql');
     document.getElementById('btn-mysql').classList.toggle('active', db.type === 'mysql');
+
+    if (!puedeModSistemas) {
+      document.getElementById('btn-mssql').disabled = true;
+      document.getElementById('btn-mysql').disabled  = true;
+      document.getElementById('btn-mssql').style.opacity = '.5';
+      document.getElementById('btn-mysql').style.opacity = '.5';
+      document.getElementById('btn-mssql').style.cursor = 'not-allowed';
+      document.getElementById('btn-mysql').style.cursor = 'not-allowed';
+    }
   }
 
   /* ── Cambiar DB ── */
   async function switchDB(type) {
+    if (!puedeModSistemas) return;
     const warn = document.getElementById('db-warn');
     warn.style.display = 'block';
     document.getElementById('btn-mssql').disabled = true;
@@ -321,7 +410,73 @@
     toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
 
+  if (puedeModSistemas) document.getElementById('smtp-test-section').style.display = 'block';
+
   loadDBInfo();
+
+  /* ── Log de eliminaciones ── */
+  let logRows = [], logFiltro = 'todos';
+
+  function escH(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtF(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleString('es-MX', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  async function loadLog() {
+    const tbody = document.getElementById('log-tbody');
+    tbody.innerHTML = '<tr><td colspan="4" class="log-empty">Cargando…</td></tr>';
+    try {
+      const res  = await fetch(`${API}/api/admin/log-eliminaciones`, { headers: HEADERS });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      logRows = data.log || [];
+      renderLog();
+    } catch (err) {
+      document.getElementById('log-tbody').innerHTML =
+        `<tr><td colspan="4" class="log-empty" style="color:#DC2626">Error: ${escH(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderLog() {
+    const tbody = document.getElementById('log-tbody');
+    const lista = logFiltro === 'todos' ? logRows : logRows.filter(r => r.tipo === logFiltro);
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="log-empty">Sin registros.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(r => {
+      const badge = r.tipo === 'acta'
+        ? `<span class="badge-acta">Acta completa</span>`
+        : `<span class="badge-item">Item</span>`;
+      let detalleHtml = '';
+      try {
+        const d = JSON.parse(r.detalle || '{}');
+        if (r.tipo === 'acta' && d.items?.length) {
+          detalleHtml = `<div class="log-detalle">${d.items.length} item(s): ${d.items.map(it => `#${it.num} ${escH(it.nombre)}`).join(', ')}</div>`;
+        } else if (r.tipo === 'item') {
+          detalleHtml = `<div class="log-detalle">#${d.num} – ${escH(d.nombre || '')}</div>`;
+        }
+      } catch {}
+      return `<tr>
+        <td style="white-space:nowrap">${escH(fmtF(r.fecha))}</td>
+        <td>${escH(r.usuario_email || '—')}</td>
+        <td>${badge}</td>
+        <td>${escH(r.acta_nombre || '—')}${detalleHtml}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('.log-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.log-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      logFiltro = btn.dataset.lf;
+      renderLog();
+    });
+  });
+
+  loadLog();
 </script>
 </body>
 </html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facultades</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
+
+    .admin-tabs {
+      background:#004f80; padding:10px 40px; display:flex; gap:6px; flex-wrap:wrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.15); position:sticky; top:64px; z-index:900;
+    }
+    .btn-nav-tab {
+      background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.3); color:white;
+      padding:7px 20px; border-radius:8px; font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:.4px; text-decoration:none;
+      transition:background .15s, border-color .15s;
+    }
+    .btn-nav-tab:hover  { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.7); }
+    .btn-nav-tab.active { background:rgba(255,255,255,.22); border-color:#fff; }
+
+    .page-header {
+      background:linear-gradient(135deg, #003E66 0%, #003E66 45%, #005D97 100%);
+      padding:32px 40px 28px; color:white;
+    }
+    .page-header h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
+    .page-header p  { margin-top:6px; font-size:13px; color:rgba(255,255,255,.65); font-weight:600; }
+    .header-stripe  { height:3px; background:linear-gradient(90deg,#00AEEF,#005D97); }
+
+    main { padding:32px 40px; max-width:1200px; margin:0 auto; }
+
+    .fac-layout { display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start; }
+    @media (max-width:860px) { .fac-layout { grid-template-columns:1fr; } }
+
+    .card {
+      background:white; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.09); overflow:hidden;
+    }
+    .card-head {
+      padding:16px 20px; border-bottom:1px solid #F0F0F0; font-size:14px; font-weight:800; color:#1A1A1A;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+
+    /* Lista de usuarios */
+    .u-search { padding:14px 16px; border-bottom:1px solid #F0F0F0; }
+    .u-search input {
+      width:100%; padding:9px 14px; border:2px solid #E5E7EB; border-radius:8px;
+      font-family:inherit; font-size:13px; outline:none; background:#FAFAFA;
+    }
+    .u-search input:focus { border-color:#005D97; background:#fff; }
+    .u-list { max-height:60vh; overflow-y:auto; }
+    .u-item {
+      display:flex; align-items:center; gap:10px; padding:12px 18px;
+      cursor:pointer; border-bottom:1px solid #F6F7F8; transition:background .12s;
+    }
+    .u-item:hover { background:#F9FAFB; }
+    .u-item.active { background:#EFF6FF; border-left:3px solid #005D97; padding-left:15px; }
+    .u-avatar {
+      width:34px; height:34px; border-radius:50%; flex-shrink:0; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;
+    }
+    .u-info { min-width:0; }
+    .u-name { font-size:13px; font-weight:800; color:#1A1A1A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-mail { font-size:11px; color:#9CA3AF; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-super { font-size:10px; color:#92400E; background:#FEF3C7; border-radius:10px; padding:1px 7px; font-weight:800; }
+
+    /* Matriz de facultades */
+    .matrix-empty { padding:60px 24px; text-align:center; color:#9CA3AF; font-size:13px; font-weight:600; }
+    .matrix-empty .ic { font-size:40px; display:block; margin-bottom:12px; }
+    .super-note {
+      margin:18px; padding:14px 16px; background:#FEF3C7; color:#92400E;
+      border-radius:8px; font-size:13px; font-weight:700;
+    }
+    .fac-row { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid #F3F4F6; }
+    .fac-row:last-child { border-bottom:none; }
+    .fac-row.head { background:#F8FAFC; border-bottom:2px solid #E5E7EB; }
+    .fac-row.super-row {
+      background:linear-gradient(90deg,#EFF6FF,#F0F7FC);
+      border-bottom:2px solid #BFDBFE;
+    }
+    .fac-row.super-row .fac-row-name { color:#1D4ED8; font-size:14px; }
+    .fac-row.super-row .fac-check input { width:20px; height:20px; accent-color:#1D4ED8; }
+    .fac-row-info { flex:1; min-width:0; }
+    .fac-row-name { font-size:13px; font-weight:800; color:#1A1A1A; }
+    .fac-row-desc { font-size:11px; color:#9CA3AF; font-weight:600; margin-top:2px; }
+    .fac-checks { display:flex; gap:10px; flex-shrink:0; }
+    .fac-checks-head span { width:74px; text-align:center; font-size:10px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:.5px; }
+    .fac-check { width:74px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .fac-check input { width:18px; height:18px; cursor:pointer; accent-color:#005D97; }
+
+    /* Grupo desplegable (Administración) */
+    .fac-group { border-bottom:1px solid #F3F4F6; }
+    .fac-group-head {
+      display:flex; align-items:center; gap:12px; padding:13px 22px;
+      cursor:pointer; user-select:none; background:#F0F7FC; transition:background .12s;
+    }
+    .fac-group-head:hover { background:#E4F1FA; }
+    .fac-group-caret { font-size:11px; color:#005D97; transition:transform .2s; width:14px; }
+    .fac-group.open .fac-group-caret { transform:rotate(90deg); }
+    .fac-group-title { flex:1; font-size:13px; font-weight:900; color:#005D97; text-transform:uppercase; letter-spacing:.4px; }
+    .fac-group-body { display:none; }
+    .fac-group.open .fac-group-body { display:block; }
+    .fac-group-body .fac-row { padding-left:44px; }
+    .fac-group-body .fac-row:last-child { border-bottom:none; }
+    .matrix-foot { padding:14px 22px; border-top:1px solid #F0F0F0; display:flex; justify-content:flex-end; gap:10px; }
+    .btn {
+      padding:10px 22px; border:none; border-radius:8px; font-family:inherit; font-size:13px;
+      font-weight:800; cursor:pointer; transition:background .15s;
+    }
+    .btn-primary { background:#005D97; color:#fff; }
+    .btn-primary:hover { background:#003E66; }
+    .btn-primary:disabled { background:#93C5FD; cursor:not-allowed; }
+    .btn-ghost { background:#F3F4F6; color:#374151; }
+    .btn-ghost:hover { background:#E5E7EB; }
+
+    /* Toast */
+    #toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(120px);
+      background:#1A1A1A; color:#fff; padding:12px 22px; border-radius:10px; font-size:13px;
+      font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.35); opacity:0; transition:all .3s; z-index:999;
+    }
+    #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    #toast.error { background:#991B1B; }
+  </style>
+</head>
+<body>
+
+<script src="navbar.js"></script>
+<div class="admin-tabs">
+  <a href="admin.html" class="btn-nav-tab">👥 Usuarios</a>
+  <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
+  <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
+  <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
+  <a href="facultades-admin.html" class="btn-nav-tab active">🔐 Facultades</a>
+  <a href="correos-entregables.html" class="btn-nav-tab">✉️ Correos Entregables</a>
+</div>
+
+<div class="page-header">
+  <h1>🔐 Facultades</h1>
+  <p>Asigna qué puede ver y modificar cada usuario.</p>
+</div>
+<div class="header-stripe"></div>
+
+<main>
+  <div class="fac-layout">
+    <!-- Lista de usuarios -->
+    <div class="card">
+      <div class="card-head">Usuarios <span id="u-count" style="font-size:12px;color:#9CA3AF;font-weight:600"></span></div>
+      <div class="u-search"><input type="text" id="u-search" placeholder="Buscar usuario…" /></div>
+      <div class="u-list" id="u-list"><div class="matrix-empty">Cargando…</div></div>
+    </div>
+
+    <!-- Matriz de facultades -->
+    <div class="card">
+      <div class="card-head">
+        <span id="matrix-title">Selecciona un usuario</span>
+      </div>
+      <div id="matrix-body">
+        <div class="matrix-empty"><span class="ic">👈</span>Elige un usuario de la lista para gestionar sus facultades.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+const session = (() => { try { return JSON.parse(localStorage.getItem('session')); } catch { return null; } })();
+function tieneFacultad(clave, tipo) {
+  const f = session && session.facultades && session.facultades[clave];
+  return !!(f && (tipo === 'mod' ? f.mod : f.ver));
+}
+if (!session || !tieneFacultad('admin_facultades', 'ver')) window.location.replace('index.html');
+const puedeModAdmin = tieneFacultad('admin_facultades', 'mod');
+
+const SUPER_USERS = ['nevoli.gonzalez@lcg.mx', 'elisa.mendez@lcg.mx'];
+const PALETTE = ['#3B82F6','#005D97','#10B981','#8B5CF6','#F59E0B','#EF4444','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#06B6D4'];
+
+let allUsers = [], selectedId = null;
+let facData = [], facEsSuper = false;
+
+function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function colorFor(u){ return PALETTE[(u.id || 0) % PALETTE.length]; }
+function inicial(n){ return (n || '?').trim().charAt(0).toUpperCase(); }
+
+function showToast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (type === 'error' ? ' error' : '');
+  setTimeout(() => t.className = '', 2600);
+}
+
+async function loadUsers(){
+  try {
+    const res  = await fetch(`${API}/api/admin/usuarios`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    allUsers = data.usuarios || [];
+    renderUsers(allUsers);
+  } catch (err) {
+    document.getElementById('u-list').innerHTML = `<div class="matrix-empty" style="color:#991B1B">Error: ${esc(err.message)}</div>`;
+  }
+}
+
+function renderUsers(list){
+  const cont = document.getElementById('u-list');
+  document.getElementById('u-count').textContent = `(${list.length})`;
+  if (!list.length){ cont.innerHTML = '<div class="matrix-empty">Sin usuarios.</div>'; return; }
+  cont.innerHTML = list.map(u => {
+    const sup = SUPER_USERS.includes((u.email||'').toLowerCase());
+    return `<div class="u-item ${u.id===selectedId?'active':''}" data-id="${u.id}" data-nombre="${esc(u.nombre)}">
+      <div class="u-avatar" style="background:${colorFor(u)}">${inicial(u.nombre)}</div>
+      <div class="u-info">
+        <div class="u-name">${esc(u.nombre)} ${sup?'<span class="u-super">SUPER</span>':''}</div>
+        <div class="u-mail">${esc(u.email)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  cont.querySelectorAll('.u-item').forEach(el => {
+    el.addEventListener('click', () => selectUser(parseInt(el.dataset.id), el.dataset.nombre));
+  });
+}
+
+document.getElementById('u-search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  renderUsers(allUsers.filter(u => u.nombre.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+});
+
+async function selectUser(id, nombre){
+  selectedId = id;
+  renderUsers(allUsers.filter(u => filterMatch(u)));
+  document.getElementById('matrix-title').textContent = `Facultades — ${nombre}`;
+  document.getElementById('matrix-body').innerHTML = '<div class="matrix-empty">Cargando…</div>';
+  try {
+    const res  = await fetch(`${API}/api/admin/usuarios/${id}/facultades`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    facData = data.facultades || [];
+    facEsSuper = !!data.esSuper;
+    renderMatrix();
+  } catch (err) {
+    document.getElementById('matrix-body').innerHTML = `<div class="matrix-empty" style="color:#991B1B">Error: ${esc(err.message)}</div>`;
+  }
+}
+function filterMatch(u){
+  const q = document.getElementById('u-search').value.toLowerCase();
+  return u.nombre.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+}
+
+const GRUPO_LABELS = { general: null, entregables: 'Módulo Entregables', administracion: 'Administración' };
+
+function rowHtml(f, i){
+  return `<div class="fac-row">
+    <div class="fac-row-info">
+      <div class="fac-row-name">${esc(f.nombre)}</div>
+      ${f.descripcion ? `<div class="fac-row-desc">${esc(f.descripcion)}</div>` : ''}
+    </div>
+    <div class="fac-checks">
+      <label class="fac-check"><input type="checkbox" data-i="${i}" data-t="ver" ${f.puede_ver?'checked':''} ${puedeModAdmin?'':'disabled'} /></label>
+      <label class="fac-check"><input type="checkbox" data-i="${i}" data-t="mod" ${f.puede_modificar?'checked':''} ${puedeModAdmin?'':'disabled'} /></label>
+    </div>
+  </div>`;
+}
+
+function renderMatrix(){
+  const body = document.getElementById('matrix-body');
+  if (facEsSuper){
+    body.innerHTML = `<div class="super-note">⭐ Este usuario siempre tiene <strong>todas</strong> las facultades y no se puede modificar.</div>`;
+    return;
+  }
+  const allVer = facData.every(f => f.puede_ver);
+  const allMod = facData.every(f => f.puede_modificar);
+  const superRow = puedeModAdmin ? `<div class="fac-row super-row">
+    <div class="fac-row-info">
+      <div class="fac-row-name">⭐ Superusuario</div>
+      <div class="fac-row-desc">Marcar o desmarcar todas las facultades de una vez</div>
+    </div>
+    <div class="fac-checks">
+      <label class="fac-check" title="Marcar todas: Ver"><input type="checkbox" data-all="ver" ${allVer?'checked':''} /></label>
+      <label class="fac-check" title="Marcar todas: Modificar"><input type="checkbox" data-all="mod" ${allMod?'checked':''} /></label>
+    </div>
+  </div>` : '';
+
+  const head = `<div class="fac-row head">
+    <div class="fac-row-info"></div>
+    <div class="fac-checks fac-checks-head"><span>Ver</span><span>Modificar</span></div>
+  </div>`;
+
+  // Facultades generales (con índice global en facData)
+  let html = superRow + head;
+  facData.forEach((f, i) => { if ((f.grupo || 'general') === 'general') html += rowHtml(f, i); });
+
+  // Grupos (ej. Administración) como desplegable con checkbox maestro
+  const grupos = [...new Set(facData.map(f => f.grupo || 'general'))].filter(g => g !== 'general');
+  grupos.forEach(g => {
+    const label = GRUPO_LABELS[g] || g;
+    const idxs = facData.map((f, i) => ({ f, i })).filter(o => (o.f.grupo || 'general') === g);
+    const allVer = idxs.every(o => o.f.puede_ver);
+    const allMod = idxs.every(o => o.f.puede_modificar);
+    html += `<div class="fac-group open" data-grupo="${esc(g)}">
+      <div class="fac-group-head">
+        <span class="fac-group-caret">▶</span>
+        <span class="fac-group-title">${esc(label)}</span>
+        <div class="fac-checks">
+          <label class="fac-check" title="Marcar todas: Ver"><input type="checkbox" data-grp="${esc(g)}" data-t="ver" ${allVer?'checked':''} ${puedeModAdmin?'':'disabled'} /></label>
+          <label class="fac-check" title="Marcar todas: Modificar"><input type="checkbox" data-grp="${esc(g)}" data-t="mod" ${allMod?'checked':''} ${puedeModAdmin?'':'disabled'} /></label>
+        </div>
+      </div>
+      <div class="fac-group-body">
+        ${idxs.map(o => rowHtml(o.f, o.i)).join('')}
+      </div>
+    </div>`;
+  });
+
+  const foot = puedeModAdmin ? `<div class="matrix-foot">
+      <button class="btn btn-ghost" id="btn-discard">Descartar</button>
+      <button class="btn btn-primary" id="btn-save">Guardar cambios</button>
+    </div>` : '';
+  body.innerHTML = html + foot;
+
+  // Toggle desplegable (click en el header pero no en los checkboxes)
+  body.querySelectorAll('.fac-group-head').forEach(h => {
+    h.addEventListener('click', e => {
+      if (e.target.closest('.fac-check')) return;
+      h.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Checkbox por fila
+  body.querySelectorAll('input[data-i]').forEach(chk => {
+    chk.addEventListener('change', function(){
+      const i = parseInt(this.dataset.i), t = this.dataset.t;
+      aplicaCheck(i, t, this.checked);
+      syncChecks();
+    });
+  });
+
+  // Checkbox maestro de grupo
+  body.querySelectorAll('input[data-grp]').forEach(chk => {
+    chk.addEventListener('change', function(){
+      const g = this.dataset.grp, t = this.dataset.t, val = this.checked;
+      facData.forEach((f, i) => { if ((f.grupo || 'general') === g) aplicaCheck(i, t, val); });
+      syncChecks();
+    });
+  });
+
+  // Checkbox superusuario (marca/desmarca todo)
+  body.querySelectorAll('input[data-all]').forEach(chk => {
+    chk.addEventListener('change', function(){
+      const t = this.dataset.all, val = this.checked;
+      facData.forEach((_, i) => aplicaCheck(i, t, val));
+      syncChecks();
+    });
+  });
+
+  if (puedeModAdmin){
+    document.getElementById('btn-discard').addEventListener('click', () => {
+      const nombre = document.querySelector('.u-item.active .u-name').textContent.replace('SUPER','').trim();
+      selectUser(selectedId, nombre);
+    });
+    document.getElementById('btn-save').addEventListener('click', saveFacultades);
+  }
+}
+
+function aplicaCheck(i, t, checked){
+  if (t === 'mod'){ facData[i].puede_modificar = checked?1:0; if (checked) facData[i].puede_ver = 1; }
+  else { facData[i].puede_ver = checked?1:0; if (!checked) facData[i].puede_modificar = 0; }
+}
+
+function syncChecks(){
+  const body = document.getElementById('matrix-body');
+  body.querySelectorAll('input[data-i]').forEach(c => {
+    const ci = parseInt(c.dataset.i), ct = c.dataset.t;
+    c.checked = ct==='mod' ? !!facData[ci].puede_modificar : !!facData[ci].puede_ver;
+  });
+  // Maestros de grupo
+  body.querySelectorAll('input[data-grp]').forEach(c => {
+    const g = c.dataset.grp, ct = c.dataset.t;
+    const idxs = facData.filter(f => (f.grupo || 'general') === g);
+    c.checked = ct==='mod' ? idxs.every(f => f.puede_modificar) : idxs.every(f => f.puede_ver);
+  });
+  // Maestro superusuario
+  body.querySelectorAll('input[data-all]').forEach(c => {
+    const ct = c.dataset.all;
+    c.checked = ct === 'mod' ? facData.every(f => f.puede_modificar) : facData.every(f => f.puede_ver);
+  });
+}
+
+async function saveFacultades(){
+  if (!selectedId) return;
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    const payload = facData.map(f => ({ facultad_id: f.id, puede_ver: f.puede_ver?1:0, puede_modificar: f.puede_modificar?1:0 }));
+    const res  = await fetch(`${API}/api/admin/usuarios/${selectedId}/facultades`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ facultades: payload })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    showToast('Facultades actualizadas');
+  } catch (err) { showToast(err.message, 'error'); }
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+}
+
+loadUsers();
+</script>
+</body>
+</html>

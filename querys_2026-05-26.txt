@@ -1,0 +1,61 @@
+══════════════════════════════════════════════════════════════
+  QUERIES DEPLOY: 2026-05-26
+  Ejecutar en phpMyAdmin (MySQL / Plesk)
+══════════════════════════════════════════════════════════════
+
+-- ─────────────────────────────────────────────────────────
+-- 1. Historial de correos de entregables
+--    (reemplaza el envío automático; guarda lo enviado/fallido)
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS correos_entregables (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  fecha         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  tipo          VARCHAR(50)  NOT NULL,
+  acta_id       VARCHAR(255) NULL,
+  destinatarios TEXT         NULL,
+  asunto        VARCHAR(500) NULL,
+  html          LONGTEXT     NULL,
+  enviado       TINYINT(1)   NOT NULL DEFAULT 0,
+  fecha_envio   DATETIME     NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ─────────────────────────────────────────────────────────
+-- 2. Configuración de destinatarios por etapa
+--    (quién recibe correo cuando se completa cada etapa)
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS config_correos_etapas (
+  id    INT AUTO_INCREMENT PRIMARY KEY,
+  etapa VARCHAR(50)  NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  UNIQUE KEY uk_etapa_email (etapa, email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ─────────────────────────────────────────────────────────
+-- 3. Log de eliminaciones de entregables
+--    (registra quién eliminó un acta completa o un item)
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS log_eliminaciones (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  fecha         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  usuario_id    INT          NULL,
+  usuario_email VARCHAR(255) NULL,
+  tipo          VARCHAR(10)  NOT NULL,
+  acta_id       VARCHAR(255) NULL,
+  acta_nombre   VARCHAR(500) NULL,
+  detalle       LONGTEXT     NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+══════════════════════════════════════════════════════════════
+  NOTAS
+══════════════════════════════════════════════════════════════
+
+- La facultad "correos_entregables" se sincroniza automáticamente
+  al reiniciar la app (el servidor hace seed del catálogo de
+  facultades en cada arranque). No requiere query manual.
+
+- Las columnas nombre_corto, firmantes_cliente, firmantes_interno
+  en la tabla proyectos ya se agregaron en el deploy 2026-05-12.
+  No repetir.

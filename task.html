@@ -6,8 +6,8 @@
   <title>Task Board</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
+  <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F0F2F5; overflow-x:hidden; }
@@ -899,8 +899,15 @@
 <script>
   const API  = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
   const _session = (() => { try { return JSON.parse(localStorage.getItem('session')); } catch { return null; } })();
+  /* Guard: facultad tasks */
+  (function () {
+    const f = _session && _session.facultades && _session.facultades['tasks'];
+    if (!_session || !f || !f.ver) window.location.replace('index.html');
+  })();
   const _uid  = _session?.id  || null;
-  const _rol  = _session?.rol || '';
+  const _fac  = _session?.facultades || {};
+  const _tasksMod = !!(_fac.tasks && _fac.tasks.mod);  // ver todos los tableros (incl. privados)
+  const _esOperacional = false; // roles eliminados — sin restricción operacional
   let boards = [], stages = [], modules = [], currentBoardId = null;
   const PRI_LABELS = { baja:'↓ Baja', media:'→ Media', alta:'↑ Alta', critica:'🔥 Crítica' };
   const CAT_LABELS = { oficio:'📄 Oficio', anexo:'📎 Anexo', sm:'💬 SM', ticket:'🎫 Ticket', bug:'🐛 Bug' };
@@ -955,7 +962,7 @@
   async function load() {
     try {
       const [br, pr, ur, mr] = await Promise.all([
-        fetch(`${API}/api/kanban/boards?${_uid ? `usuario_id=${_uid}&` : ''}rol=${_rol}`).then(r=>r.json()).catch(()=>({success:false,boards:[]})),
+        fetch(`${API}/api/kanban/boards?${_uid ? `usuario_id=${_uid}&` : ''}verTodo=${_tasksMod ? 1 : 0}`).then(r=>r.json()).catch(()=>({success:false,boards:[]})),
         fetch(`${API}/api/proyectos`).then(r=>r.json()).catch(()=>({success:false,proyectos:[]})),
         fetch(`${API}/api/usuarios`).then(r=>r.json()).catch(()=>({success:false,usuarios:[]})),
         fetch(`${API}/api/kanban/modules`).then(r=>r.json()).catch(()=>({success:false,modules:[]})),
@@ -1094,7 +1101,7 @@
       body: JSON.stringify({ nombre: formValues.nombre, privado: formValues.privado, usuario_id: _uid })
     }).then(r=>r.json());
     if (!r.success) { Swal.fire({icon:'error',title:'Error',text:r.error,confirmButtonColor:'#005D97'}); return; }
-    const br = await fetch(`${API}/api/kanban/boards?${_uid ? `usuario_id=${_uid}&` : ''}rol=${_rol}`).then(r=>r.json());
+    const br = await fetch(`${API}/api/kanban/boards?${_uid ? `usuario_id=${_uid}&` : ''}verTodo=${_tasksMod ? 1 : 0}`).then(r=>r.json());
     boards = br.boards || [];
     currentBoardId = r.id;
     await loadBoardData();
@@ -1299,7 +1306,7 @@
       if (fPr  && String(t.proyecto_id) !== fPr)     return false;
       if (fUs) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(parseInt(fUs))) return false; }
       if (fPi  && t.prioridad !== fPi)               return false;
-      if (_rol === 'operacional' && _uid) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(Number(_uid)) && Number(t.asignado_a)!==Number(_uid)) return false; }
+      if (_esOperacional && _uid) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(Number(_uid)) && Number(t.asignado_a)!==Number(_uid)) return false; }
       return true;
     });
 
@@ -1332,7 +1339,7 @@
         const si = stages.findIndex(s=>s.id===t.stage_id);
         const hasPrev = si > 0;
         const boardPrivado = !!(boards.find(b=>b.id===currentBoardId)?.privado);
-        const hasNext = si >= 0 && si < stages.length - 1 && !(_rol === 'operacional' && !boardPrivado && stages[si+1]?.es_final);
+        const hasNext = si >= 0 && si < stages.length - 1 && !(_esOperacional && !boardPrivado && stages[si+1]?.es_final);
         const arrows = (cls) =>
           `<button class="stage-arrow ${cls}" onclick="event.stopPropagation();moveTaskStage(${t.id},-1)" ${hasPrev?'':'disabled'}>◀</button>` +
           `<button class="stage-arrow ${cls}" onclick="event.stopPropagation();moveTaskStage(${t.id},1)"  ${hasNext?'':'disabled'}>▶</button>`;
@@ -1418,7 +1425,7 @@
     if (newIdx < 0 || newIdx >= stages.length) return;
     const newStage = stages[newIdx];
     const boardPrivado = !!(boards.find(b=>b.id===currentBoardId)?.privado);
-    if (_rol === 'operacional' && newStage.es_final && !boardPrivado) {
+    if (_esOperacional && newStage.es_final && !boardPrivado) {
       Swal.fire({icon:'warning', title:'Sin permiso', text:'No puedes mover una tarea a la etapa final en tableros públicos.', confirmButtonColor:'#005D97'});
       return;
     }
@@ -1681,7 +1688,7 @@
       if (fPr  && String(t.proyecto_id) !== fPr)     return false;
       if (fUs) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(parseInt(fUs))) return false; }
       if (fPi  && t.prioridad !== fPi)               return false;
-      if (_rol === 'operacional' && _uid) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(Number(_uid)) && Number(t.asignado_a)!==Number(_uid)) return false; }
+      if (_esOperacional && _uid) { const iids=String(t.involucrados_ids||'').split(',').map(Number).filter(Boolean); if(!iids.includes(Number(_uid)) && Number(t.asignado_a)!==Number(_uid)) return false; }
       return true;
     });
 

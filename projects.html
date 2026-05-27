@@ -6,7 +6,7 @@
   <title>Cargar Project</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     /* ── Palette ──
        #005D97  azul corporativo (primario)
@@ -219,6 +219,13 @@
 
 <script>
   const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+  /* Guard: facultad carga_projects */
+  (function () {
+    const s = JSON.parse(localStorage.getItem('session') || 'null');
+    const f = s && s.facultades && s.facultades['carga_projects'];
+    if (!s || !f || !f.ver) window.location.replace('index.html');
+  })();
 
   /* Mostrar nombre del archivo seleccionado */
   document.getElementById('file-input').addEventListener('change', function () {

@@ -6,7 +6,7 @@
   <title>Administración de Usuarios</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     /* ── Palette ──
        #005D97  azul corporativo (primario)
@@ -180,6 +180,52 @@
     .btn-role-save { padding:9px 24px; background:#005D97; color:white; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:800; cursor:pointer; transition:background .15s; }
     .btn-role-save:hover { background:#003E66; }
     .btn-role-save:disabled { background:#93C5FD; cursor:not-allowed; }
+
+    /* ── FACULTADES MODAL ─────────────────────── */
+    .fac-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+      z-index:300; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    }
+    .fac-overlay.active { display:flex; }
+    .fac-card {
+      background:white; border-radius:14px; width:100%; max-width:560px;
+      overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.4); animation:modalIn .2s ease;
+      display:flex; flex-direction:column; max-height:88vh;
+    }
+    .fac-header {
+      background:linear-gradient(135deg, #003E66 0%, #005D97 100%);
+      padding:18px 22px; display:flex; align-items:center; justify-content:space-between; color:white;
+    }
+    .fac-header h2 { font-size:16px; font-weight:800; }
+    .fac-header span { font-size:12px; color:rgba(255,255,255,.7); font-weight:600; }
+    .fac-close { background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity:.65; transition:opacity .15s; }
+    .fac-close:hover { opacity:1; }
+    .fac-body { padding:8px 0; overflow-y:auto; }
+    .fac-super-note {
+      margin:16px 22px; padding:12px 14px; background:#FEF3C7; color:#92400E;
+      border-radius:8px; font-size:12px; font-weight:700;
+    }
+    .fac-row {
+      display:flex; align-items:center; gap:14px;
+      padding:12px 22px; border-bottom:1px solid #F3F4F6;
+    }
+    .fac-row:last-child { border-bottom:none; }
+    .fac-row-info { flex:1; min-width:0; }
+    .fac-row-name { font-size:13px; font-weight:800; color:#1A1A1A; }
+    .fac-row-desc { font-size:11px; color:#9CA3AF; font-weight:600; margin-top:2px; }
+    .fac-checks { display:flex; gap:16px; flex-shrink:0; }
+    .fac-check {
+      display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;
+      font-size:12px; font-weight:700; color:#374151; user-select:none; width:62px;
+    }
+    .fac-check input { width:17px; height:17px; cursor:pointer; accent-color:#005D97; }
+    .fac-checks-head { display:flex; gap:16px; flex-shrink:0; }
+    .fac-checks-head span {
+      width:62px; text-align:center; font-size:10px; font-weight:800;
+      color:#6B7280; text-transform:uppercase; letter-spacing:.5px;
+    }
+    .fac-row.head { background:#F8FAFC; border-bottom:2px solid #E5E7EB; }
+    .fac-footer { padding:14px 22px; border-top:1px solid #F3F4F6; display:flex; justify-content:flex-end; gap:10px; flex-shrink:0; }
 
     /* ── ACTION BUTTONS ───────────────────────── */
     .td-actions { display:flex; gap:6px; align-items:center; }
@@ -443,6 +489,8 @@
     <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
     <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
     <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
+    <a href="facultades-admin.html" class="btn-nav-tab">🔐 Facultades</a>
+    <a href="correos-entregables.html" class="btn-nav-tab">✉️ Correos Entregables</a>
   </div>
 
   <!-- ══ PAGE HEADER ══════════════════════════════════ -->
@@ -494,14 +542,13 @@
               <th>#</th>
               <th>Nombre</th>
               <th>Correo electrónico</th>
-              <th>Rol</th>
               <th>Estado</th>
               <th>Registrado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="users-tbody">
-            <tr><td colspan="7" class="td-center">Cargando...</td></tr>
+            <tr><td colspan="6" class="td-center">Cargando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -551,27 +598,21 @@
     </div>
   </div>
 
-  <!-- ══ ROL MODAL ════════════════════════════════════ -->
-  <div class="role-overlay" id="role-overlay">
-    <div class="role-card">
-      <div class="role-header">
-        <h2 id="role-modal-title">Cambiar rol</h2>
-        <button class="role-header-close" id="role-close">✕</button>
+  <!-- ══ FACULTADES MODAL ═════════════════════════════ -->
+  <div class="fac-overlay" id="fac-overlay">
+    <div class="fac-card">
+      <div class="fac-header">
+        <div>
+          <h2>🔐 Facultades</h2>
+          <span id="fac-modal-sub">—</span>
+        </div>
+        <button class="fac-close" id="fac-close">✕</button>
       </div>
       <div class="role-stripe"></div>
-      <div class="role-body">
-        <label for="role-select">Nuevo rol</label>
-        <select id="role-select">
-          <option value="sinrol">⛔ Sin rol</option>
-          <option value="usuario">👤 Usuario</option>
-          <option value="operacional">📊 Operacional</option>
-          <option value="desarrollolead">💻 DesarrolloLead</option>
-          <option value="superusuario">⭐ Superusuario</option>
-        </select>
-      </div>
-      <div class="role-footer">
-        <button class="btn-role-cancel" id="role-cancel">Cancelar</button>
-        <button class="btn-role-save"   id="role-save">Guardar</button>
+      <div class="fac-body" id="fac-body"></div>
+      <div class="fac-footer">
+        <button class="btn-role-cancel" id="fac-cancel">Cancelar</button>
+        <button class="btn-role-save"   id="fac-save">Guardar</button>
       </div>
     </div>
   </div>
@@ -634,13 +675,18 @@
   <script>
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
-    /* ── Guard: solo superusuario ────────────── */
+    /* ── Guard: facultad administración ──────── */
     const session = (() => {
       try { return JSON.parse(localStorage.getItem('session')); } catch { return null; }
     })();
-    if (!session || session.rol !== 'superusuario') {
+    function tieneFacultad(clave, tipo) {
+      const f = session && session.facultades && session.facultades[clave];
+      return !!(f && (tipo === 'mod' ? f.mod : f.ver));
+    }
+    if (!session || !tieneFacultad('admin_usuarios', 'ver')) {
       window.location.replace('index.html');
     }
+    const puedeAdminMod = tieneFacultad('admin_usuarios', 'mod');
 
     /* ── Toast ───────────────────────────────── */
     let toastTimer;
@@ -710,14 +756,15 @@
         renderTable(allUsers);
       } catch (err) {
         document.getElementById('users-tbody').innerHTML =
-          `<tr><td colspan="7" class="td-center" style="color:#C41010">Error al cargar: ${esc(err.message)}</td></tr>`;
+          `<tr><td colspan="6" class="td-center" style="color:#C41010">Error al cargar: ${esc(err.message)}</td></tr>`;
       }
     }
 
+    const SUPER_USERS = ['nevoli.gonzalez@lcg.mx', 'elisa.mendez@lcg.mx'];
     function updateStats(users) {
       document.getElementById('stat-total').textContent    = users.length;
       document.getElementById('stat-activos').textContent  = users.filter(u => u.activo).length;
-      document.getElementById('stat-admins').textContent   = users.filter(u => u.rol === 'superusuario').length;
+      document.getElementById('stat-admins').textContent   = users.filter(u => SUPER_USERS.includes((u.email||'').toLowerCase())).length;
       document.getElementById('stat-inactivos').textContent= users.filter(u => !u.activo).length;
     }
 
@@ -727,28 +774,15 @@
 
       if (users.length === 0) {
         document.getElementById('users-tbody').innerHTML =
-          '<tr><td colspan="7" class="td-center">No se encontraron usuarios</td></tr>';
+          '<tr><td colspan="6" class="td-center">No se encontraron usuarios</td></tr>';
         return;
       }
-
-      const rolBadge = rol => {
-        const map = {
-          superusuario:  ['badge-super',         '⭐ Superusuario'],
-          operacional:   ['badge-operacional',    '📊 Operacional'],
-          desarrollolead:['badge-desarrollolead', '💻 DesarrolloLead'],
-          usuario:       ['badge-usuario',        '👤 Usuario'],
-          sinrol:        ['badge-sinrol',         '⛔ Sin rol'],
-        };
-        const [cls, lbl] = map[rol] || ['badge-usuario', `👤 ${rol}`];
-        return `<span class="badge ${cls}">${lbl}</span>`;
-      };
 
       document.getElementById('users-tbody').innerHTML = users.map(u => `
         <tr>
           <td class="td-id">${u.id}</td>
           <td class="td-name">${esc(u.nombre)}</td>
           <td class="td-email">${esc(u.email)}</td>
-          <td>${rolBadge(u.rol)}</td>
           <td>
             <span class="badge ${u.activo ? 'badge-activo' : 'badge-inactivo'}">
               ${u.activo ? '&#10003; Activo' : '&#8212; Inactivo'}
@@ -757,12 +791,12 @@
           <td class="td-date">${fmtDate(u.creado_en)}</td>
           <td>
             <div class="td-actions">
-              ${session.rol === 'superusuario' && u.id !== session.id ? `
+              ${puedeAdminMod ? `
               <button class="btn-action btn-role"
-                title="Cambiar rol"
-                onclick="openRoleModal(${u.id}, '${esc(u.nombre)}', '${esc(u.rol)}')">
-                🔄
-              </button>` : ''}
+                title="Facultades"
+                onclick="openFacModal(${u.id}, '${esc(u.nombre)}')">
+                🔐
+              </button>
               <button class="btn-action btn-toggle"
                 title="${u.activo ? 'Bloquear usuario' : 'Desbloquear usuario'}"
                 onclick="toggleActivo(${u.id}, ${!u.activo})">
@@ -787,7 +821,7 @@
                 title="Asignar proyectos"
                 onclick="openProjModal(${u.id}, '${esc(u.nombre)}')">
                 📁
-              </button>
+              </button>` : '<span style="color:#9CA3AF;font-size:12px;font-weight:600">Solo lectura</span>'}
             </div>
           </td>
         </tr>
@@ -800,55 +834,115 @@
       renderTable(
         allUsers.filter(u =>
           u.nombre.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)  ||
-          u.rol.toLowerCase().includes(q)
+          u.email.toLowerCase().includes(q)
         )
       );
     });
 
-    /* ── Modal cambio de rol ────────────────── */
-    let roleTargetId = null;
+    /* ── Modal de Facultades ────────────────── */
+    let facTargetId = null;
+    let facData     = []; // [{id, clave, nombre, descripcion, puede_ver, puede_modificar}]
+    let facEsSuper  = false;
 
-    function openRoleModal(id, nombre, rolActual) {
-      roleTargetId = id;
-      document.getElementById('role-modal-title').textContent = `Cambiar rol — ${nombre}`;
-      document.getElementById('role-select').value = rolActual;
-      document.getElementById('role-overlay').classList.add('active');
-    }
-    function closeRoleModal() {
-      document.getElementById('role-overlay').classList.remove('active');
-      roleTargetId = null;
-    }
-    document.getElementById('role-close').addEventListener('click',  closeRoleModal);
-    document.getElementById('role-cancel').addEventListener('click', closeRoleModal);
-    document.getElementById('role-overlay').addEventListener('click', e => {
-      if (e.target === document.getElementById('role-overlay')) closeRoleModal();
-    });
-
-    document.getElementById('role-save').addEventListener('click', async () => {
-      if (!roleTargetId) return;
-      const newRol = document.getElementById('role-select').value;
-      const btn    = document.getElementById('role-save');
-      btn.disabled = true; btn.textContent = 'Guardando…';
-      await changeRole(roleTargetId, newRol);
-      btn.disabled = false; btn.textContent = 'Guardar';
-      closeRoleModal();
-    });
-
-    /* ── Acciones ────────────────────────────── */
-    async function changeRole(id, newRol) {
+    async function openFacModal(id, nombre) {
+      facTargetId = id;
+      facEsSuper  = false;
+      document.getElementById('fac-modal-sub').textContent = nombre;
+      document.getElementById('fac-body').innerHTML = '<div class="fac-super-note" style="background:#EFF6FF;color:#005D97">Cargando…</div>';
+      document.getElementById('fac-overlay').classList.add('active');
       try {
-        const res  = await fetch(`${API}/api/admin/usuarios/${id}/rol`, {
-          method: 'PATCH',
+        const res  = await fetch(`${API}/api/admin/usuarios/${id}/facultades`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        facData    = data.facultades || [];
+        facEsSuper = !!data.esSuper;
+        renderFacModal();
+      } catch (err) {
+        document.getElementById('fac-body').innerHTML =
+          `<div class="fac-super-note" style="background:#FEE2E2;color:#991B1B">Error: ${esc(err.message)}</div>`;
+      }
+    }
+
+    function renderFacModal() {
+      const body = document.getElementById('fac-body');
+      const saveBtn = document.getElementById('fac-save');
+      if (facEsSuper) {
+        body.innerHTML = `<div class="fac-super-note">⭐ Este usuario siempre tiene <strong>todas</strong> las facultades y no se puede modificar.</div>`;
+        saveBtn.style.display = 'none';
+        return;
+      }
+      saveBtn.style.display = '';
+      const head = `<div class="fac-row head">
+        <div class="fac-row-info"></div>
+        <div class="fac-checks-head"><span>Ver</span><span>Modificar</span></div>
+      </div>`;
+      const rows = facData.map((f, i) => `
+        <div class="fac-row">
+          <div class="fac-row-info">
+            <div class="fac-row-name">${esc(f.nombre)}</div>
+            ${f.descripcion ? `<div class="fac-row-desc">${esc(f.descripcion)}</div>` : ''}
+          </div>
+          <div class="fac-checks">
+            <label class="fac-check"><input type="checkbox" data-i="${i}" data-t="ver" ${f.puede_ver ? 'checked' : ''} /></label>
+            <label class="fac-check"><input type="checkbox" data-i="${i}" data-t="mod" ${f.puede_modificar ? 'checked' : ''} /></label>
+          </div>
+        </div>`).join('');
+      body.innerHTML = head + rows;
+
+      body.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', function () {
+          const i = parseInt(this.dataset.i), t = this.dataset.t;
+          if (t === 'mod') {
+            facData[i].puede_modificar = this.checked ? 1 : 0;
+            if (this.checked) { facData[i].puede_ver = 1; } // modificar implica ver
+          } else {
+            facData[i].puede_ver = this.checked ? 1 : 0;
+            if (!this.checked) { facData[i].puede_modificar = 0; } // sin ver no hay modificar
+          }
+          renderFacModalState();
+        });
+      });
+    }
+    // Sincroniza checkboxes con facData sin re-render completo
+    function renderFacModalState() {
+      document.querySelectorAll('#fac-body input[type="checkbox"]').forEach(chk => {
+        const i = parseInt(chk.dataset.i), t = chk.dataset.t;
+        chk.checked = t === 'mod' ? !!facData[i].puede_modificar : !!facData[i].puede_ver;
+      });
+    }
+
+    function closeFacModal() {
+      document.getElementById('fac-overlay').classList.remove('active');
+      facTargetId = null;
+    }
+    document.getElementById('fac-close').addEventListener('click',  closeFacModal);
+    document.getElementById('fac-cancel').addEventListener('click', closeFacModal);
+    document.getElementById('fac-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('fac-overlay')) closeFacModal();
+    });
+
+    document.getElementById('fac-save').addEventListener('click', async () => {
+      if (!facTargetId) return;
+      const btn = document.getElementById('fac-save');
+      btn.disabled = true; btn.textContent = 'Guardando…';
+      try {
+        const payload = facData.map(f => ({
+          facultad_id: f.id,
+          puede_ver: f.puede_ver ? 1 : 0,
+          puede_modificar: f.puede_modificar ? 1 : 0,
+        }));
+        const res  = await fetch(`${API}/api/admin/usuarios/${facTargetId}/facultades`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rol: newRol })
+          body: JSON.stringify({ facultades: payload })
         });
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
-        showToast(`Rol actualizado a "${newRol}"`);
-        await loadUsers();
+        showToast('Facultades actualizadas');
+        closeFacModal();
       } catch (err) { showToast(err.message, 'error'); }
-    }
+      btn.disabled = false; btn.textContent = 'Guardar';
+    });
 
     /* ── Proyectos modal ────────────────────── */
     let projTargetId = null;

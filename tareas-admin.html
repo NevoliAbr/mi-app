@@ -6,7 +6,7 @@
   <title>Tareas – Administración</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -199,6 +199,8 @@
   <a href="proyectos-admin.html" class="btn-nav-tab">📁 Proyectos</a>
   <a href="tareas-admin.html"    class="btn-nav-tab active">📋 Tareas</a>
   <a href="sistemas-admin.html"  class="btn-nav-tab">⚙️ Sistemas</a>
+  <a href="facultades-admin.html" class="btn-nav-tab">🔐 Facultades</a>
+  <a href="correos-entregables.html" class="btn-nav-tab">✉️ Correos Entregables</a>
 </div>
 
 <div class="page-header">
@@ -315,6 +317,13 @@
 <script>
   const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
+  /* Guard: facultad admin_tareas */
+  const _sessionTA = JSON.parse(localStorage.getItem('session') || 'null');
+  (function () {
+    const f = _sessionTA && _sessionTA.facultades && _sessionTA.facultades['admin_tareas'];
+    if (!_sessionTA || !f || !f.ver) window.location.replace('index.html');
+  })();
+  const puedeModTareas = !!(_sessionTA && _sessionTA.facultades && _sessionTA.facultades['admin_tareas'] && _sessionTA.facultades['admin_tareas'].mod);
 
   /* ── Helpers ── */
   function esc(s) {
@@ -423,9 +432,9 @@
         <td class="td-tarea">${esc(t.tarea)}</td>
         <td>${proy}</td>
         <td>
-          <select class="est-select ${cls}" data-id="${t.id}" onchange="cambiarEstatus(this)">
-            ${opts}
-          </select>
+          ${puedeModTareas
+            ? `<select class="est-select ${cls}" data-id="${t.id}" onchange="cambiarEstatus(this)">${opts}</select>`
+            : `<span class="est-select ${cls}" style="pointer-events:none">${esc(t.estatus.charAt(0).toUpperCase()+t.estatus.slice(1))}</span>`}
         </td>
         <td class="td-date">${fmtDate(t.fecha_inicio)}</td>
         <td class="td-date">${fmtDate(t.fecha_fin)}</td>
@@ -473,7 +482,11 @@
   }
   function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
 
-  document.getElementById('btn-nueva').addEventListener('click', openModal);
+  if (puedeModTareas) {
+    document.getElementById('btn-nueva').addEventListener('click', openModal);
+  } else {
+    document.getElementById('btn-nueva').style.display = 'none';
+  }
   document.getElementById('modal-close').addEventListener('click',  closeModal);
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   document.getElementById('modal-overlay').addEventListener('click', e => {

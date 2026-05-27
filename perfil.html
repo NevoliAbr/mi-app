@@ -6,7 +6,7 @@
   <title>Perfil</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -172,8 +172,8 @@
             <span class="info-value" id="info-correo">—</span>
           </div>
           <div class="info-row">
-            <span class="info-label">Rol</span>
-            <span class="info-badge" id="info-rol-badge">—</span>
+            <span class="info-label">Facultades</span>
+            <div class="proyectos-chips" id="info-facultades-chips"><span class="info-value">—</span></div>
           </div>
           <div class="info-row" id="info-proyectos-row" style="display:none">
             <span class="info-label">Proyectos</span>
@@ -299,17 +299,27 @@
   initColorPicker();
 
   /* ── Info básica ── */
-  const ROL_MAP = {
-    superusuario:   ['badge-super',   '⭐ Superusuario'],
-    operacional:    ['badge-operacional',    '📊 Operacional'],
-    desarrollolead: ['badge-desarrollolead', '💻 DesarrolloLead'],
-    usuario:        ['badge-usuario', '👤 Usuario'],
+  const FAC_NOMBRES = {
+    avisos:'Avisos', carga_entregables:'Carga de entregables', carga_projects:'Carga de projects',
+    proyectos:'Proyectos', modulo_entregables:'Módulo Entregables', eliminar_proyecto:'Eliminar proyecto',
+    seguimiento:'Seguimiento', dashboards:'Dashboards', tasks:'Tasks',
+    admin_usuarios:'Admin: Usuarios', admin_proyectos:'Admin: Proyectos', admin_tareas:'Admin: Tareas',
+    admin_sistemas:'Admin: Sistemas', admin_facultades:'Admin: Facultades',
   };
   document.getElementById('info-nombre').textContent = session.nombre || '—';
   document.getElementById('info-correo').textContent = session.email  || '—';
-  const [rolCls, rolLbl] = ROL_MAP[session.rol] || ['badge-usuario', session.rol || '—'];
-  const badge = document.getElementById('info-rol-badge');
-  badge.textContent = rolLbl; badge.className = `info-badge ${rolCls}`;
+  (function () {
+    const cont = document.getElementById('info-facultades-chips');
+    const fac  = session.facultades || {};
+    const chips = Object.keys(fac)
+      .filter(k => fac[k] && fac[k].ver)
+      .map(k => {
+        const nombre = FAC_NOMBRES[k] || k;
+        const mod = fac[k].mod;
+        return `<span class="info-badge badge-usuario" title="${mod ? 'Ver y modificar' : 'Solo ver'}">${nombre}${mod ? ' ✎' : ' 👁'}</span>`;
+      });
+    cont.innerHTML = chips.length ? chips.join('') : '<span class="info-value">Sin facultades asignadas</span>';
+  })();
 
   /* cargar foto, proyectos del usuario y poblar select */
   let userProyectos = [];

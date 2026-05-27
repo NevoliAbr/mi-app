@@ -6,7 +6,7 @@
   <title>Módulo de Seguimiento</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#001829; }
@@ -313,18 +313,16 @@
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
     function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    /* ── Verificar sesión y rol ── */
-    let currentUserRol = null;
+    /* ── Verificar sesión y facultad ── */
+    let currentFac = {};
     (function () {
       const saved = localStorage.getItem('session');
       if (!saved) { window.location.href = 'index.html'; return; }
       try {
         const user = JSON.parse(saved);
-        currentUserRol = user?.rol || null;
-        const esUsuario     = currentUserRol === 'usuario';
-        const esRestringido = currentUserRol === 'desarrollolead' || currentUserRol === 'operacional';
-        const esSinRol      = currentUserRol === 'sinrol';
-        if (esUsuario || esRestringido || esSinRol) { window.location.href = 'index.html'; }
+        currentFac = user?.facultades || {};
+        const f = currentFac['seguimiento'];
+        if (!f || !f.ver) { window.location.href = 'index.html'; }
       } catch {
         localStorage.removeItem('session');
         window.location.href = 'index.html';
@@ -370,7 +368,7 @@
     function renderProjectCards() {
       const container  = document.getElementById('dash-projects');
       const filtered   = allProjects.filter(p => p.year === activeYear);
-      const esSuperusr = currentUserRol === 'superusuario';
+      const esSuperusr = !!(currentFac['seguimiento'] && currentFac['seguimiento'].mod);
 
       if (!filtered.length) {
         container.innerHTML = '<div class="dash-empty">Sin proyectos para este año.</div>';

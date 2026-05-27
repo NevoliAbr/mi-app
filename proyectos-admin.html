@@ -6,7 +6,7 @@
   <title>Administración de Proyectos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -274,6 +274,8 @@
     <a href="proyectos-admin.html" class="btn-nav-tab active">📁 Proyectos</a>
     <a href="tareas-admin.html" class="btn-nav-tab">📋 Tareas</a>
     <a href="sistemas-admin.html" class="btn-nav-tab">⚙️ Sistemas</a>
+    <a href="facultades-admin.html" class="btn-nav-tab">🔐 Facultades</a>
+    <a href="correos-entregables.html" class="btn-nav-tab">✉️ Correos Entregables</a>
   </div>
 
   <div class="page-header">
@@ -323,7 +325,7 @@
               <th>Responsables</th>
               <th>Firmas</th>
               <th>Vigencia</th>
-              <th>PDF</th>
+              <th>Propuesta técnica</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -436,11 +438,13 @@
   <script>
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
-    /* Guard superusuario */
+    /* Guard: facultad admin_proyectos */
+    const _sessionPA = JSON.parse(localStorage.getItem('session') || 'null');
     (function () {
-      const s = JSON.parse(localStorage.getItem('session') || 'null');
-      if (!s || s.rol !== 'superusuario') window.location.href = 'index.html';
+      const f = _sessionPA && _sessionPA.facultades && _sessionPA.facultades['admin_proyectos'];
+      if (!_sessionPA || !f || !f.ver) window.location.href = 'index.html';
     })();
+    const puedeModProyectos = !!(_sessionPA && _sessionPA.facultades && _sessionPA.facultades['admin_proyectos'] && _sessionPA.facultades['admin_proyectos'].mod);
 
     let allProyectos = [];
     let allUsuarios  = [];
@@ -503,7 +507,9 @@
         const fiChips = fi.map(f => `<div class="firmante-chip"><strong>${esc(f.nombre||'—')}</strong><span>${esc(f.rol||'—')}</span></div>`).join('');
         const pdfCell = p.pdf_url
           ? `<button class="btn-pdf-view" data-pdf-url="${esc(p.pdf_url)}" data-pdf-id="${p.id}">📄 Ver PDF</button>`
-          : `<label class="btn-pdf-upload" title="Subir PDF">📎 Subir<input type="file" accept=".pdf" data-proy-id="${p.id}" style="display:none"></label>`;
+          : (puedeModProyectos
+              ? `<label class="btn-pdf-upload" title="Subir PDF">📎 Subir<input type="file" accept=".pdf" data-proy-id="${p.id}" style="display:none"></label>`
+              : '<span style="color:#9CA3AF;font-size:12px">—</span>');
         const detailRow = hasFirmas ? `
         <tr class="firmas-detail" id="firmas-detail-${p.id}" style="display:none">
           <td colspan="11">
@@ -525,9 +531,11 @@
           <td><span class="badge ${esActivo(p) ? 'badge-activo' : 'badge-inactivo'}"${p.activo && !esActivo(p) ? ' title="Inactivo: falta fecha de vigencia"' : ''}>${esActivo(p) ? '● Activo' : '○ Inactivo'}</span></td>
           <td>
             <div class="td-actions">
+              ${puedeModProyectos ? `
               <button class="btn-action btn-edit"   title="Editar"   data-id="${p.id}" data-action="edit">✏️</button>
               <button class="btn-action btn-toggle" title="${p.activo ? 'Desactivar' : 'Activar'}" data-id="${p.id}" data-action="toggle" data-activo="${p.activo ? 1 : 0}">${p.activo ? '🔒' : '🔓'}</button>
               <button class="btn-action btn-delete" title="Eliminar" data-id="${p.id}" data-action="delete" data-nombre="${esc(p.nombre)}">🗑️</button>
+              ` : '<span style="color:#9CA3AF;font-size:12px;font-weight:600">Solo lectura</span>'}
             </div>
           </td>
         </tr>${detailRow}`;}).join('');
@@ -632,7 +640,11 @@
     }
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    document.getElementById('btn-nuevo').addEventListener('click', () => openModal('Nuevo Proyecto', {}));
+    if (puedeModProyectos) {
+      document.getElementById('btn-nuevo').addEventListener('click', () => openModal('Nuevo Proyecto', {}));
+    } else {
+      document.getElementById('btn-nuevo').style.display = 'none';
+    }
 
     /* ── Guardar ── */
     document.getElementById('modal-save').addEventListener('click', async () => {

@@ -6,7 +6,7 @@
   <title>Dashboard de Entregables</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" /></noscript>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html, body { min-height:100%; font-family:'Montserrat',sans-serif; background:#F3F4F6; }
@@ -339,6 +339,13 @@
 
 <script>
   const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+  /* Guard: facultad dashboards */
+  (function () {
+    const s = JSON.parse(localStorage.getItem('session') || 'null');
+    const f = s && s.facultades && s.facultades['dashboards'];
+    if (!s || !f || !f.ver) window.location.replace('index.html');
+  })();
 
   const ETAPAS_KEYS = ['creacion','revision','vobo','impresion','firma_interna','firma_externa','carpeta','acuse','vobo_final'];
   const ETAPAS_PCTS = [10,20,30,40,50,80,90,95,100];
