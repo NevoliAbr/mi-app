@@ -756,9 +756,12 @@
     function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     /* ── Verificar sesión y facultad ── */
-    let currentFac = {};          // facultades del usuario
-    let puedeModEntregables = false; // facultad modulo_entregables.mod
-    let puedeEliminarProyecto = false; // facultad eliminar_proyecto.mod
+    let currentFac = {};
+    let puedeModEntregables = false;
+    let puedeEliminarProyecto = false;
+    let puedeVerCarpeta = false, puedeModCarpeta = false;
+    let puedeVerAcuse   = false, puedeModAcuse   = false;
+    let puedeVerVoboFinal = false, puedeModVoboFinal = false;
     (function () {
       const saved = localStorage.getItem('session');
       if (!saved) { window.location.href = 'index.html'; return; }
@@ -769,6 +772,12 @@
         if (!f || !f.ver) { window.location.href = 'index.html'; return; }
         puedeModEntregables = !!f.mod;
         puedeEliminarProyecto = !!(currentFac['eliminar_proyecto'] && currentFac['eliminar_proyecto'].mod);
+        puedeVerCarpeta   = !!(currentFac['etapa_carpeta']?.ver);
+        puedeModCarpeta   = !!(currentFac['etapa_carpeta']?.mod);
+        puedeVerAcuse     = !!(currentFac['etapa_acuse']?.ver);
+        puedeModAcuse     = !!(currentFac['etapa_acuse']?.mod);
+        puedeVerVoboFinal = !!(currentFac['etapa_vobo_final']?.ver);
+        puedeModVoboFinal = !!(currentFac['etapa_vobo_final']?.mod);
       } catch {
         localStorage.removeItem('session');
         window.location.href = 'index.html';
@@ -1297,8 +1306,6 @@
     });
 
     /* Clicks en etapas */
-    const BULK_ALLOWED       = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
-    const VOBO_FINAL_ALLOWED = ['elisa.mendez@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
     const OBS_DECIDE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
     function esObsDecider() {
       return OBS_DECIDE_ALLOWED.includes((sessionUser().email || '').toLowerCase());
@@ -1318,12 +1325,6 @@
       return false;
     }
     function sessionUser() { try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch { return {}; } }
-    function esUsuarioBulkAllowed() {
-      return BULK_ALLOWED.includes((sessionUser().email || '').toLowerCase());
-    }
-    function esVoboFinalAllowed() {
-      return VOBO_FINAL_ALLOWED.includes((sessionUser().email || '').toLowerCase());
-    }
 
     /* ── Estado agregado del acta para una etapa ── */
     function actaEstadoEtapa(acta, key) {
@@ -1343,9 +1344,7 @@
     function renderActaActions() {
       const wrap = document.getElementById('acta-actions');
       const acta = entregablesData.find(e => e.id === activeId);
-      const bulkAllowed   = esUsuarioBulkAllowed();
-      const voboAllowed   = esVoboFinalAllowed();
-      if (!acta || !acta.items?.length || (!bulkAllowed && !voboAllowed)) {
+      if (!acta || !acta.items?.length || (!puedeVerCarpeta && !puedeVerAcuse && !puedeVerVoboFinal)) {
         wrap.style.display='none'; wrap.innerHTML=''; return;
       }
 
@@ -1362,23 +1361,24 @@
       // PDF acuse compartido
       const acusePdf  = acta.items.find(it => it.etapas?.acuse?.pdf)?.etapas?.acuse?.pdf || null;
 
-      function bloque({ key, titulo, est, condicionLista, pdfPath }) {
+      function bloque({ key, titulo, est, condicionLista, pdfPath, canMod }) {
         let btnCls, btnIcon, btnAction, subTxt, subCls, extra = '';
         if (est.estado === 'completada') {
           btnCls='done'; btnIcon='✓'; btnAction='noop'; subCls='done';
           subTxt = `Completada · ${est.total}/${est.total}`;
-          extra  = `<button class="acta-action-revert" data-key="${key}" data-act="reset">Revertir</button>`;
+          if (canMod) extra = `<button class="acta-action-revert" data-key="${key}" data-act="reset">Revertir</button>`;
           if (key === 'acuse' && pdfPath) {
             extra = `<a class="acta-action-pdf" href="${escH(pdfPath)}" target="_blank" rel="noopener" data-pdf-url="${escH(pdfPath)}" data-pdf="true">📄 PDF</a>` + extra;
           }
         } else if (est.estado === 'en_proceso') {
-          btnCls='inprog'; btnIcon='⏳'; btnAction='completar';
+          btnCls='inprog'; btnIcon='⏳'; btnAction= canMod ? 'completar' : 'noop';
           subCls='prog';
           subTxt = `En proceso · ${est.completados}/${est.total}`;
-          extra  = `<button class="acta-action-revert" data-key="${key}" data-act="reset">Cancelar</button>`;
+          if (canMod) extra = `<button class="acta-action-revert" data-key="${key}" data-act="reset">Cancelar</button>`;
         } else {
-          if (condicionLista) { btnCls='avail'; btnIcon='·'; btnAction='en_proceso'; }
-          else                { btnCls='lock';  btnIcon='·'; btnAction='lock'; }
+          if (condicionLista && canMod) { btnCls='avail'; btnIcon='·'; btnAction='en_proceso'; }
+          else if (condicionLista)      { btnCls='avail'; btnIcon='·'; btnAction='noop'; }
+          else                          { btnCls='lock';  btnIcon='·'; btnAction='lock'; }
           subCls=''; subTxt = condicionLista ? 'Pendiente' : 'Bloqueado';
         }
         const pct = est.total ? Math.round((est.completados/est.total)*100) : 0;
@@ -1394,12 +1394,14 @@
       }
 
       let html = '';
-      if (bulkAllowed) {
-        html += bloque({ key:'carpeta', titulo:'Carpeta y Dig.', est:carpEst,  condicionLista:firmaExtAll, pdfPath:null });
-        html += bloque({ key:'acuse',   titulo:'Acuse',          est:acuseEst, condicionLista:carpAll,     pdfPath:acusePdf });
+      if (puedeVerCarpeta) {
+        html += bloque({ key:'carpeta',    titulo:'Carpeta y Dig.', est:carpEst,  condicionLista:firmaExtAll, pdfPath:null,     canMod:puedeModCarpeta });
       }
-      if (voboAllowed) {
-        html += bloque({ key:'vobo_final', titulo:'VOBO Final', est:voboEst, condicionLista:acuseAll, pdfPath:null });
+      if (puedeVerAcuse) {
+        html += bloque({ key:'acuse',      titulo:'Acuse',          est:acuseEst, condicionLista:carpAll,     pdfPath:acusePdf, canMod:puedeModAcuse });
+      }
+      if (puedeVerVoboFinal) {
+        html += bloque({ key:'vobo_final', titulo:'VOBO Final',     est:voboEst,  condicionLista:acuseAll,    pdfPath:null,     canMod:puedeModVoboFinal });
       }
       wrap.innerHTML = html;
       wrap.style.display = 'flex';
@@ -1422,13 +1424,12 @@
                      : 'VOBO Final';
 
       // Permisos
-      const necesitaVobo  = key === 'vobo_final';
-      const tienePermiso  = necesitaVobo ? esVoboFinalAllowed() : esUsuarioBulkAllowed();
+      const tienePermiso = key === 'vobo_final' ? puedeModVoboFinal
+                         : key === 'acuse'      ? puedeModAcuse
+                         :                       puedeModCarpeta;
       if (!tienePermiso) {
         Swal.fire({ icon:'error', title:'Sin permiso',
-          text: necesitaVobo
-            ? 'Solo Elisa Mendez puede dar VOBO Final.'
-            : `Solo Elisa Mendez o Daniel Arias pueden gestionar ${etiqueta}.`,
+          text: `No tienes facultad para modificar la etapa de ${etiqueta}.`,
           confirmButtonColor:'#005D97', background:'#0f172a', color:'#f1f5f9' });
         return;
       }
@@ -2180,6 +2181,26 @@ if (btn.dataset.pdf === 'true') {
     }
 
     loadEntregables().then(() => { aplicarDeepLink(); });
+
+    /* ── SSE: actualizaciones en tiempo real ── */
+    let _reloadTimer = null;
+    function iniciarSSE() {
+      const es = new EventSource(`${API}/api/entregables/events`);
+      es.addEventListener('entregable_updated', e => {
+        try {
+          const { actaId } = JSON.parse(e.data);
+          // Solo recarga si el acta afectada está en la vista actual
+          if (!entregablesData.some(a => a.id === actaId)) return;
+          clearTimeout(_reloadTimer);
+          _reloadTimer = setTimeout(() => loadEntregables(), 600);
+        } catch {}
+      });
+      es.onerror = () => {
+        es.close();
+        setTimeout(iniciarSSE, 5000); // reconecta tras 5s si se cae
+      };
+    }
+    iniciarSSE();
   </script>
 
   <script>

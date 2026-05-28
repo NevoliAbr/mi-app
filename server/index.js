@@ -31,7 +31,6 @@ function notifyTo(emails) {
 }
 
 // Destinatarios principales de notificaciones de seguimiento
-const ELISA_NOTIFY = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx'];
 
 // ── Facultades (permisos por área) ──
 // Catálogo de áreas. Cada facultad se puede asignar por usuario con Ver y/o Modificar.
@@ -48,13 +47,16 @@ const FACULTADES = [
   // Módulo Entregables (sub-facultades)
   { clave: 'modulo_entregables', nombre: 'Ver y trabajar',        descripcion: 'Ver y trabajar entregables',            grupo: 'entregables',    orden: 8 },
   { clave: 'eliminar_proyecto',  nombre: 'Eliminar proyecto',     descripcion: 'Eliminar actas/proyectos en el módulo', grupo: 'entregables',    orden: 9 },
+  { clave: 'etapa_carpeta',      nombre: 'Carpeta y Dig.',        descripcion: 'Ver y gestionar etapa Carpeta y Digitalización', grupo: 'entregables', orden: 10 },
+  { clave: 'etapa_acuse',        nombre: 'Acuse',                 descripcion: 'Ver y gestionar etapa de Acuse',                 grupo: 'entregables', orden: 11 },
+  { clave: 'etapa_vobo_final',   nombre: 'VoBo Final',            descripcion: 'Ver y gestionar etapa de VoBo Final',            grupo: 'entregables', orden: 12 },
   // Administración (sub-secciones)
-  { clave: 'admin_usuarios',     nombre: 'Usuarios',              descripcion: 'Gestión de usuarios',          grupo: 'administracion', orden: 10 },
-  { clave: 'admin_proyectos',    nombre: 'Proyectos',             descripcion: 'Administración de proyectos',   grupo: 'administracion', orden: 11 },
-  { clave: 'admin_tareas',       nombre: 'Tareas',                descripcion: 'Administración de tareas',      grupo: 'administracion', orden: 12 },
-  { clave: 'admin_sistemas',     nombre: 'Sistemas',              descripcion: 'Administración de sistemas',    grupo: 'administracion', orden: 13 },
-  { clave: 'admin_facultades',   nombre: 'Facultades',            descripcion: 'Gestión de facultades',         grupo: 'administracion', orden: 14 },
-  { clave: 'correos_entregables', nombre: 'Correos Entregables',  descripcion: 'Ver historial y configurar destinatarios de correos', grupo: 'administracion', orden: 15 },
+  { clave: 'admin_usuarios',     nombre: 'Usuarios',              descripcion: 'Gestión de usuarios',          grupo: 'administracion', orden: 13 },
+  { clave: 'admin_proyectos',    nombre: 'Proyectos',             descripcion: 'Administración de proyectos',   grupo: 'administracion', orden: 14 },
+  { clave: 'admin_tareas',       nombre: 'Tareas',                descripcion: 'Administración de tareas',      grupo: 'administracion', orden: 15 },
+  { clave: 'admin_sistemas',     nombre: 'Sistemas',              descripcion: 'Administración de sistemas',    grupo: 'administracion', orden: 16 },
+  { clave: 'admin_facultades',   nombre: 'Facultades',            descripcion: 'Gestión de facultades',         grupo: 'administracion', orden: 17 },
+  { clave: 'correos_entregables', nombre: 'Correos Entregables',  descripcion: 'Ver historial y configurar destinatarios de correos', grupo: 'administracion', orden: 18 },
 ];
 // Claves de administración (para visibilidad del menú "Administración")
 const FACULTADES_ADMIN = FACULTADES.filter(f => f.grupo === 'administracion').map(f => f.clave);
@@ -97,47 +99,217 @@ async function callerFacultades(req) {
   } catch { return null; }
 }
 
-// Mapeo tipo → clave de config_correos_etapas
-const TIPO_A_CONFIG_ETAPA = {
-  creacion:             'creacion',
-  revision:             'revision_completada',
-  observacion_vobo:     'revision_observacion',
-  vobo:                 'vobo',
-  impresion:            'impresion',
-  firma_interna:        'firma_interna',
-  firma_externa:        'firma_externa',
-  firma_externa_80pct:  'firma_externa',
-  carpeta:              'carpeta',
-  carpeta_bulk:         'carpeta',
-  acuse:                'acuse',
-  acuse_pdf:            'acuse',
-  acuse_bulk:           'acuse',
-  vobo_final_bulk:      'vobo_final',
-};
+// Emails fijos de notificación
+const NOTIF_ELISA  = 'elisa.mendez@lcg.mx';
+const NOTIF_EDNA   = 'edna.servin@lcg.mx';
+const NOTIF_PACO   = 'francisco.herrera@lcg.mx';
+const NOTIF_DANIEL = 'daniel.arias@lcg.mx';
 
-// Envía el correo a los destinatarios configurados para esa etapa y lo registra en historial
-async function queueCorreo(tipo, opts, actaId = null) {
+// Obtiene los emails de los responsables de un proyecto (responsables → IDs → emails en DB)
+async function getProyRespEmails(proyectoId) {
+  if (!proyectoId) return [];
   try {
-    const configEtapa = TIPO_A_CONFIG_ETAPA[tipo];
-    if (!configEtapa) return;
-    const pool = await getPool();
-    const [cfgRows] = await pool.execute(
-      'SELECT email FROM config_correos_etapas WHERE etapa = ?', [configEtapa]
+    const pool  = await getPool();
+    const [pr]  = await pool.execute('SELECT responsables FROM proyectos WHERE id = ?', [proyectoId]);
+    if (!pr.length) return [];
+    const resps = typeof pr[0].responsables === 'string'
+      ? JSON.parse(pr[0].responsables) : (pr[0].responsables || []);
+    const ids = resps.map(r => r.id).filter(Boolean);
+    if (!ids.length) return [];
+    const [ur] = await pool.execute(
+      `SELECT email FROM usuarios WHERE id IN (${ids.map(() => '?').join(',')}) AND activo = 1`, ids
     );
-    if (!cfgRows.length) return;
-    const dest   = cfgRows.map(r => r.email).join(', ');
-    const asunto = opts.subject || '';
-    const html   = opts.html   || '';
+    return ur.map(r => r.email).filter(Boolean);
+  } catch { return []; }
+}
+
+// Envía notificación de correo por etapa y registra en historial
+async function sendNotif(tipo, { meta, item = null, actaId = null }) {
+  try {
+    const proy   = meta.proyectoNombre || '';
+    const mes    = meta.mesNombre || '';
+    const prefix = `[${proy}${proy && mes ? ' · ' : ''}${mes}]`;
+    const num    = item?.num;
+    const nombre = item?.nombre || '';
+    const ownerEmail = item?.owner?.email || null;
+
+    const respProy = await getProyRespEmails(meta.proyecto_id || null);
+
+    let to = [], subject = '', html = '';
+
+    switch (tipo) {
+      case 'creacion':
+        to      = [NOTIF_ELISA, NOTIF_EDNA, ...respProy];
+        subject = `${prefix} Elaboración completada – #${num}`;
+        html    = `<p>Se completó la elaboración del entregable <strong>#${num} – ${nombre}</strong>, listo para revisión.</p>`;
+        break;
+      case 'observacion_vobo':
+        to      = [ownerEmail, ...respProy].filter(Boolean);
+        subject = `${prefix} Observaciones en entregable #${num}`;
+        html    = `<p>Se encontraron observaciones en el entregable <strong>#${num} – ${nombre}</strong>.</p>`;
+        break;
+      case 'vobo':
+        to      = [ownerEmail, ...respProy].filter(Boolean);
+        subject = `${prefix} VoBo al entregable #${num} – listo para impresión y firmas`;
+        html    = `<p>Visto bueno al entregable <strong>#${num} – ${nombre}</strong>, listo para impresión y firmas.</p>`;
+        break;
+      case 'firma_externa_80pct':
+        to      = [NOTIF_DANIEL, NOTIF_ELISA, NOTIF_EDNA];
+        subject = `${prefix} Proyecto al 80% – listo para carpeta y digitalización`;
+        html    = `<p>El proyecto <strong>${proy}</strong> llegó al 80%. Todos los entregables tienen Firma Externa completada. Listo para <strong>Carpeta y Digitalización</strong>.</p>`;
+        break;
+      case 'carpeta':
+      case 'carpeta_bulk':
+        to      = [...respProy, NOTIF_ELISA, NOTIF_EDNA];
+        subject = `${prefix} Carpeta y digitalización${num ? ' – #' + num : ''}`;
+        html    = num
+          ? `<p>El entregable <strong>#${num} – ${nombre}</strong> elaboró carpeta y digitalización. Favor de elaborar oficio.</p>`
+          : `<p>Se elaboró carpeta y digitalización del proyecto <strong>${proy || mes}</strong>. Favor de elaborar oficio.</p>`;
+        break;
+      case 'acuse':
+      case 'acuse_pdf':
+      case 'acuse_bulk':
+        to      = [NOTIF_ELISA, NOTIF_EDNA];
+        subject = `${prefix} Acuse${num ? ' #' + num : ''} subido – favor de revisarlo`;
+        html    = num
+          ? `<p>Acuse <strong>#${num} – ${nombre}</strong> subido, favor de revisarlo.</p>`
+          : `<p>Acuse del acta <strong>${proy || mes}</strong> subido, favor de revisarlo.</p>`;
+        break;
+      case 'vobo_final_bulk':
+        to      = [NOTIF_PACO];
+        subject = `${prefix} Proyecto liberado al 100%`;
+        html    = `<p>Proyecto <strong>${proy}</strong> liberado. Mes <strong>${mes}</strong>.</p>`;
+        break;
+      default:
+        return;
+    }
+
+    if (!to.length) return;
+    const toUnique = [...new Set(to)].join(', ');
     let enviado = 0;
     try {
-      await transporter.sendMail({ from: process.env.SMTP_FROM, to: notifyTo(dest), subject: asunto, html });
+      await transporter.sendMail({ from: process.env.SMTP_FROM, to: notifyTo(toUnique), subject, html });
       enviado = 1;
     } catch (se) { console.warn('⚠ correo no enviado:', se.message); }
+    const pool = await getPool();
     await pool.execute(
       'INSERT INTO correos_entregables (tipo, acta_id, destinatarios, asunto, html, enviado, fecha_envio) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [tipo, actaId || null, dest, asunto, html, enviado, enviado ? new Date() : null]
+      [tipo, actaId || null, toUnique, subject, html, enviado, enviado ? new Date() : null]
     );
-  } catch (e) { console.warn('⚠ queueCorreo:', e.message); }
+  } catch (e) { console.warn('⚠ sendNotif:', e.message); }
+}
+
+// Resuelve emails a IDs de usuarios activos
+async function emailsAIds(pool, emails) {
+  const unique = [...new Set(emails.filter(Boolean))];
+  if (!unique.length) return new Set();
+  const [rows] = await pool.execute(
+    `SELECT id FROM usuarios WHERE email IN (${unique.map(() => '?').join(',')}) AND activo = 1`, unique
+  );
+  return new Set(rows.map(r => r.id));
+}
+
+// Crea notificaciones in-app con los mismos destinatarios que sendNotif
+async function sendInApp(tipo, { meta, item = null }) {
+  try {
+    const pool   = await getPool();
+    const proy   = meta.proyectoNombre || '';
+    const mes    = meta.mesNombre || '';
+    const num    = item?.num;
+    const nombre = item?.nombre || '';
+    const ownerEmail = item?.owner?.email || null;
+    const proyId = meta.proyecto_id || null;
+
+    // IDs de responsables del proyecto (siempre disponibles, se incluyen o no según el tipo)
+    const respProyIds = new Set();
+    if (proyId) {
+      const [pr] = await pool.execute('SELECT responsables FROM proyectos WHERE id = ?', [proyId]);
+      if (pr[0]?.responsables) {
+        const resps = typeof pr[0].responsables === 'string'
+          ? JSON.parse(pr[0].responsables) : (pr[0].responsables || []);
+        resps.forEach(r => { if (Number(r.id)) respProyIds.add(Number(r.id)); });
+      }
+    }
+
+    const linkBase = `modulo-entregables.html?proyecto_id=${encodeURIComponent(proyId || '')}&mes=${encodeURIComponent(meta.mes || '')}`;
+    const linkItem = num ? `${linkBase}&item=${encodeURIComponent(num)}` : linkBase;
+
+    let emailsExtra = [], baseIds = new Set(respProyIds);
+    let titulo = '', mensaje = '', link_url = linkBase;
+
+    switch (tipo) {
+      case 'creacion':
+        emailsExtra = [NOTIF_ELISA, NOTIF_EDNA];
+        titulo   = `Elaboración completada – #${num}`;
+        mensaje  = `${proy} · ${mes} · "${nombre}"`;
+        link_url = linkItem;
+        break;
+      case 'observacion_vobo':
+        if (ownerEmail) emailsExtra.push(ownerEmail);
+        titulo   = `Entregable #${num} con observaciones`;
+        mensaje  = `${proy} · ${mes} · "${nombre}"`;
+        link_url = linkItem;
+        break;
+      case 'vobo':
+        if (ownerEmail) emailsExtra.push(ownerEmail);
+        titulo   = `VoBo otorgado – #${num}`;
+        mensaje  = `${proy} · ${mes} · "${nombre}" – listo para impresión y firmas`;
+        link_url = linkItem;
+        break;
+      case 'firma_externa_80pct':
+        emailsExtra = [NOTIF_DANIEL, NOTIF_ELISA, NOTIF_EDNA];
+        baseIds  = new Set();
+        titulo   = `Proyecto al 80%`;
+        mensaje  = `${proy} · ${mes} – Listo para Carpeta y Digitalización`;
+        break;
+      case 'carpeta':
+      case 'carpeta_bulk':
+        emailsExtra = [NOTIF_ELISA, NOTIF_EDNA];
+        titulo   = `Carpeta y digitalización${num ? ' – #' + num : ''}`;
+        mensaje  = `${proy} · ${mes}${nombre ? ' · "' + nombre + '"' : ''} – Favor de elaborar oficio`;
+        link_url = num ? linkItem : linkBase;
+        break;
+      case 'acuse':
+      case 'acuse_pdf':
+      case 'acuse_bulk':
+        emailsExtra = [NOTIF_ELISA, NOTIF_EDNA];
+        baseIds  = new Set();
+        titulo   = `Acuse${num ? ' #' + num : ''} subido`;
+        mensaje  = `${proy} · ${mes}${nombre ? ' · "' + nombre + '"' : ''} – Favor de revisarlo`;
+        link_url = num ? linkItem : linkBase;
+        break;
+      case 'vobo_final_bulk':
+        emailsExtra = [NOTIF_PACO];
+        baseIds  = new Set();
+        titulo   = `Proyecto liberado al 100%`;
+        mensaje  = `${proy} · ${mes}`;
+        break;
+      default:
+        return;
+    }
+
+    const resolvedIds = await emailsAIds(pool, emailsExtra);
+    const allIds = new Set([...baseIds, ...resolvedIds]);
+    if (!allIds.size) return;
+
+    const metaPayload = {
+      proyecto_id: proyId, proyecto_nombre: proy,
+      mes: meta.mes, mes_nombre: mes, año: meta.año,
+      ...(num != null ? { item_num: num, item_nombre: nombre, entregable_id: meta.id } : {}),
+    };
+    for (const uid of allIds) {
+      await crearNotificacion({ usuario_id: uid, tipo, titulo, mensaje, link_url, meta: metaPayload });
+    }
+  } catch (e) { console.warn('⚠ sendInApp:', e.message); }
+}
+
+/* ── Server-Sent Events: tiempo real en módulo entregables ── */
+const sseClients = new Set();
+function broadcastEntregable(actaId) {
+  const payload = `event: entregable_updated\ndata: ${JSON.stringify({ actaId })}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(payload); } catch { sseClients.delete(client); }
+  }
 }
 
 // Middleware: exige que el solicitante tenga la facultad (tipo 'mod' por defecto)
@@ -1143,6 +1315,20 @@ app.post('/api/entregables/upload', requireFacultad('carga_entregables'), entreg
   res.json({ success: true, meta });
 });
 
+/* ── Entregables: SSE stream ─────────────────────── */
+app.get('/api/entregables/events', (req, res) => {
+  res.set({
+    'Content-Type':      'text/event-stream',
+    'Cache-Control':     'no-cache',
+    'Connection':        'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders();
+  res.write('data: connected\n\n');
+  sseClients.add(res);
+  req.on('close', () => sseClients.delete(res));
+});
+
 /* ── Entregables: listar ────────────────────────── */
 app.get('/api/entregables', (_req, res) => {
   try {
@@ -1301,56 +1487,12 @@ app.patch('/api/entregables/:id/items/:num/etapa', requireFacultad('modulo_entre
     if (!item.etapas[etapa].fecha_cambio && (completada || en_proceso === true))
       item.etapas[etapa].fecha_cambio = new Date().toISOString();
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
 
-    // Enviar correo de notificación a destinatarios configurados
+    // Correo + notificación in-app
     if (completada) {
-      const proy   = meta.proyectoNombre || '';
-      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      const mailMap = {
-        creacion: {
-          subject: `${prefix} Elaboración terminada – #${item.num}`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha completado la etapa de <strong>Elaboración</strong>. Favor de revisar.</p>`
-        },
-        revision: {
-          subject: `${prefix} Revisión completada – #${item.num}`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha completado la etapa de <strong>Revisión</strong>.</p>`
-        },
-        vobo: {
-          subject: `${prefix} VoBo otorgado – #${item.num}`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha recibido <strong>Visto Bueno</strong>.</p>`
-        },
-        impresion: {
-          subject: `${prefix} Impresión completada – #${item.num}`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha completado la etapa de <strong>Impresión</strong>.</p>`
-        },
-        firma_interna: {
-          subject: `${prefix} Firma Interna completada – #${item.num}`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Interna</strong>.</p>`
-        },
-        firma_externa: {
-          subject: `${prefix} Firma Externa completada – #${item.num}`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> salió de <strong>Firma Externa</strong>.</p>`
-        },
-        carpeta: {
-          subject: `${prefix} Carpeta y digitalización terminada – #${item.num}`,
-          html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> con número <strong>#${item.num}</strong> ha sido completada.</p>`
-        },
-        acuse: {
-          subject: `${prefix} Acuse pendiente de VoBo – #${item.num}`,
-          html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
-        }
-      };
-      const mailOpts = mailMap[etapa];
-      if (mailOpts) queueCorreo(etapa, mailOpts, req.params.id);
-      // Notificar siempre al owner cuando VOBO es otorgado
-      if (etapa === 'vobo' && item.owner?.email) {
-        transporter.sendMail({
-          from: process.env.SMTP_FROM,
-          to: notifyTo(item.owner.email),
-          subject: `${prefix} Entregable #${item.num} – Visto Bueno otorgado`,
-          html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> ha recibido Visto Bueno.</p>`
-        }).catch(e => console.warn('⚠ vobo owner mail:', e.message));
-      }
+      sendNotif(etapa, { meta, item, actaId: id });
+      sendInApp(etapa, { meta, item });
     }
 
     // Notificación al 80% del acta: cuando todos los items tienen firma_externa completada
@@ -1359,14 +1501,8 @@ app.patch('/api/entregables/:id/items/:num/etapa', requireFacultad('modulo_entre
       if (todosFirmados && !meta.notif_80_sent) {
         meta.notif_80_sent = true;
         fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-        const proy   = meta.proyectoNombre || '';
-        const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-        queueCorreo('firma_externa_80pct', {
-          to: ELISA_NOTIFY,
-          subject: `${prefix} 80% completado — Listo para Carpeta y Digitalización`,
-          html: `<p>Se ha completado el <strong>80%</strong> del proyecto <strong>${proy || meta.mesNombre}</strong>.</p>
-                 <p>Todos los entregables tienen Firma Externa completada. Listo para <strong>Carpeta y Digitalización</strong>.</p>`
-        }, req.params.id);
+        sendNotif('firma_externa_80pct', { meta, actaId: id });
+        sendInApp('firma_externa_80pct', { meta });
       } else if (!todosFirmados && meta.notif_80_sent) {
         // Si alguien revierte un firma_externa, reseteamos el flag para que se reenvíe al volver al 100%
         meta.notif_80_sent = false;
@@ -1417,6 +1553,7 @@ app.patch('/api/entregables/:id/items/:num/nombre', requireFacultad('modulo_entr
       meta.items.sort((a, b) => a.num - b.num);
     }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1452,6 +1589,7 @@ app.delete('/api/entregables/:id/items/:num', requireFacultad('modulo_entregable
 
     meta.items.splice(idx, 1);
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1490,6 +1628,7 @@ app.post('/api/entregables/:id/items', requireFacultad('modulo_entregables'), (r
     });
     meta.items.sort((a, b) => a.num - b.num);
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
     res.status(201).json({ success: true, num: assignedNum });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1543,14 +1682,10 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', requireFacultad('modulo_e
     if (!item.etapas[etapa].fecha_cambio) item.etapas[etapa].fecha_cambio = new Date().toISOString();
     if (etapa === 'revision') item.etapas.vobo.rechazado = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(decodeURIComponent(req.params.id));
     if (etapa === 'acuse') {
-      const _proy   = meta.proyectoNombre || '';
-      const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
-      queueCorreo('acuse_pdf', {
-        to: ELISA_NOTIFY,
-        subject: `${_prefix} Acuse pendiente de VoBo – #${item.num}`,
-        html: `<p>Se ha subido el acuse del entregable <strong>#${item.num} – ${item.nombre}</strong>. Favor de dar visto bueno.</p>`
-      }, req.params.id);
+      sendNotif('acuse_pdf', { meta, item, actaId: req.params.id });
+      sendInApp('acuse_pdf', { meta, item });
     }
     res.json({ success: true, pdf: ruta });
   } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
@@ -1620,16 +1755,11 @@ app.patch('/api/entregables/:id/etapa-bulk/carpeta', (req, res) => {
       }
     }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
 
-    // Encolar correo al completar
     if (accion === 'completada') {
-      const proy   = meta.proyectoNombre || '';
-      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      queueCorreo('carpeta_bulk', {
-        to: ELISA_NOTIFY,
-        subject: `${prefix} Carpeta y digitalización terminada (acta completa)`,
-        html: `<p>Carpeta y digitalización del proyecto <strong>${proy || meta.mesNombre}</strong> se completó para todos los entregables del acta.</p>`
-      }, req.params.id);
+      sendNotif('carpeta_bulk', { meta, actaId: id });
+      sendInApp('carpeta_bulk', { meta });
     }
 
     res.json({ success: true });
@@ -1713,16 +1843,11 @@ app.patch('/api/entregables/:id/etapa-bulk/acuse', pdfUpload.single('pdf'), (req
       }
     }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
 
-    // Encolar correo al completar
     if (accion === 'completada') {
-      const proy   = meta.proyectoNombre || '';
-      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      queueCorreo('acuse_bulk', {
-        to: ELISA_NOTIFY,
-        subject: `${prefix} Acuse pendiente de VoBo (acta completa)`,
-        html: `<p>Se ha subido el acuse del acta completa de <strong>${proy || meta.mesNombre}</strong>. Favor de dar visto bueno.</p>`
-      }, req.params.id);
+      sendNotif('acuse_bulk', { meta, actaId: id });
+      sendInApp('acuse_bulk', { meta });
     }
 
     res.json({ success: true, pdf: pdfRuta });
@@ -1784,15 +1909,11 @@ app.patch('/api/entregables/:id/etapa-bulk/vobo_final', (req, res) => {
       }
     }
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(id);
 
     if (accion === 'completada') {
-      const proy   = meta.proyectoNombre || '';
-      const prefix = `[${meta.mesNombre}${proy ? ' · ' + proy : ''}]`;
-      queueCorreo('vobo_final_bulk', {
-        to: ELISA_NOTIFY,
-        subject: `${prefix} VOBO Final otorgado (acta completa)`,
-        html: `<p>Se ha otorgado VOBO Final al acta completa de <strong>${proy || meta.mesNombre}</strong>. Avance: 100%.</p>`
-      }, req.params.id);
+      sendNotif('vobo_final_bulk', { meta, actaId: id });
+      sendInApp('vobo_final_bulk', { meta });
     }
 
     res.json({ success: true });
@@ -1857,70 +1978,10 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     item.etapas.creacion.fecha        = null;
     item.etapas.creacion.en_proceso   = false;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-    // Encolar correo al owner sobre nuevas observaciones
-    if (item.owner?.email) {
-      const _proy   = meta.proyectoNombre || '';
-      const _prefix = `[${meta.mesNombre}${_proy ? ' · ' + _proy : ''}]`;
-      queueCorreo('observacion_vobo', {
-        to: item.owner.email,
-        subject: `${_prefix} Entregable #${item.num} – Nuevas observaciones`,
-        html: `<p>El entregable <strong>#${item.num} – ${item.nombre}</strong> tiene nuevas observaciones de VOBO.</p>
-               <p>Por favor revisa el sistema.</p>`
-      }, req.params.id);
-    }
-    // Notificación in-app: responsable de entregable + responsable(s) de proyecto (dedup)
-    (async () => {
-      try {
-        const pool      = await getPool();
-        const usuariosNotificar = new Set();
-
-        if (item.owner?.email) {
-          const [u] = await pool.execute(
-            'SELECT id FROM usuarios WHERE email = ? AND activo = 1',
-            [item.owner.email.toLowerCase().trim()]
-          );
-          if (u[0]?.id) usuariosNotificar.add(u[0].id);
-        }
-        if (meta.proyecto_id) {
-          const [p] = await pool.execute(
-            'SELECT responsables FROM proyectos WHERE id = ?',
-            [meta.proyecto_id]
-          );
-          if (p[0]?.responsables) {
-            try {
-              const resps = JSON.parse(p[0].responsables);
-              for (const r of resps) {
-                if (r && Number(r.id)) usuariosNotificar.add(Number(r.id));
-              }
-            } catch {}
-          }
-        }
-
-        const titulo  = `Entregable #${item.num} con observaciones`;
-        const mensaje = `${meta.proyectoNombre || 'Proyecto'} · ${meta.mesNombre || ''} · "${item.nombre}"`;
-        const linkUrl = `modulo-entregables.html?proyecto_id=${encodeURIComponent(meta.proyecto_id || '')}&mes=${encodeURIComponent(meta.mes || '')}&item=${encodeURIComponent(item.num)}`;
-        const metaPayload = {
-          proyecto_id:     meta.proyecto_id,
-          proyecto_nombre: meta.proyectoNombre,
-          mes:             meta.mes,
-          mes_nombre:      meta.mesNombre,
-          año:             meta.año,
-          item_num:        item.num,
-          item_nombre:     item.nombre,
-          entregable_id:   meta.id,
-        };
-        for (const uid of usuariosNotificar) {
-          await crearNotificacion({
-            usuario_id: uid,
-            tipo:       'observacion_entregable',
-            titulo,
-            mensaje,
-            link_url:   linkUrl,
-            meta:       metaPayload,
-          });
-        }
-      } catch (err) { console.warn('⚠ Notif obs:', err.message); }
-    })();
+    broadcastEntregable(decodeURIComponent(req.params.id));
+    // Notificar sobre nuevas observaciones
+    sendNotif('observacion_vobo', { meta, item, actaId: decodeURIComponent(req.params.id) });
+    sendInApp('observacion_vobo', { meta, item });
     res.json({ success: true, imagen });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -1960,6 +2021,7 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     const todasAceptadas = item.etapas.vobo.observaciones.every(o => o.estado === 'aceptada');
     item.etapas.vobo.rechazado = !todasAceptadas;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(decodeURIComponent(req.params.id));
     res.json({ success: true, rechazado: item.etapas.vobo.rechazado });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
@@ -2019,6 +2081,7 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx/reply', obsIm
     };
     obs.replies.push(reply);
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    broadcastEntregable(decodeURIComponent(req.params.id));
     res.json({ success: true, reply });
   } catch (err) { cleanup(); res.status(500).json({ success: false, error: err.message }); }
 });
