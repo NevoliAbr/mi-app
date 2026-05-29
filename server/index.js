@@ -1692,17 +1692,14 @@ app.post('/api/entregables/:id/items/:num/pdf/:etapa', requireFacultad('modulo_e
 });
 
 /* ── Entregables: Carpeta/Acuse bulk (acta completa) ── */
-const BULK_ALLOWED = ['elisa.mendez@lcg.mx', 'daniel.arias@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
 
 // Carpeta: marcar en_proceso / completada para TODOS los items del acta
 app.patch('/api/entregables/:id/etapa-bulk/carpeta', (req, res) => {
   try {
     const id = decodeURIComponent(req.params.id);
-    const { accion, usuario_email, usuario_nombre } = req.body; // accion: 'en_proceso' | 'completada' | 'reset'
+    const { accion, usuario_email, usuario_nombre } = req.body;
     if (!['en_proceso', 'completada', 'reset'].includes(accion))
       return res.status(400).json({ success: false, error: 'Acción inválida.' });
-    if (!usuario_email || !BULK_ALLOWED.includes(usuario_email.toLowerCase()))
-      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Daniel Arias pueden gestionar Carpeta y Dig.' });
 
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'Acta no encontrada.' });
@@ -1777,10 +1774,6 @@ app.patch('/api/entregables/:id/etapa-bulk/acuse', pdfUpload.single('pdf'), (req
     const cleanup = () => { if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); };
 
     if (!['en_proceso', 'completada', 'reset'].includes(accion)) { cleanup(); return res.status(400).json({ success: false, error: 'Acción inválida.' }); }
-    if (!usuario_email || !BULK_ALLOWED.includes(usuario_email.toLowerCase())) {
-      cleanup();
-      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Daniel Arias pueden gestionar Acuse.' });
-    }
 
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) { cleanup(); return res.status(404).json({ success: false, error: 'Acta no encontrada.' }); }
@@ -1857,17 +1850,13 @@ app.patch('/api/entregables/:id/etapa-bulk/acuse', pdfUpload.single('pdf'), (req
   }
 });
 
-// VOBO Final: solo Elisa (+ Nevoli para pruebas). Marca completado a todos los items del acta.
-const VOBO_FINAL_ALLOWED = ['elisa.mendez@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
-
+// VOBO Final: marcar completado a todos los items del acta
 app.patch('/api/entregables/:id/etapa-bulk/vobo_final', (req, res) => {
   try {
     const id = decodeURIComponent(req.params.id);
     const { accion, usuario_email, usuario_nombre } = req.body;
     if (!['en_proceso', 'completada', 'reset'].includes(accion))
       return res.status(400).json({ success: false, error: 'Acción inválida.' });
-    if (!usuario_email || !VOBO_FINAL_ALLOWED.includes(usuario_email.toLowerCase()))
-      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez puede dar VOBO Final.' });
 
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
     if (!fs.existsSync(metaPath)) return res.status(404).json({ success: false, error: 'Acta no encontrada.' });
