@@ -104,6 +104,46 @@
     }
     #pdf-preview-frame { flex:1; border:none; width:100%; }
 
+    /* ── Botón firmantes cliente ── */
+    .firm-popup-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA;
+      border-radius:14px; padding:4px 12px; font-family:inherit;
+      font-size:11px; font-weight:800; cursor:pointer;
+      transition:background .15s, border-color .15s;
+    }
+    .firm-popup-btn:hover { background:#FFEDD5; border-color:#FDBA74; }
+
+    /* ── Modal firmantes ── */
+    .firm-overlay {
+      display:none; position:fixed; inset:0; z-index:2000;
+      background:rgba(0,0,0,.45); align-items:center; justify-content:center;
+    }
+    .firm-overlay.open { display:flex; }
+    .firm-modal {
+      background:#fff; border-radius:16px; width:100%; max-width:480px;
+      box-shadow:0 24px 64px rgba(0,0,0,.2); overflow:hidden;
+    }
+    .firm-modal-head {
+      background:linear-gradient(135deg,#003E66,#005D97);
+      padding:18px 24px; display:flex; align-items:center; justify-content:space-between;
+    }
+    .firm-modal-title { font-size:15px; font-weight:900; color:#fff; }
+    .firm-modal-close {
+      background:none; border:none; color:rgba(255,255,255,.6);
+      font-size:20px; cursor:pointer; line-height:1; padding:0 4px;
+    }
+    .firm-modal-close:hover { color:#fff; }
+    .firm-modal-body { padding:20px 24px; display:flex; flex-direction:column; gap:12px; max-height:60vh; overflow-y:auto; }
+    .firm-card {
+      background:#FFF7ED; border:1px solid #FED7AA;
+      border-radius:10px; padding:14px 16px;
+    }
+    .firm-card-nombre { font-size:14px; font-weight:800; color:#1A1A1A; margin-bottom:4px; }
+    .firm-card-detail { display:flex; flex-direction:column; gap:3px; }
+    .firm-card-row { font-size:12px; color:#6B7280; font-weight:600; }
+    .firm-card-row span { color:#9A3412; font-weight:700; }
+
     @media (max-width:700px) {
       .page-header { padding:24px 16px; }
       main { padding:20px 12px 40px; }
@@ -153,6 +193,17 @@
   </div>
 </main>
 
+<!-- Modal Firmantes Cliente -->
+<div class="firm-overlay" id="firm-overlay">
+  <div class="firm-modal">
+    <div class="firm-modal-head">
+      <span class="firm-modal-title" id="firm-modal-title">Firmantes Cliente</span>
+      <button class="firm-modal-close" id="firm-modal-close">✕</button>
+    </div>
+    <div class="firm-modal-body" id="firm-modal-body"></div>
+  </div>
+</div>
+
 <!-- PDF preview -->
 <div id="pdf-preview-panel">
   <div id="pdf-preview-bar">Vista previa — PDF</div>
@@ -198,7 +249,9 @@ function render(list) {
       : `<span class="small">—</span>`;
     const firmCli = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente : [];
     const firmCliHtml = firmCli.length
-      ? `<div class="resp-chips">${firmCli.map(f => `<span class="firm-ext-chip">${escH(f.nombre || '')}</span>`).join('')}</div>`
+      ? `<button class="firm-popup-btn" data-firmantes="${escH(JSON.stringify(firmCli))}" data-proyecto="${escH(p.nombre || '')}">
+           👥 ${firmCli.length} firmante${firmCli.length !== 1 ? 's' : ''}
+         </button>`
       : `<span class="small">—</span>`;
     const pdfHtml = p.pdf_url
       ? `<a class="pdf-link" href="${escH(p.pdf_url)}" data-pdf-url="${escH(p.pdf_url)}" target="_blank" rel="noopener" download>📄 PDF</a>`
@@ -271,6 +324,38 @@ async function load() {
 })();
 
 load();
+
+/* ── Modal Firmantes Cliente ── */
+(function () {
+  const overlay = document.getElementById('firm-overlay');
+  const body    = document.getElementById('firm-modal-body');
+  const title   = document.getElementById('firm-modal-title');
+
+  function openModal(firmantes, proyecto) {
+    title.textContent = `Firmantes Cliente — ${proyecto}`;
+    body.innerHTML = firmantes.map(f => `
+      <div class="firm-card">
+        <div class="firm-card-nombre">${escH(f.nombre || '—')}</div>
+        <div class="firm-card-detail">
+          ${f.cargo ? `<div class="firm-card-row">Cargo: <span>${escH(f.cargo)}</span></div>` : ''}
+          ${f.rol   ? `<div class="firm-card-row">Rol: <span>${escH(f.rol)}</span></div>`   : ''}
+        </div>
+      </div>`).join('');
+    overlay.classList.add('open');
+  }
+
+  document.getElementById('firm-modal-close').addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  document.getElementById('tbody').addEventListener('click', e => {
+    const btn = e.target.closest('.firm-popup-btn');
+    if (!btn) return;
+    try {
+      const firmantes = JSON.parse(btn.dataset.firmantes);
+      openModal(firmantes, btn.dataset.proyecto);
+    } catch {}
+  });
+})();
 </script>
 </body>
 </html>
