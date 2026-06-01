@@ -1995,23 +1995,33 @@ app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res)
     const obs = item.etapas.vobo.observaciones[obsIdx];
     if (!obs) return res.status(404).json({ success: false, error: 'Observación no encontrada.' });
     obs.estado = estado;
+    const ahora = new Date().toISOString();
     if (estado === 'aceptada') {
       obs.aceptado_por = usuario_nombre || null;
-      obs.aceptado_en  = new Date().toISOString();
+      obs.aceptado_en  = ahora;
       obs.rechazado_por = null;
       obs.rechazado_en  = null;
     } else {
       obs.aceptado_por = null;
       obs.aceptado_en  = null;
       obs.rechazado_por = usuario_nombre || null;
-      obs.rechazado_en  = new Date().toISOString();
+      obs.rechazado_en  = ahora;
     }
+    // Registrar la decisión en el hilo cronológico
+    if (!Array.isArray(obs.replies)) obs.replies = [];
+    const decisionEntry = {
+      tipo:   'decision',
+      estado: estado,
+      autor:  { email: usuario_email, nombre: usuario_nombre || usuario_email },
+      fecha:  ahora,
+    };
+    obs.replies.push(decisionEntry);
     // Ya NO reseteamos creacion/revision al rechazar — la conversación continúa
     const todasAceptadas = item.etapas.vobo.observaciones.every(o => o.estado === 'aceptada');
     item.etapas.vobo.rechazado = !todasAceptadas;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     broadcastEntregable(decodeURIComponent(req.params.id));
-    res.json({ success: true, rechazado: item.etapas.vobo.rechazado });
+    res.json({ success: true, rechazado: item.etapas.vobo.rechazado, decisionEntry });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 

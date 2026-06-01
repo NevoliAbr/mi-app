@@ -381,6 +381,24 @@
     }
     .vobo-reply-form button:hover { background:#005D97; }
     .vobo-reply-form button.img { background:rgba(255,255,255,.06); padding:7px 10px; }
+    .vobo-reply.decision {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      padding:7px 14px; border-radius:6px; background:none; border:none;
+    }
+    .vobo-reply.decision-aceptada {
+      background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25);
+    }
+    .vobo-reply.decision-rechazada {
+      background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.2);
+    }
+    .decision-icon { font-size:13px; font-weight:900; flex-shrink:0; }
+    .decision-aceptada .decision-icon { color:#34D399; }
+    .decision-rechazada .decision-icon { color:#F87171; }
+    .decision-label { font-size:11px; font-weight:900; letter-spacing:.5px; flex-shrink:0; }
+    .decision-aceptada .decision-label { color:#34D399; }
+    .decision-rechazada .decision-label { color:#F87171; }
+    .decision-by   { font-size:10px; color:rgba(255,255,255,.5); font-weight:700; }
+    .decision-date { font-size:9px;  color:rgba(255,255,255,.3); font-weight:600; margin-left:auto; }
     .vobo-reply-img-preview {
       display:none; margin:6px 0 0 14px; position:relative; width:90px;
     }
@@ -1307,6 +1325,17 @@
 
     /* Clicks en etapas */
     const OBS_DECIDE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+    const ACUSE_ALLOWED      = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'daniel.arias@lcg.mx'];
+
+    // ¿puede el usuario actual gestionar el Acuse para un acta concreta?
+    function canHandleAcuse(acta) {
+      if (puedeModAcuse) return true;
+      const email = (sessionUser().email || '').toLowerCase();
+      if (ACUSE_ALLOWED.includes(email)) return true;
+      // responsable del proyecto asignado al acta
+      const proy = allProyectosData.find(p => String(p.id) === String(acta?.proyecto_id));
+      return !!(proy?.responsables?.some(r => Number(r.id) === Number(sessionUser().id)));
+    }
     function esObsDecider() {
       return OBS_DECIDE_ALLOWED.includes((sessionUser().email || '').toLowerCase());
     }
@@ -1344,7 +1373,8 @@
     function renderActaActions() {
       const wrap = document.getElementById('acta-actions');
       const acta = entregablesData.find(e => e.id === activeId);
-      if (!acta || !acta.items?.length || (!puedeVerCarpeta && !puedeVerAcuse && !puedeVerVoboFinal)) {
+      const acusePermiso = puedeVerAcuse || canHandleAcuse(acta);
+      if (!acta || !acta.items?.length || (!puedeVerCarpeta && !acusePermiso && !puedeVerVoboFinal)) {
         wrap.style.display='none'; wrap.innerHTML=''; return;
       }
 
@@ -1397,8 +1427,8 @@
       if (puedeVerCarpeta) {
         html += bloque({ key:'carpeta',    titulo:'Carpeta y Dig.', est:carpEst,  condicionLista:firmaExtAll, pdfPath:null,     canMod:puedeModCarpeta });
       }
-      if (puedeVerAcuse) {
-        html += bloque({ key:'acuse',      titulo:'Acuse',          est:acuseEst, condicionLista:carpAll,     pdfPath:acusePdf, canMod:puedeModAcuse });
+      if (acusePermiso) {
+        html += bloque({ key:'acuse',      titulo:'Acuse',          est:acuseEst, condicionLista:carpAll,     pdfPath:acusePdf, canMod:canHandleAcuse(acta) });
       }
       if (puedeVerVoboFinal) {
         html += bloque({ key:'vobo_final', titulo:'VOBO Final',     est:voboEst,  condicionLista:acuseAll,    pdfPath:null,     canMod:puedeModVoboFinal });
@@ -1425,7 +1455,7 @@
 
       // Permisos
       const tienePermiso = key === 'vobo_final' ? puedeModVoboFinal
-                         : key === 'acuse'      ? puedeModAcuse
+                         : key === 'acuse'      ? canHandleAcuse(acta)
                          :                       puedeModCarpeta;
       if (!tienePermiso) {
         Swal.fire({ icon:'error', title:'Sin permiso',
@@ -1894,6 +1924,13 @@ if (btn.dataset.pdf === 'true') {
             ob.rechazado_por = su.nombre || su.email || null;
             ob.rechazado_en  = new Date().toISOString();
           }
+          // Agregar la decisión al hilo local
+          if (!Array.isArray(ob.replies)) ob.replies = [];
+          ob.replies.push(data.decisionEntry || {
+            tipo: 'decision', estado,
+            autor: { email: su.email, nombre: su.nombre || su.email },
+            fecha: new Date().toISOString(),
+          });
           item.etapas.vobo.rechazado = data.rechazado;
         }
         renderVoboObs();
@@ -1975,6 +2012,17 @@ if (btn.dataset.pdf === 'true') {
       function renderReplies(o, idx) {
         const replies = Array.isArray(o.replies) ? o.replies : [];
         const repliesHtml = replies.map(r => {
+          // Entrada de decisión (aceptado/rechazado)
+          if (r.tipo === 'decision') {
+            const esAcep = r.estado === 'aceptada';
+            return `<div class="vobo-reply decision decision-${r.estado}">
+              <span class="decision-icon">${esAcep ? '✓' : '✗'}</span>
+              <span class="decision-label">${esAcep ? 'ACEPTADO' : 'RECHAZADO'}</span>
+              <span class="decision-by">${escH(r.autor?.nombre || r.autor?.email || '')}</span>
+              <span class="decision-date">${new Date(r.fecha).toLocaleString('es-MX')}</span>
+            </div>`;
+          }
+          // Respuesta normal
           const esElisa = OBS_DECIDE_ALLOWED.includes((r.autor?.email || '').toLowerCase());
           return `<div class="vobo-reply ${esElisa ? 'is-elisa' : ''}">
             <div class="vobo-obs-author"><span class="author-dot"></span>${escH(r.autor?.nombre || r.autor?.email || 'Anónimo')}</div>
@@ -2030,8 +2078,6 @@ if (btn.dataset.pdf === 'true') {
             if (puedeDecidir && !aprobado) {
               if (est === 'aceptada') {
                 actionsHtml = `<button class="voa-btn reject-ghost" data-idx="${idx}" data-estado="rechazada">✗ Rechazar</button>`;
-              } else if (est === 'rechazada') {
-                actionsHtml = `<button class="voa-btn accept" data-idx="${idx}" data-estado="aceptada">✓ Aceptar</button>`;
               } else {
                 actionsHtml = `<button class="voa-btn accept" data-idx="${idx}" data-estado="aceptada">✓ Aceptar</button>
                                <button class="voa-btn reject" data-idx="${idx}" data-estado="rechazada">✗ Rechazar</button>`;
