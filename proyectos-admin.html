@@ -444,13 +444,9 @@
       const f = _sessionPA && _sessionPA.facultades && _sessionPA.facultades['admin_proyectos'];
       if (!_sessionPA || !f || !f.ver) window.location.href = 'index.html';
     })();
-    // Se lee en cada render para capturar el refresh asíncrono de navbar.js
-    function puedeModProyectos() {
-      try {
-        const s = JSON.parse(localStorage.getItem('session') || 'null');
-        return !!(s && s.facultades && s.facultades['admin_proyectos'] && s.facultades['admin_proyectos'].mod);
-      } catch { return false; }
-    }
+    // Se resuelve desde el servidor al cargar, no desde localStorage (evita timing con navbar.js)
+    let _canModProyectos = false;
+    function puedeModProyectos() { return _canModProyectos; }
 
     let allProyectos = [];
     let allUsuarios  = [];
@@ -550,15 +546,24 @@
     /* ── Cargar ── */
     async function loadProyectos() {
       try {
+        // Resolver facultades directamente del servidor (no depende de localStorage)
+        if (_sessionPA && _sessionPA.id) {
+          try {
+            const rf = await fetch(`${API}/api/usuarios/${_sessionPA.id}/facultades`);
+            const df = await rf.json();
+            if (df.success && df.facultades) {
+              _canModProyectos = !!(df.facultades['admin_proyectos']?.mod);
+            }
+          } catch {}
+        }
         const res  = await fetch(`${API}/api/admin/proyectos`);
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
         allProyectos = data.proyectos;
         updateStats(allProyectos);
         renderTable(allProyectos);
-        // Actualizar visibilidad de btn-nuevo con facultades ya refrescadas
         const btnNuevo = document.getElementById('btn-nuevo');
-        if (btnNuevo) btnNuevo.style.display = puedeModProyectos() ? '' : 'none';
+        if (btnNuevo) btnNuevo.style.display = _canModProyectos ? '' : 'none';
       } catch (err) {
         document.getElementById('proj-tbody').innerHTML =
           `<tr><td colspan="11" class="td-center" style="color:#C41010">Error al cargar: ${err.message}</td></tr>`;
