@@ -444,7 +444,13 @@
       const f = _sessionPA && _sessionPA.facultades && _sessionPA.facultades['admin_proyectos'];
       if (!_sessionPA || !f || !f.ver) window.location.href = 'index.html';
     })();
-    const puedeModProyectos = !!(_sessionPA && _sessionPA.facultades && _sessionPA.facultades['admin_proyectos'] && _sessionPA.facultades['admin_proyectos'].mod);
+    // Se lee en cada render para capturar el refresh asíncrono de navbar.js
+    function puedeModProyectos() {
+      try {
+        const s = JSON.parse(localStorage.getItem('session') || 'null');
+        return !!(s && s.facultades && s.facultades['admin_proyectos'] && s.facultades['admin_proyectos'].mod);
+      } catch { return false; }
+    }
 
     let allProyectos = [];
     let allUsuarios  = [];
@@ -507,7 +513,7 @@
         const fiChips = fi.map(f => `<div class="firmante-chip"><strong>${esc(f.nombre||'—')}</strong><span>${esc(f.rol||'—')}</span></div>`).join('');
         const pdfCell = p.pdf_url
           ? `<button class="btn-pdf-view" data-pdf-url="${esc(p.pdf_url)}" data-pdf-id="${p.id}">📄 Ver PDF</button>`
-          : (puedeModProyectos
+          : (puedeModProyectos()
               ? `<label class="btn-pdf-upload" title="Subir PDF">📎 Subir<input type="file" accept=".pdf" data-proy-id="${p.id}" style="display:none"></label>`
               : '<span style="color:#9CA3AF;font-size:12px">—</span>');
         const detailRow = hasFirmas ? `
@@ -531,7 +537,7 @@
           <td><span class="badge ${esActivo(p) ? 'badge-activo' : 'badge-inactivo'}"${p.activo && !esActivo(p) ? ' title="Inactivo: falta fecha de vigencia"' : ''}>${esActivo(p) ? '● Activo' : '○ Inactivo'}</span></td>
           <td>
             <div class="td-actions">
-              ${puedeModProyectos ? `
+              ${puedeModProyectos() ? `
               <button class="btn-action btn-edit"   title="Editar"   data-id="${p.id}" data-action="edit">✏️</button>
               <button class="btn-action btn-toggle" title="${p.activo ? 'Desactivar' : 'Activar'}" data-id="${p.id}" data-action="toggle" data-activo="${p.activo ? 1 : 0}">${p.activo ? '🔒' : '🔓'}</button>
               <button class="btn-action btn-delete" title="Eliminar" data-id="${p.id}" data-action="delete" data-nombre="${esc(p.nombre)}">🗑️</button>
@@ -550,6 +556,9 @@
         allProyectos = data.proyectos;
         updateStats(allProyectos);
         renderTable(allProyectos);
+        // Actualizar visibilidad de btn-nuevo con facultades ya refrescadas
+        const btnNuevo = document.getElementById('btn-nuevo');
+        if (btnNuevo) btnNuevo.style.display = puedeModProyectos() ? '' : 'none';
       } catch (err) {
         document.getElementById('proj-tbody').innerHTML =
           `<tr><td colspan="11" class="td-center" style="color:#C41010">Error al cargar: ${err.message}</td></tr>`;
@@ -640,11 +649,9 @@
     }
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    if (puedeModProyectos) {
-      document.getElementById('btn-nuevo').addEventListener('click', () => openModal('Nuevo Proyecto', {}));
-    } else {
-      document.getElementById('btn-nuevo').style.display = 'none';
-    }
+    document.getElementById('btn-nuevo').addEventListener('click', () => {
+      if (puedeModProyectos()) openModal('Nuevo Proyecto', {});
+    });
 
     /* ── Guardar ── */
     document.getElementById('modal-save').addEventListener('click', async () => {
