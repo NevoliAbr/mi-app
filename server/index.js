@@ -50,6 +50,8 @@ const FACULTADES = [
   { clave: 'etapa_carpeta',      nombre: 'Carpeta y Dig.',        descripcion: 'Ver y gestionar etapa Carpeta y Digitalización', grupo: 'entregables', orden: 10 },
   { clave: 'etapa_acuse',        nombre: 'Acuse',                 descripcion: 'Ver y gestionar etapa de Acuse',                 grupo: 'entregables', orden: 11 },
   { clave: 'etapa_vobo_final',   nombre: 'VoBo Final',            descripcion: 'Ver y gestionar etapa de VoBo Final',            grupo: 'entregables', orden: 12 },
+  { clave: 'vobo_responder',     nombre: 'Responder observaciones', descripcion: 'Responder en el hilo de observaciones de VoBo',  grupo: 'entregables', orden: 13 },
+  { clave: 'vobo_decidir',       nombre: 'Aceptar o Rechazar',    descripcion: 'Aceptar o rechazar observaciones de VoBo',       grupo: 'entregables', orden: 14 },
   // Administración (sub-secciones)
   { clave: 'admin_usuarios',     nombre: 'Usuarios',              descripcion: 'Gestión de usuarios',          grupo: 'administracion', orden: 13 },
   { clave: 'admin_proyectos',    nombre: 'Proyectos',             descripcion: 'Administración de proyectos',   grupo: 'administracion', orden: 14 },
@@ -1923,10 +1925,18 @@ const obsImgUpload = multer({
   fileFilter: (_req, file, cb) => cb(null, file.mimetype.startsWith('image/'))
 });
 
-// Solo estos pueden crear observaciones iniciales y aceptar/rechazar
-const OBS_DECIDE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
+async function puedeModFacultad(email, clave) {
+  if (SUPER_USERS.includes(email)) return true;
+  try {
+    const pool = await getPool();
+    const [userRows] = await pool.execute('SELECT id FROM usuarios WHERE email = ? AND activo = 1', [email]);
+    if (!userRows.length) return false;
+    const facs = await resolverFacultades(pool, userRows[0].id, email);
+    return !!(facs[clave]?.mod);
+  } catch { return false; }
+}
 
-app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single('imagen'), (req, res) => {
+app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single('imagen'), async (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
     const num    = parseFloat(req.params.num);
@@ -1936,9 +1946,9 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
     const usuario_nombre = (req.body.usuario_nombre || '').trim();
     const cleanup = () => { if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); };
 
-    if (!OBS_DECIDE_ALLOWED.includes(usuario_email)) {
+    if (!(await puedeModFacultad(usuario_email, 'vobo_decidir'))) {
       cleanup();
-      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Edna Servin pueden crear observaciones.' });
+      return res.status(403).json({ success: false, error: 'Sin permiso para crear observaciones.' });
     }
     if (!texto && !imagen) {
       cleanup();
@@ -1976,15 +1986,15 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion', obsImgUpload.single
 });
 
 /* ── Entregables: aceptar / rechazar observación (solo Elisa o Edna) ── */
-app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', (req, res) => {
+app.patch('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx', async (req, res) => {
   try {
     const id     = decodeURIComponent(req.params.id);
     const num    = parseFloat(req.params.num);
     const obsIdx = parseInt(req.params.obsIdx);
     const { estado, usuario_nombre } = req.body;
     const usuario_email = (req.body.usuario_email || '').toLowerCase().trim();
-    if (!OBS_DECIDE_ALLOWED.includes(usuario_email))
-      return res.status(403).json({ success: false, error: 'Solo Elisa Mendez o Edna Servin pueden aceptar/rechazar observaciones.' });
+    if (!(await puedeModFacultad(usuario_email, 'vobo_decidir')))
+      return res.status(403).json({ success: false, error: 'Sin permiso para aceptar o rechazar observaciones.' });
     if (!['aceptada', 'rechazada'].includes(estado))
       return res.status(400).json({ success: false, error: 'Estado inválido.' });
     const metaPath = path.join(entregablesDir, `${id}.meta.json`);
@@ -2049,8 +2059,9 @@ app.post('/api/entregables/:id/items/:num/vobo/observacion/:obsIdx/reply', obsIm
     const obs = item.etapas.vobo.observaciones[obsIdx];
     if (!obs) { cleanup(); return res.status(404).json({ success: false, error: 'Observación no encontrada.' }); }
 
-    // Validar permiso: Elisa/Edna, owner, o responsable de proyecto
-    let permitido = OBS_DECIDE_ALLOWED.includes(usuario_email);
+    // Validar permiso: vobo_responder, vobo_decidir, owner, o responsable de proyecto
+    let permitido = await puedeModFacultad(usuario_email, 'vobo_responder') ||
+                    await puedeModFacultad(usuario_email, 'vobo_decidir');
     if (!permitido && item.owner?.email && item.owner.email.toLowerCase() === usuario_email) permitido = true;
     if (!permitido && meta.proyecto_id) {
       try {

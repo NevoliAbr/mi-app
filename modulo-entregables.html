@@ -780,6 +780,9 @@
     let puedeVerCarpeta = false, puedeModCarpeta = false;
     let puedeVerAcuse   = false, puedeModAcuse   = false;
     let puedeVerVoboFinal = false, puedeModVoboFinal = false;
+    let puedeVoboResponder = false;
+    let puedeVoboDecidir = false;
+    const OBS_DECIDE_ALLOWED = [];
     (function () {
       const saved = localStorage.getItem('session');
       if (!saved) { window.location.href = 'index.html'; return; }
@@ -796,6 +799,9 @@
         puedeModAcuse     = !!(currentFac['etapa_acuse']?.mod);
         puedeVerVoboFinal = !!(currentFac['etapa_vobo_final']?.ver);
         puedeModVoboFinal = !!(currentFac['etapa_vobo_final']?.mod);
+        puedeVoboResponder = !!(currentFac['vobo_responder']?.mod);
+        puedeVoboDecidir   = !!(currentFac['vobo_decidir']?.mod);
+        if (puedeVoboDecidir && user?.email) OBS_DECIDE_ALLOWED.push(user.email.toLowerCase());
       } catch {
         localStorage.removeItem('session');
         window.location.href = 'index.html';
@@ -1324,8 +1330,7 @@
     });
 
     /* Clicks en etapas */
-    const OBS_DECIDE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'nevoli.gonzalez@lcg.mx'];
-    const ACUSE_ALLOWED      = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'daniel.arias@lcg.mx'];
+    const ACUSE_ALLOWED = ['elisa.mendez@lcg.mx', 'edna.servin@lcg.mx', 'daniel.arias@lcg.mx'];
 
     // ¿puede el usuario actual gestionar el Acuse para un acta concreta?
     function canHandleAcuse(acta) {
@@ -1337,14 +1342,15 @@
       return !!(proy?.responsables?.some(r => Number(r.id) === Number(sessionUser().id)));
     }
     function esObsDecider() {
-      return OBS_DECIDE_ALLOWED.includes((sessionUser().email || '').toLowerCase());
+      return puedeVoboDecidir;
     }
-    // Puede responder en el hilo: Elisa/Edna, dueño del entregable, o responsable del proyecto
+    // Puede responder en el hilo: deciders, dueño del entregable, o responsable del proyecto
     function puedeResponderObs(acta, item) {
       const email = (sessionUser().email || '').toLowerCase();
       const uid   = sessionUser().id;
       if (!email) return false;
-      if (OBS_DECIDE_ALLOWED.includes(email)) return true;
+      if (puedeVoboDecidir) return true;
+      if (puedeVoboResponder) return true;
       if (item?.owner?.email && item.owner.email.toLowerCase() === email) return true;
       if (acta?.proyecto_id) {
         const proy = (allProyectosData || []).find(p => String(p.id) === String(acta.proyecto_id));
