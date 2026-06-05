@@ -1845,14 +1845,29 @@ if (btn.dataset.pdf === 'true') {
     /* Pegar imagen con Ctrl+V */
     function tryPasteImg(e) {
       if (!document.getElementById('vobo-overlay').classList.contains('open')) return;
-      if (document.getElementById('vobo-input').disabled) return;
       const items = Array.from(e.clipboardData?.items || []);
       const img   = items.find(it => it.kind === 'file' && it.type.startsWith('image/'));
-      if (img) {
+      if (!img) return;
+      const file = img.getAsFile();
+      if (!file) return;
+      // Si el foco está en un form de reply, la imagen va a ese reply
+      const replyForm = document.activeElement?.closest('[data-reply-idx]');
+      if (replyForm) {
         e.preventDefault();
-        const file = img.getAsFile();
-        if (file) setObsImg(file);
+        const idx = parseInt(replyForm.dataset.replyIdx);
+        replyImgFiles[idx] = file;
+        const prev = document.getElementById('reply-img-prev-' + idx);
+        if (prev) {
+          const reader = new FileReader();
+          reader.onload = ev => { prev.querySelector('img').src = ev.target.result; prev.classList.add('show'); };
+          reader.readAsDataURL(file);
+        }
+        return;
       }
+      // Si no, va al input principal de nueva observación
+      if (document.getElementById('vobo-input').disabled) return;
+      e.preventDefault();
+      setObsImg(file);
     }
     /* Escuchar en el input (cuando tiene foco) Y en document (cuando no) */
     document.getElementById('vobo-input').addEventListener('paste', tryPasteImg);
@@ -1871,10 +1886,15 @@ if (btn.dataset.pdf === 'true') {
         const idx = parseInt(replyImgBtn.dataset.replyImgBtn);
         const inp = document.createElement('input');
         inp.type = 'file'; inp.accept = 'image/*';
+        inp.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;pointer-events:none;';
+        document.body.appendChild(inp);
         inp.onchange = () => {
-          const f = inp.files[0]; if (!f) return;
+          const f = inp.files[0];
+          document.body.removeChild(inp);
+          if (!f) return;
           replyImgFiles[idx] = f;
           const prev = document.getElementById('reply-img-prev-' + idx);
+          if (!prev) return;
           const reader = new FileReader();
           reader.onload = ev => {
             prev.querySelector('img').src = ev.target.result;
