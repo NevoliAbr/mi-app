@@ -69,7 +69,9 @@
       "Bash(New-Item -ItemType File -Path \"d:\\\\mi-app\\\\iniciar.bat\" -Force)",
       "Bash(Out-Null)",
       "Bash(Set-Content -Path 'd:\\\\mi-app\\\\iniciar.bat' -Encoding utf8 -Value '@echo off *)",
-      "PowerShell(sc query MSSQL$SQLEXPRESS | Select-String \"STATE\")"
+      "PowerShell(sc query MSSQL$SQLEXPRESS | Select-String \"STATE\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Desarrollador web\\Downloads"
