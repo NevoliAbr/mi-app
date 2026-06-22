@@ -22,6 +22,8 @@ function getMysqlPool() {
     waitForConnections: true,
     connectionLimit:    10,
     timezone:           '+00:00',
+    ssl:                false,
+    connectTimeout:     30000,
   });
   mysqlPool.on('error', err => console.error('⚠ Error pool MySQL:', err.message));
   return mysqlPool;
