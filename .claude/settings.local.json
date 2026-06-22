@@ -65,7 +65,10 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST \"http://localhost:3001/api/avisos\" -H \"X-User-Id: 1\" -H \"Content-Type: application/json\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X PUT \"http://localhost:3001/api/admin/usuarios/1/facultades\" -H \"X-User-Id: 1\" -H \"Content-Type: application/json\" -d '{\"facultades\":[]}')",
       "Bash(curl -s http://localhost:3001/navbar.js)",
-      "Bash(curl -s -D - -o /dev/null http://localhost:3001/navbar.js)"
+      "Bash(curl -s -D - -o /dev/null http://localhost:3001/navbar.js)",
+      "Bash(New-Item -ItemType File -Path \"d:\\\\mi-app\\\\iniciar.bat\" -Force)",
+      "Bash(Out-Null)",
+      "Bash(Set-Content -Path 'd:\\\\mi-app\\\\iniciar.bat' -Encoding utf8 -Value '@echo off *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Desarrollador web\\Downloads"
