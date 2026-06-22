@@ -68,7 +68,8 @@
       "Bash(curl -s -D - -o /dev/null http://localhost:3001/navbar.js)",
       "Bash(New-Item -ItemType File -Path \"d:\\\\mi-app\\\\iniciar.bat\" -Force)",
       "Bash(Out-Null)",
-      "Bash(Set-Content -Path 'd:\\\\mi-app\\\\iniciar.bat' -Encoding utf8 -Value '@echo off *)"
+      "Bash(Set-Content -Path 'd:\\\\mi-app\\\\iniciar.bat' -Encoding utf8 -Value '@echo off *)",
+      "PowerShell(sc query MSSQL$SQLEXPRESS | Select-String \"STATE\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\Desarrollador web\\Downloads"
