@@ -444,8 +444,8 @@ app.get('/api/test', async (_req, res) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.execute('SELECT 1 AS connected, DATABASE() AS database_name');
-    res.json({ success: true, data: rows[0] });
-  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+    res.json({ success: true, driver: 'mariadb@v2', data: rows[0] });
+  } catch (err) { res.status(500).json({ success: false, driver: 'mariadb@v2', error: err.message }); }
 });
 
 /* ── Proyectos (público) ───────────────────────── */
