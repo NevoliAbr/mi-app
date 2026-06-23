@@ -15,15 +15,23 @@ let mysqlPool = null;
 function getMysqlPool() {
   if (mysqlPool) return mysqlPool;
   const mariadb = require('mariadb');
-  const rawPool = mariadb.createPool({
-    host:            process.env.MYSQL_HOST     || process.env.DB_SERVER || '127.0.0.1',
-    port:            parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
+  const socketPath = process.env.MYSQL_SOCKET;
+  const baseConfig = {
     user:            process.env.MYSQL_USER     || process.env.DB_USER   || 'root',
     password:        process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
     database:        process.env.MYSQL_DATABASE || process.env.DB_NAME   || 'mibase',
     connectionLimit: 10,
     bigIntAsNumber:  true,
-  });
+  };
+  const rawPool = mariadb.createPool(
+    socketPath
+      ? { ...baseConfig, socketPath }
+      : { ...baseConfig,
+          host: process.env.MYSQL_HOST || process.env.DB_SERVER || '127.0.0.1',
+          port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
+          ssl:  { rejectUnauthorized: false },
+        }
+  );
   mysqlPool = {
     execute:       async (sql, params) => [await rawPool.execute(sql, params ?? [])],
     query:         async (sql, params) => [await rawPool.query(sql, params ?? [])],
