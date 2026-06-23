@@ -445,7 +445,18 @@ app.get('/api/test', async (_req, res) => {
     const pool = await getPool();
     const [rows] = await pool.execute('SELECT 1 AS connected, DATABASE() AS database_name');
     res.json({ success: true, driver: 'mariadb@v2', data: rows[0] });
-  } catch (err) { res.status(500).json({ success: false, driver: 'mariadb@v2', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({
+      success: false, driver: 'mariadb@v2',
+      error: err.message,
+      code: err.code,
+      errno: err.errno,
+      host: process.env.MYSQL_HOST || process.env.DB_SERVER || '127.0.0.1',
+      port: process.env.MYSQL_PORT || process.env.DB_PORT || '3306',
+      user: process.env.MYSQL_USER || process.env.DB_USER,
+      db:   process.env.MYSQL_DATABASE || process.env.DB_NAME,
+    });
+  }
 });
 
 /* ── Proyectos (público) ───────────────────────── */
