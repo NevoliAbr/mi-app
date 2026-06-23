@@ -8,21 +8,27 @@ let ACTIVE_TYPE =
   _envType === 'mysql'                              ? 'mysql' :
   parseInt(process.env.DB_PORT || '3306') === 1433  ? 'mssql' : 'mysql';
 
-// ── MySQL ─────────────────────────────────────────────────────
+// ── MySQL / MariaDB ───────────────────────────────────────────
+// Usa el paquete 'mariadb' (soporta ed25519 nativo de MariaDB 10.6+)
+// Envuelve el pool para devolver [rows] igual que mysql2
 let mysqlPool = null;
 function getMysqlPool() {
   if (mysqlPool) return mysqlPool;
-  const mysql = require('mysql2/promise');
-  mysqlPool = mysql.createPool({
-    host:               process.env.MYSQL_HOST     || process.env.DB_SERVER || '127.0.0.1',
-    port:               parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
-    user:               process.env.MYSQL_USER     || process.env.DB_USER   || 'root',
-    password:           process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
-    database:           process.env.MYSQL_DATABASE || process.env.DB_NAME   || 'mibase',
-    waitForConnections: true,
-    connectionLimit:    10,
+  const mariadb = require('mariadb');
+  const rawPool = mariadb.createPool({
+    host:            process.env.MYSQL_HOST     || process.env.DB_SERVER || '127.0.0.1',
+    port:            parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
+    user:            process.env.MYSQL_USER     || process.env.DB_USER   || 'root',
+    password:        process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+    database:        process.env.MYSQL_DATABASE || process.env.DB_NAME   || 'mibase',
+    connectionLimit: 10,
+    bigIntAsNumber:  true,
   });
-  mysqlPool.on('error', err => console.error('⚠ Error pool MySQL:', err.message));
+  mysqlPool = {
+    execute:       async (sql, params) => [await rawPool.execute(sql, params ?? [])],
+    query:         async (sql, params) => [await rawPool.query(sql, params ?? [])],
+    getConnection: () => rawPool.getConnection(),
+  };
   return mysqlPool;
 }
 
