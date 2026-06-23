@@ -1,3 +1,6 @@
+# Env y configuración local
+.env
+server/.env
 
 # Archivos subidos en runtime (no van a producción)
 server/entregables/
