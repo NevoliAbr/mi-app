@@ -29,7 +29,6 @@ function getMysqlPool() {
       : { ...baseConfig,
           host: process.env.MYSQL_HOST || process.env.DB_SERVER || '127.0.0.1',
           port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
-          ssl:  { rejectUnauthorized: false },
         }
   );
   mysqlPool = {
