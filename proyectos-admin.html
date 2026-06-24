@@ -508,7 +508,10 @@
         const fcChips = fc.map(f => `<div class="firmante-chip"><strong>${esc(f.nombre||'—')}</strong><span>${[f.cargo,f.rol].filter(Boolean).join(' · ') || '—'}</span></div>`).join('');
         const fiChips = fi.map(f => `<div class="firmante-chip"><strong>${esc(f.nombre||'—')}</strong><span>${esc(f.rol||'—')}</span></div>`).join('');
         const pdfCell = p.pdf_url
-          ? `<button class="btn-pdf-view" data-pdf-url="${esc(p.pdf_url)}" data-pdf-id="${p.id}">📄 Ver PDF</button>`
+          ? `<span style="display:flex;gap:4px;align-items:center">
+               <button class="btn-pdf-view" data-pdf-url="${esc(p.pdf_url)}" data-pdf-id="${p.id}">📄 Ver PDF</button>
+               ${puedeModProyectos() ? `<button class="btn-action btn-delete" title="Quitar PDF" data-id="${p.id}" data-action="delete-pdf" style="padding:2px 6px;font-size:13px">🗑️</button>` : ''}
+             </span>`
           : (puedeModProyectos()
               ? `<label class="btn-pdf-upload" title="Subir PDF">📎 Subir<input type="file" accept=".pdf" data-proy-id="${p.id}" style="display:none"></label>`
               : '<span style="color:#9CA3AF;font-size:12px">—</span>');
@@ -807,13 +810,29 @@
     pdfPanel.addEventListener('mouseover', () => clearTimeout(pdfHideTimer));
     pdfPanel.addEventListener('mouseout',  hidePdfPreview);
 
-    document.getElementById('proj-tbody').addEventListener('click', e => {
-      const btn = e.target.closest('[data-pdf-url]');
-      if (!btn) return;
-      const a = document.createElement('a');
-      a.href     = btn.dataset.pdfUrl;
-      a.download = `proyecto-${btn.dataset.pdfId || 'pdf'}.pdf`;
-      a.click();
+    document.getElementById('proj-tbody').addEventListener('click', async e => {
+      const btnView = e.target.closest('[data-pdf-url]');
+      if (btnView) {
+        const a = document.createElement('a');
+        a.href     = btnView.dataset.pdfUrl;
+        a.download = `proyecto-${btnView.dataset.pdfId || 'pdf'}.pdf`;
+        a.click();
+        return;
+      }
+      const btnDel = e.target.closest('[data-action="delete-pdf"]');
+      if (btnDel) {
+        const id = parseInt(btnDel.dataset.id);
+        if (!confirm('¿Quitar el PDF de este proyecto?')) return;
+        try {
+          const r = await fetch(`${API}/api/admin/proyectos/${id}/pdf`, { method: 'DELETE' });
+          const d = await r.json();
+          if (!d.success) throw new Error(d.error);
+          showToast('PDF eliminado correctamente.');
+          const p = allProyectos.find(p => p.id === id);
+          if (p) p.pdf_url = null;
+          renderTable(allProyectos);
+        } catch (err) { showToast(err.message, 'error'); }
+      }
     });
   </script>
 </body>

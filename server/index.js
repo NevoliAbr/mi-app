@@ -581,6 +581,22 @@ app.post('/api/admin/proyectos/:id/pdf', requireFacultad('admin_proyectos'), pro
   } catch (err) { if (req.file) fs.unlinkSync(req.file.path); res.status(500).json({ success: false, error: err.message }); }
 });
 
+app.delete('/api/admin/proyectos/:id/pdf', requireFacultad('admin_proyectos'), async (req, res) => {
+  try {
+    const id   = parseInt(req.params.id);
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT pdf_url FROM proyectos WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Proyecto no encontrado.' });
+    const oldUrl = rows[0].pdf_url;
+    await pool.execute('UPDATE proyectos SET pdf_url = NULL WHERE id = ?', [id]);
+    if (oldUrl) {
+      const filePath = path.join(proyectosPdfDir, path.basename(oldUrl));
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 /* ── Auth: Registro ─────────────────────────────── */
 app.post('/api/auth/register', async (req, res) => {
   const { nombre, email, password } = req.body;
