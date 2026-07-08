@@ -316,7 +316,7 @@
     /* ── Verificar sesión y facultad ── */
     let currentFac = {};
     (function () {
-      const saved = localStorage.getItem('session');
+      const saved = localStorage.getItem('session:v1');
       if (!saved) { window.location.href = 'index.html'; return; }
       try {
         const user = JSON.parse(saved);
@@ -324,7 +324,7 @@
         const f = currentFac['seguimiento'];
         if (!f || !f.ver) { window.location.href = 'index.html'; }
       } catch {
-        localStorage.removeItem('session');
+        localStorage.removeItem('session:v1');
         window.location.href = 'index.html';
       }
     })();
@@ -356,7 +356,7 @@
         if (!data.success) return;
         allProjects = data.projects;
 
-        const sessionYear = parseInt((JSON.parse(localStorage.getItem('session') || '{}')).año) || new Date().getFullYear();
+        const sessionYear = parseInt((JSON.parse(localStorage.getItem('session:v1') || '{}')).año) || new Date().getFullYear();
         activeYear = sessionYear;
         renderProjectCards();
       } catch {

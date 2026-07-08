@@ -222,7 +222,7 @@
 
   /* Guard: facultad carga_projects */
   (function () {
-    const s = JSON.parse(localStorage.getItem('session') || 'null');
+    const s = JSON.parse(localStorage.getItem('session:v1') || 'null');
     const f = s && s.facultades && s.facultades['carga_projects'];
     if (!s || !f || !f.ver) window.location.replace('index.html');
   })();
@@ -260,7 +260,7 @@
 
     /* Leer año de la sesión */
     let año = new Date().getFullYear();
-    try { año = JSON.parse(localStorage.getItem('session') || '{}').año || año; } catch {}
+    try { año = JSON.parse(localStorage.getItem('session:v1') || '{}').año || año; } catch {}
 
     const fd = new FormData();
     fd.append('archivo', file);

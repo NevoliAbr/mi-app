@@ -170,7 +170,7 @@
 
 <script>
 const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
-const session = (() => { try { return JSON.parse(localStorage.getItem('session')); } catch { return null; } })();
+const session = (() => { try { return JSON.parse(localStorage.getItem('session:v1')); } catch { return null; } })();
 function tieneFacultad(clave, tipo) {
   const f = session && session.facultades && session.facultades[clave];
   return !!(f && (tipo === 'mod' ? f.mod : f.ver));

@@ -61,7 +61,10 @@ const FACULTADES = [
   { clave: 'correos_entregables', nombre: 'Correos Entregables',  descripcion: 'Ver historial y configurar destinatarios de correos', grupo: 'administracion', orden: 18 },
 ];
 // Claves de administración (para visibilidad del menú "Administración")
-const FACULTADES_ADMIN = FACULTADES.filter(f => f.grupo === 'administracion').map(f => f.clave);
+const FACULTADES_ADMIN = FACULTADES.reduce((acc, f) => {
+  if (f.grupo === 'administracion') acc.push(f.clave);
+  return acc;
+}, []);
 // Usuarios con TODAS las facultades siempre (no se pueden quedar bloqueados)
 const SUPER_USERS = ['nevoli.gonzalez@lcg.mx', 'elisa.mendez@lcg.mx'];
 
@@ -116,12 +119,12 @@ async function getProyRespEmails(proyectoId) {
     if (!pr.length) return [];
     const resps = typeof pr[0].responsables === 'string'
       ? JSON.parse(pr[0].responsables) : (pr[0].responsables || []);
-    const ids = resps.map(r => r.id).filter(Boolean);
+    const ids = resps.flatMap(r => r.id ? [r.id] : []);
     if (!ids.length) return [];
     const [ur] = await pool.execute(
       `SELECT email FROM usuarios WHERE id IN (${ids.map(() => '?').join(',')}) AND activo = 1`, ids
     );
-    return ur.map(r => r.email).filter(Boolean);
+    return ur.flatMap(r => r.email ? [r.email] : []);
   } catch { return []; }
 }
 
@@ -299,9 +302,9 @@ async function sendInApp(tipo, { meta, item = null }) {
       mes: meta.mes, mes_nombre: mes, año: meta.año,
       ...(num != null ? { item_num: num, item_nombre: nombre, entregable_id: meta.id } : {}),
     };
-    for (const uid of allIds) {
-      await crearNotificacion({ usuario_id: uid, tipo, titulo, mensaje, link_url, meta: metaPayload });
-    }
+    await Promise.all([...allIds].map(uid =>
+      crearNotificacion({ usuario_id: uid, tipo, titulo, mensaje, link_url, meta: metaPayload })
+    ));
   } catch (e) { console.warn('⚠ sendInApp:', e.message); }
 }
 
@@ -686,10 +689,13 @@ app.get('/api/usuarios/:id/info', async (req, res) => {
       const [respRows] = await pool.execute(
         'SELECT id, nombre, responsables FROM proyectos WHERE responsables IS NOT NULL ORDER BY nombre'
       );
-      responsable_proyectos = respRows.filter(r => {
-        try { return JSON.parse(r.responsables).some(x => Number(x.id) === usuarioId); }
-        catch { return false; }
-      }).map(r => ({ id: r.id, nombre: r.nombre }));
+      responsable_proyectos = respRows.reduce((acc, r) => {
+        let esResponsable = false;
+        try { esResponsable = JSON.parse(r.responsables).some(x => Number(x.id) === usuarioId); }
+        catch { esResponsable = false; }
+        if (esResponsable) acc.push({ id: r.id, nombre: r.nombre });
+        return acc;
+      }, []);
     } catch {}
 
     res.json({
@@ -709,7 +715,7 @@ app.post('/api/usuarios/:id/info', upload.single('foto'), async (req, res) => {
 
   let mids = [];
   try { mids = JSON.parse(proyecto_ids || '[]'); } catch { mids = []; }
-  mids = mids.map(Number).filter(Boolean);
+  mids = mids.flatMap(x => { const n = Number(x); return n ? [n] : []; });
 
   try {
     const pool = await getPool();
@@ -951,16 +957,14 @@ app.post('/api/avisos', requireFacultad('avisos'), upload.array('imagenes', 10),
     (async () => {
       try {
         const [usuarios] = await pool.execute('SELECT id FROM usuarios WHERE activo = 1');
-        for (const u of usuarios) {
-          await crearNotificacion({
-            usuario_id: u.id,
-            tipo:       'aviso_nuevo',
-            titulo:     'Nuevo aviso publicado',
-            mensaje:    titulo.trim(),
-            link_url:   'index.html',
-            meta:       { aviso_id: avisoId },
-          });
-        }
+        await Promise.all(usuarios.map(u => crearNotificacion({
+          usuario_id: u.id,
+          tipo:       'aviso_nuevo',
+          titulo:     'Nuevo aviso publicado',
+          mensaje:    titulo.trim(),
+          link_url:   'index.html',
+          meta:       { aviso_id: avisoId },
+        })));
       } catch (err) { console.warn('⚠ Notif aviso nuevo:', err.message); }
     })();
 
@@ -1278,7 +1282,8 @@ app.post('/api/entregables/upload', requireFacultad('carga_entregables'), entreg
 
   // Eliminar carga previa del mismo proyecto+mes+año si existe
   try {
-    fs.readdirSync(entregablesDir).filter(f => f.endsWith('.meta.json')).forEach(f => {
+    for (const f of fs.readdirSync(entregablesDir)) {
+      if (!f.endsWith('.meta.json')) continue;
       try {
         const m = JSON.parse(fs.readFileSync(path.join(entregablesDir, f), 'utf8'));
         if (m.mes === mes && m.año === año && m.proyecto_id == proyecto_id) {
@@ -1287,7 +1292,7 @@ app.post('/api/entregables/upload', requireFacultad('carga_entregables'), entreg
           fs.unlinkSync(path.join(entregablesDir, f));
         }
       } catch {}
-    });
+    }
   } catch {}
 
   const id        = `${safeNombre}_${mesNombre}_${año}_${Date.now()}`;
@@ -1379,7 +1384,7 @@ app.get('/api/entregables', (_req, res) => {
       vobo_final:    { completada: false, fecha: null }
     });
     const entregables = files
-      .map(f => {
+      .flatMap(f => {
         try {
           const metaPath = path.join(entregablesDir, f);
           const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
@@ -1408,10 +1413,9 @@ app.get('/api/entregables', (_req, res) => {
             if (it.etapas.revision?.pdf !== undefined) { delete it.etapas.revision.pdf; migrated = true; }
           });
           if (migrated) fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-          return meta;
-        } catch { return null; }
+          return [meta];
+        } catch { return []; }
       })
-      .filter(Boolean)
       .sort((a, b) => new Date(b.fecha_carga) - new Date(a.fecha_carga));
     res.json({ success: true, entregables });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -2484,7 +2488,7 @@ app.get('/api/kanban/tasks', async (req, res) => {
     );
 
     // Involucrados por separado y se fusionan en Node (compatible con ambas DBs)
-    const taskIds = rows.map(r => r.id).filter(Boolean);
+    const taskIds = rows.flatMap(r => r.id ? [r.id] : []);
     let invMap = {};
     if (taskIds.length) {
       const placeholders = taskIds.map(() => '?').join(',');

@@ -306,11 +306,11 @@
 
 <script>
   const API     = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
-  const _sess   = JSON.parse(localStorage.getItem('session') || 'null');
+  const _sess   = JSON.parse(localStorage.getItem('session:v1') || 'null');
   const HEADERS = { 'Content-Type': 'application/json', 'X-User-Id': _sess?.id || '' };
 
   /* Guard: facultad admin_sistemas */
-  const _sessionSA = JSON.parse(localStorage.getItem('session') || 'null');
+  const _sessionSA = JSON.parse(localStorage.getItem('session:v1') || 'null');
   (function () {
     const f = _sessionSA && _sessionSA.facultades && _sessionSA.facultades['admin_sistemas'];
     if (!_sessionSA || !f || !f.ver) window.location.replace('index.html');

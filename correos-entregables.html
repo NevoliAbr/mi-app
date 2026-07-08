@@ -270,7 +270,7 @@
 </div>
 
 <script>
-const session = JSON.parse(localStorage.getItem('session') || 'null');
+const session = JSON.parse(localStorage.getItem('session:v1') || 'null');
 if (!session) { window.location.replace('index.html'); }
 const _fce = session?.facultades?.correos_entregables;
 if (!_fce?.ver) { window.location.replace('index.html'); }

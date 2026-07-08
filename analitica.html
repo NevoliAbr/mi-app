@@ -342,7 +342,7 @@
 
   /* Guard: facultad dashboards */
   (function () {
-    const s = JSON.parse(localStorage.getItem('session') || 'null');
+    const s = JSON.parse(localStorage.getItem('session:v1') || 'null');
     const f = s && s.facultades && s.facultades['dashboards'];
     if (!s || !f || !f.ver) window.location.replace('index.html');
   })();

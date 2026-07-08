@@ -318,7 +318,7 @@
   const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
   /* Guard: facultad admin_tareas */
-  const _sessionTA = JSON.parse(localStorage.getItem('session') || 'null');
+  const _sessionTA = JSON.parse(localStorage.getItem('session:v1') || 'null');
   (function () {
     const f = _sessionTA && _sessionTA.facultades && _sessionTA.facultades['admin_tareas'];
     if (!_sessionTA || !f || !f.ver) window.location.replace('index.html');

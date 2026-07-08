@@ -784,7 +784,7 @@
     let puedeVoboDecidir = false;
     const OBS_DECIDE_ALLOWED = [];
     (function () {
-      const saved = localStorage.getItem('session');
+      const saved = localStorage.getItem('session:v1');
       if (!saved) { window.location.href = 'index.html'; return; }
       try {
         const user = JSON.parse(saved);
@@ -803,7 +803,7 @@
         puedeVoboDecidir   = !!(currentFac['vobo_decidir']?.mod);
         if (puedeVoboDecidir && user?.email) OBS_DECIDE_ALLOWED.push(user.email.toLowerCase());
       } catch {
-        localStorage.removeItem('session');
+        localStorage.removeItem('session:v1');
         window.location.href = 'index.html';
       }
     })();
@@ -1041,7 +1041,7 @@
 
         if (!dataE.success) return;
         let año = new Date().getFullYear();
-        try { año = parseInt(JSON.parse(localStorage.getItem('session') || '{}').año) || año; } catch {}
+        try { año = parseInt(JSON.parse(localStorage.getItem('session:v1') || '{}').año) || año; } catch {}
         document.getElementById('entreg-year-badge').textContent = año;
 
         allEntregablesData = (dataE.entregables || []).filter(e => e.año == año);
@@ -1359,7 +1359,7 @@
       }
       return false;
     }
-    function sessionUser() { try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch { return {}; } }
+    function sessionUser() { try { return JSON.parse(localStorage.getItem('session:v1') || '{}'); } catch { return {}; } }
 
     /* ── Estado agregado del acta para una etapa ── */
     function actaEstadoEtapa(acta, key) {

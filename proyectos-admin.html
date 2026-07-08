@@ -439,7 +439,7 @@
     const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
     /* Guard: facultad admin_proyectos */
-    const _sessionPA = JSON.parse(localStorage.getItem('session') || 'null');
+    const _sessionPA = JSON.parse(localStorage.getItem('session:v1') || 'null');
     (function () {
       const f = _sessionPA && _sessionPA.facultades && _sessionPA.facultades['admin_proyectos'];
       if (!_sessionPA || !f || !f.ver) window.location.href = 'index.html';

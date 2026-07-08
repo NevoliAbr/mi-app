@@ -71,7 +71,13 @@
       "Bash(Set-Content -Path 'd:\\\\mi-app\\\\iniciar.bat' -Encoding utf8 -Value '@echo off *)",
       "PowerShell(sc query MSSQL$SQLEXPRESS | Select-String \"STATE\")",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(curl --fail --silent --show-error --header 'Cache-Control: no-cache' https://www.react.doctor/prompts/react-doctor-agent.md)",
+      "Bash(mkdir -p /tmp/rule/react-doctor)",
+      "Bash(curl --silent --fail --header 'Cache-Control: no-cache' -o /tmp/rule/react-doctor/client-localstorage-no-version.md \"https://www.react.doctor/prompts/rules/react-doctor/client-localstorage-no-version.md\")",
+      "Bash(curl --silent --fail --header 'Cache-Control: no-cache' -o /tmp/rule/react-doctor/dangerous-html-sink.md \"https://www.react.doctor/prompts/rules/react-doctor/dangerous-html-sink.md\")",
+      "Bash(curl --silent --fail --header 'Cache-Control: no-cache' -o /tmp/rule/react-doctor/js-combine-iterations.md \"https://www.react.doctor/prompts/rules/react-doctor/js-combine-iterations.md\")",
+      "Bash(curl --silent --fail --header 'Cache-Control: no-cache' -o /tmp/rule/react-doctor/js-flatmap-filter.md \"https://www.react.doctor/prompts/rules/react-doctor/js-flatmap-filter.md\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\Desarrollador web\\Downloads"

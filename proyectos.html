@@ -69,7 +69,10 @@
     .firm-chip {
       background:#F0FDF4; color:#166534; border:1px solid #BBF7D0;
       border-radius:12px; padding:2px 9px; font-size:11px; font-weight:700;
-      width:fit-content;
+      width:fit-content; display:flex; align-items:center; gap:5px;
+    }
+    .firm-chip .firm-chip-rol {
+      color:#166534; opacity:.65; font-weight:600;
     }
     .firm-ext-chip {
       background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA;
@@ -211,7 +214,7 @@
 </div>
 
 <script>
-const session = JSON.parse(localStorage.getItem('session') || 'null');
+const session = JSON.parse(localStorage.getItem('session:v1') || 'null');
 if (!session) { window.location.replace('index.html'); }
 
 const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
@@ -245,7 +248,7 @@ function render(list) {
       : `<span class="small">—</span>`;
     const firmInt = Array.isArray(p.firmantes_interno) ? p.firmantes_interno : [];
     const firmIntHtml = firmInt.length
-      ? `<div class="resp-chips">${firmInt.map(f => `<span class="firm-chip">${escH(f.nombre || '')}</span>`).join('')}</div>`
+      ? `<div class="resp-chips">${firmInt.map(f => `<span class="firm-chip">${escH(f.nombre || '')}${f.rol ? `<span class="firm-chip-rol">· ${escH(f.rol)}</span>` : ''}</span>`).join('')}</div>`
       : `<span class="small">—</span>`;
     const firmCli = Array.isArray(p.firmantes_cliente) ? p.firmantes_cliente : [];
     const firmCliHtml = firmCli.length

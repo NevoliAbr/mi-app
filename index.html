@@ -1086,7 +1086,7 @@
       } catch {}
     }
     (function () {
-      const s = JSON.parse(localStorage.getItem('session') || 'null');
+      const s = JSON.parse(localStorage.getItem('session:v1') || 'null');
       if (s && s.id) {
         refreshAvisosBadge();
         setInterval(() => refreshNotifBadge(s.id), 30000);
@@ -1098,12 +1098,12 @@
     })();
 
     function setSession(user) {
-      localStorage.setItem('session', JSON.stringify(user));
+      localStorage.setItem('session:v1', JSON.stringify(user));
       updateAuthUI(user);
     }
 
     function clearSession() {
-      localStorage.removeItem('session');
+      localStorage.removeItem('session:v1');
       updateAuthUI(null);
     }
 
@@ -1658,7 +1658,7 @@
 
     // Restaurar sesión al cargar — dispara updateAuthUI que carga los módulos
     (async function () {
-      const saved = localStorage.getItem('session');
+      const saved = localStorage.getItem('session:v1');
       if (!saved) return;
       let user;
       try { user = JSON.parse(saved); } catch { clearSession(); return; }
@@ -1670,7 +1670,7 @@
           const d = await r.json();
           if (d && d.success && d.facultades) {
             user.facultades = d.facultades;
-            localStorage.setItem('session', JSON.stringify(user));
+            localStorage.setItem('session:v1', JSON.stringify(user));
             updateAuthUI(user);
           }
         } catch {}

@@ -129,7 +129,7 @@
 
 <script>
 /* ── Guard de sesión ──────────────────────────── */
-const session = JSON.parse(localStorage.getItem('session') || 'null');
+const session = JSON.parse(localStorage.getItem('session:v1') || 'null');
 if (!session || !session.id) {
   window.location.replace('index.html');
 }

@@ -7,7 +7,7 @@
      Permite que el backend valide facultades por usuario. */
   (function patchFetch() {
     let s = null;
-    try { s = JSON.parse(localStorage.getItem('session') || 'null'); } catch {}
+    try { s = JSON.parse(localStorage.getItem('session:v1') || 'null'); } catch {}
     if (!s || !s.id || window.__fetchPatched) return;
     window.__fetchPatched = true;
     const _fetch = window.fetch;
@@ -31,7 +31,7 @@
 
     /* ── Sesión y roles ── */
     let session = null;
-    try { session = JSON.parse(localStorage.getItem('session') || 'null'); } catch {}
+    try { session = JSON.parse(localStorage.getItem('session:v1') || 'null'); } catch {}
 
     /* ── Refrescar facultades desde el server (sin re-login) ── */
     if (session && session.id) {
@@ -41,7 +41,7 @@
         const _d = await _r.json();
         if (_d && _d.success && _d.facultades) {
           session.facultades = _d.facultades;
-          try { localStorage.setItem('session', JSON.stringify(session)); } catch {}
+          try { localStorage.setItem('session:v1', JSON.stringify(session)); } catch {}
         }
       } catch {}
     }
@@ -233,81 +233,122 @@
     styleEl.textContent = css;
     document.head.appendChild(styleEl);
 
-    /* ── HTML ── */
+    /* ── DOM: navbar construido con nodos reales (sin innerHTML dinámico) ── */
     const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    const act = (href) => path === href.toLowerCase() ? ' class="active"' : '';
+
+    function navLink(href, label) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = label;
+      if (path === href.toLowerCase()) a.className = 'active';
+      li.appendChild(a);
+      return li;
+    }
+
+    function dropdown(label, childLis) {
+      const li = document.createElement('li');
+      li.className = 'anb-dropdown';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'anb-dropdown-toggle';
+      btn.append(label + ' ');
+      const caret = document.createElement('span');
+      caret.className = 'anb-caret';
+      caret.textContent = '▾';
+      btn.appendChild(caret);
+      const ul = document.createElement('ul');
+      ul.className = 'anb-dropdown-menu';
+      childLis.forEach(function (childLi) { ul.appendChild(childLi); });
+      li.appendChild(btn);
+      li.appendChild(ul);
+      return li;
+    }
 
     const items = [];
     if (facCreacion) {
-      let subC = '';
-      if (facCargaProj) subC += '<li><a href="projects.html"' + act('projects.html') + '>Cargar projects</a></li>';
-      if (facAvisos)    subC += '<li><a href="avisos.html"' + act('avisos.html') + '>Crear Avisos</a></li>';
-      if (facCargaEnt)  subC += '<li><a href="entregables.html"' + act('entregables.html') + '>Carga de entregables</a></li>';
-      items.push(
-        '<li class="anb-dropdown">' +
-          '<button type="button" class="anb-dropdown-toggle">Creación <span class="anb-caret">&#9662;</span></button>' +
-          '<ul class="anb-dropdown-menu">' + subC + '</ul>' +
-        '</li>'
-      );
+      const subC = [];
+      if (facCargaProj) subC.push(navLink('projects.html', 'Cargar projects'));
+      if (facAvisos)    subC.push(navLink('avisos.html', 'Crear Avisos'));
+      if (facCargaEnt)  subC.push(navLink('entregables.html', 'Carga de entregables'));
+      items.push(dropdown('Creación', subC));
     }
     if (segVisible || entVisible) {
-      let sub = '';
-      if (segVisible) sub += '<li><a href="seguimiento.html"' + act('seguimiento.html') + '>Módulo de Seguimiento</a></li>';
-      if (entVisible) sub += '<li><a href="modulo-entregables.html"' + act('modulo-entregables.html') + '>Módulo Entregables</a></li>';
-      items.push(
-        '<li class="anb-dropdown">' +
-          '<button type="button" class="anb-dropdown-toggle">Módulos <span class="anb-caret">&#9662;</span></button>' +
-          '<ul class="anb-dropdown-menu">' + sub + '</ul>' +
-        '</li>'
-      );
+      const sub = [];
+      if (segVisible) sub.push(navLink('seguimiento.html', 'Módulo de Seguimiento'));
+      if (entVisible) sub.push(navLink('modulo-entregables.html', 'Módulo Entregables'));
+      items.push(dropdown('Módulos', sub));
     }
-    if (proyVisible) items.push('<li><a href="proyectos.html"' + act('proyectos.html') + '>Proyectos</a></li>');
-    if (dashVisible) items.push('<li><a href="analitica.html"' + act('analitica.html') + '>Dashboards</a></li>');
-    if (taskVisible) items.push('<li><a href="task.html"' + act('task.html') + '>&#128203; Tasks</a></li>');
-    if (adminVisible) items.push('<li><a href="' + adminFirst[1] + '"' + act(adminFirst[1]) + '>Administración</a></li>');
+    if (proyVisible) items.push(navLink('proyectos.html', 'Proyectos'));
+    if (dashVisible) items.push(navLink('analitica.html', 'Dashboards'));
+    if (taskVisible) items.push(navLink('task.html', '📋 Tasks'));
+    if (adminVisible) items.push(navLink(adminFirst[1], 'Administración'));
 
-    let userHtml = '';
+    let userLi = null;
     if (session) {
-      const nombre = (session.nombre || 'Perfil').replace(/</g, '&lt;');
-      const bellActive = path === 'notificaciones.html' ? ' active' : '';
-      const bellHtml =
-        '<a href="notificaciones.html" class="anb-bell' + bellActive + '" id="anb-bell" title="Notificaciones">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-            '<path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.2 6.5 2.3 7.7.4.5.7 1 .7 1.3 0 .6-.5 1-1 1H4c-.5 0-1-.4-1-1 0-.3.3-.8.7-1.3C4.8 14.5 6 12.5 6 8z" fill="currentColor" fill-opacity=".18"/>' +
-            '<path d="M14 19a2 2 0 0 1-4 0"/>' +
-          '</svg>' +
-          '<span class="anb-bell-badge" id="anb-bell-badge">0</span>' +
-        '</a>';
-      userHtml =
-        '<li class="anb-user">' +
-          bellHtml +
-          '<a href="perfil.html" class="anb-greeting" title="Ver mi perfil">' + nombre + '</a>' +
-          '<button class="anb-logout" id="anb-logout-btn" type="button">Cerrar sesión</button>' +
-        '</li>';
+      userLi = document.createElement('li');
+      userLi.className = 'anb-user';
+
+      const bellA = document.createElement('a');
+      bellA.href = 'notificaciones.html';
+      bellA.id = 'anb-bell';
+      bellA.className = 'anb-bell' + (path === 'notificaciones.html' ? ' active' : '');
+      bellA.title = 'Notificaciones';
+      bellA.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.2 6.5 2.3 7.7.4.5.7 1 .7 1.3 0 .6-.5 1-1 1H4c-.5 0-1-.4-1-1 0-.3.3-.8.7-1.3C4.8 14.5 6 12.5 6 8z" fill="currentColor" fill-opacity=".18"/><path d="M14 19a2 2 0 0 1-4 0"/></svg><span class="anb-bell-badge" id="anb-bell-badge">0</span>`;
+
+      const greetingA = document.createElement('a');
+      greetingA.href = 'perfil.html';
+      greetingA.className = 'anb-greeting';
+      greetingA.id = 'anb-greeting';
+      greetingA.title = 'Ver mi perfil';
+      greetingA.textContent = session.nombre || 'Perfil';
+
+      const logoutBtnEl = document.createElement('button');
+      logoutBtnEl.className = 'anb-logout';
+      logoutBtnEl.id = 'anb-logout-btn';
+      logoutBtnEl.type = 'button';
+      logoutBtnEl.textContent = 'Cerrar sesión';
+
+      userLi.appendChild(bellA);
+      userLi.appendChild(greetingA);
+      userLi.appendChild(logoutBtnEl);
     }
 
     // Botón de avisos activos (lado izquierdo, junto al logo) — solo con sesión
-    const avisosLeftHtml = session
-      ? '<a href="index.html" class="anb-avisos" id="anb-avisos" title="Ver avisos activos">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-            '<path d="M3 10.5v3a1 1 0 0 0 1 1h2.5L11 18V6L6.5 10.5H4a1 1 0 0 0-1 0z" fill="currentColor" fill-opacity=".25"/>' +
-            '<path d="M15 8.5a4 4 0 0 1 0 7"/>' +
-            '<path d="M17.5 6a7 7 0 0 1 0 12"/>' +
-          '</svg>' +
-          '<span class="anb-avisos-label">Avisos</span>' +
-          '<span class="anb-avisos-badge" id="anb-avisos-badge">0</span>' +
-        '</a>'
-      : '';
+    let avisosLeftA = null;
+    if (session) {
+      avisosLeftA = document.createElement('a');
+      avisosLeftA.href = 'index.html';
+      avisosLeftA.className = 'anb-avisos';
+      avisosLeftA.id = 'anb-avisos';
+      avisosLeftA.title = 'Ver avisos activos';
+      avisosLeftA.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5v3a1 1 0 0 0 1 1h2.5L11 18V6L6.5 10.5H4a1 1 0 0 0-1 0z" fill="currentColor" fill-opacity=".25"/><path d="M15 8.5a4 4 0 0 1 0 7"/><path d="M17.5 6a7 7 0 0 1 0 12"/></svg><span class="anb-avisos-label">Avisos</span><span class="anb-avisos-badge" id="anb-avisos-badge">0</span>`;
+    }
 
     const nav = document.createElement('div');
     nav.id = 'app-navbar';
     nav.setAttribute('role', 'navigation');
-    nav.innerHTML =
-      '<div class="anb-left">' +
-        '<a href="index.html" class="anb-logo"><img src="logo.png" alt="Logo" onerror="this.style.display=\'none\'" /></a>' +
-        avisosLeftHtml +
-      '</div>' +
-      '<ul class="anb-menu">' + items.join('') + userHtml + '</ul>';
+
+    const leftDiv = document.createElement('div');
+    leftDiv.className = 'anb-left';
+    const logoA = document.createElement('a');
+    logoA.href = 'index.html';
+    logoA.className = 'anb-logo';
+    const logoImg = document.createElement('img');
+    logoImg.src = 'logo.png';
+    logoImg.alt = 'Logo';
+    logoImg.addEventListener('error', function () { logoImg.style.display = 'none'; });
+    logoA.appendChild(logoImg);
+    leftDiv.appendChild(logoA);
+    if (avisosLeftA) leftDiv.appendChild(avisosLeftA);
+
+    const menuUl = document.createElement('ul');
+    menuUl.className = 'anb-menu';
+    items.forEach(function (li) { menuUl.appendChild(li); });
+    if (userLi) menuUl.appendChild(userLi);
+
+    nav.appendChild(leftDiv);
+    nav.appendChild(menuUl);
     document.body.insertBefore(nav, document.body.firstChild);
 
     /* ── Dropdowns ── */
@@ -326,7 +367,7 @@
     /* ── Logout ── */
     const logoutBtn = document.getElementById('anb-logout-btn');
     if (logoutBtn) logoutBtn.addEventListener('click', function () {
-      localStorage.removeItem('session');
+      localStorage.removeItem('session:v1');
       window.location.href = 'index.html';
     });
 

@@ -898,7 +898,7 @@
 
 <script>
   const API  = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
-  const _session = (() => { try { return JSON.parse(localStorage.getItem('session')); } catch { return null; } })();
+  const _session = (() => { try { return JSON.parse(localStorage.getItem('session:v1')); } catch { return null; } })();
   /* Guard: facultad tasks */
   (function () {
     const f = _session && _session.facultades && _session.facultades['tasks'];

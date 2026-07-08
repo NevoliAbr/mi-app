@@ -344,7 +344,7 @@
 
 <script>
 /* ── Guard: facultad avisos ───────────────────── */
-const session = JSON.parse(localStorage.getItem('session') || 'null');
+const session = JSON.parse(localStorage.getItem('session:v1') || 'null');
 function _fac(c, t) { const f = session && session.facultades && session.facultades[c]; return !!(f && (t === 'mod' ? f.mod : f.ver)); }
 if (!session || !_fac('avisos', 'ver')) {
   window.location.replace('index.html');

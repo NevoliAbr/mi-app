@@ -290,11 +290,11 @@
       }).then(r=>r.json());
       if (!r.success) throw new Error(r.error);
       session.color = selectedColor;
-      localStorage.setItem('session', JSON.stringify(session));
+      localStorage.setItem('session:v1', JSON.stringify(session));
       showToast('Color guardado');
     } catch (err) { showToast(err.message,'error'); }
   }
-  try { session = JSON.parse(localStorage.getItem('session')); } catch {}
+  try { session = JSON.parse(localStorage.getItem('session:v1')); } catch {}
   if (!session) { window.location.href = 'index.html'; }
   initColorPicker();
 

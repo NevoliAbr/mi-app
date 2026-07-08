@@ -677,7 +677,7 @@
 
     /* ── Guard: facultad administración ──────── */
     const session = (() => {
-      try { return JSON.parse(localStorage.getItem('session')); } catch { return null; }
+      try { return JSON.parse(localStorage.getItem('session:v1')); } catch { return null; }
     })();
     function tieneFacultad(clave, tipo) {
       const f = session && session.facultades && session.facultades[clave];
