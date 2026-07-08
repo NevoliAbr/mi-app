@@ -101,6 +101,23 @@
     .inline-date:focus { border-color:#005D97; background:#fff; }
     .inline-check { width:17px; height:17px; cursor:pointer; accent-color:#005D97; }
     .check-cell   { text-align:center; }
+    .fianza-toggle {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px; border-radius:6px;
+      border:1.5px solid #D1D5DB; background:#fff;
+      font-size:14px; font-weight:900; cursor:pointer; user-select:none;
+      transition:background .15s, border-color .15s, color .15s;
+    }
+    .fianza-toggle[data-disabled="1"] { opacity:.4; cursor:not-allowed; }
+    .fianza-toggle[data-state="empty"]::before { content:''; }
+    .fianza-toggle[data-state="no"] {
+      background:#FEF3C7; border-color:#FDE68A; color:#92400E; border-radius:50%;
+    }
+    .fianza-toggle[data-state="no"]::before { content:'–'; }
+    .fianza-toggle[data-state="yes"] {
+      background:#D1FAE5; border-color:#A7F3D0; color:#059669; border-radius:50%;
+    }
+    .fianza-toggle[data-state="yes"]::before { content:'✓'; }
 
     /* ── TABLE CARD ── */
     .table-card {
@@ -574,9 +591,12 @@
       const allItems = entList.flatMap(e => e.items || []);
       const avgProg  = allItems.length ? Math.round(allItems.reduce((s,it) => s + calcProgress(it.etapas), 0) / allItems.length) : 0;
       const cls      = progClass(avgProg);
-      const fc       = entList.some(e => e.fianza_cumplimiento) ? 'checked' : '';
-      const fa       = entList.some(e => e.fianza_anticipo)     ? 'checked' : '';
-      const fv       = entList.some(e => e.fianza_vicios)       ? 'checked' : '';
+      const fianzaState = field => entList.some(e => e[field] === true)  ? 'yes'
+                                  : entList.some(e => e[field] === false) ? 'no'
+                                  : 'empty';
+      const fc       = fianzaState('fianza_cumplimiento');
+      const fa       = fianzaState('fianza_anticipo');
+      const fv       = fianzaState('fianza_vicios');
       const allIds   = entList.length ? entList.map(e => e.id).join(',') : '';
 
       const mesCols = MESES_COLS.map(m => {
@@ -614,9 +634,9 @@
             <span class="prog-pct">${avgProg}%</span>
           </div>
         </td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fc} data-ids="${allIds}" data-field="fianza_cumplimiento" onchange="if(this.dataset.ids) saveExtraGroup(this)" ${!allIds?'disabled':''}></td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fa} data-ids="${allIds}" data-field="fianza_anticipo"     onchange="if(this.dataset.ids) saveExtraGroup(this)" ${!allIds?'disabled':''}></td>
-        <td class="check-cell"><input type="checkbox" class="inline-check" ${fv} data-ids="${allIds}" data-field="fianza_vicios"       onchange="if(this.dataset.ids) saveExtraGroup(this)" ${!allIds?'disabled':''}></td>
+        <td class="check-cell"><span class="fianza-toggle" data-state="${fc}" data-ids="${allIds}" data-field="fianza_cumplimiento" data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
+        <td class="check-cell"><span class="fianza-toggle" data-state="${fa}" data-ids="${allIds}" data-field="fianza_anticipo"     data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
+        <td class="check-cell"><span class="fianza-toggle" data-state="${fv}" data-ids="${allIds}" data-field="fianza_vicios"       data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
       </tr>`;
     }).join('');
   }
@@ -644,10 +664,17 @@
     }
   }
 
-  async function saveExtraGroup(input) {
-    const ids   = input.dataset.ids.split(',');
-    const field = input.dataset.field;
-    const value = input.checked;
+  const FIANZA_NEXT  = { empty: 'yes', yes: 'no', no: 'empty' };
+  const FIANZA_VALUE = { empty: null, yes: true, no: false };
+
+  async function cycleFianza(el) {
+    if (el.dataset.disabled === '1') return;
+    const ids      = el.dataset.ids.split(',');
+    const field    = el.dataset.field;
+    const prevState = el.dataset.state;
+    const nextState = FIANZA_NEXT[prevState] || 'empty';
+    const value      = FIANZA_VALUE[nextState];
+    el.dataset.state = nextState;
     try {
       await Promise.all(ids.map(id =>
         fetch(`${API}/api/entregables/${encodeURIComponent(id)}/extra`, {
@@ -660,7 +687,7 @@
         if (e) e[field] = value;
       });
     } catch {
-      input.checked = !value;
+      el.dataset.state = prevState;
     }
   }
 

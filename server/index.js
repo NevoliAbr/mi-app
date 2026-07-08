@@ -1431,9 +1431,9 @@ app.patch('/api/entregables/:id/extra', (req, res) => {
     const { dictamen, vigencia, fianza_cumplimiento, fianza_anticipo, fianza_vicios, meses_nota } = req.body;
     if (dictamen            !== undefined) meta.dictamen            = String(dictamen).slice(0,10);
     if (vigencia            !== undefined) meta.vigencia            = vigencia || null;
-    if (fianza_cumplimiento !== undefined) meta.fianza_cumplimiento = !!fianza_cumplimiento;
-    if (fianza_anticipo     !== undefined) meta.fianza_anticipo     = !!fianza_anticipo;
-    if (fianza_vicios       !== undefined) meta.fianza_vicios       = !!fianza_vicios;
+    if (fianza_cumplimiento !== undefined) meta.fianza_cumplimiento = fianza_cumplimiento === null ? null : !!fianza_cumplimiento;
+    if (fianza_anticipo     !== undefined) meta.fianza_anticipo     = fianza_anticipo     === null ? null : !!fianza_anticipo;
+    if (fianza_vicios       !== undefined) meta.fianza_vicios       = fianza_vicios       === null ? null : !!fianza_vicios;
     if (meses_nota          !== undefined) meta.meses_nota          = { ...(meta.meses_nota || {}), ...meses_nota };
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
     res.json({ success: true });
