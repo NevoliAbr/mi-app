@@ -512,11 +512,12 @@ app.post('/api/admin/proyectos', requireFacultad('admin_proyectos'), async (req,
   const firmantes_interno  = req.body.firmantes_interno?.length  ? JSON.stringify(req.body.firmantes_interno)  : null;
   const responsables       = req.body.responsables?.length       ? JSON.stringify(req.body.responsables)       : null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
+  const activo = (vigencia_inicio && vigencia_fin) ? 1 : 0;
   try {
     const pool = await getPool();
     const [result] = await pool.execute(
-      'INSERT INTO proyectos (orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables]
+      'INSERT INTO proyectos (orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, activo]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -535,11 +536,12 @@ app.patch('/api/admin/proyectos/:id', requireFacultad('admin_proyectos'), async 
   const firmantes_interno  = req.body.firmantes_interno?.length  ? JSON.stringify(req.body.firmantes_interno)  : null;
   const responsables       = req.body.responsables?.length       ? JSON.stringify(req.body.responsables)       : null;
   if (!nombre) return res.status(400).json({ success: false, error: 'El nombre es requerido.' });
+  const activo = (vigencia_inicio && vigencia_fin) ? 1 : 0;
   try {
     const pool = await getPool();
     await pool.execute(
-      'UPDATE proyectos SET orden = ?, nombre = ?, nombre_corto = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ?, firmantes_cliente = ?, firmantes_interno = ?, responsables = ? WHERE id = ?',
-      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, parseInt(req.params.id)]
+      'UPDATE proyectos SET orden = ?, nombre = ?, nombre_corto = ?, procedimiento = ?, NombreProyecto = ?, contrato = ?, vigencia_inicio = ?, vigencia_fin = ?, firmantes_cliente = ?, firmantes_interno = ?, responsables = ?, activo = ? WHERE id = ?',
+      [orden, nombre, nombre_corto, procedimiento, NombreProyecto, contrato, vigencia_inicio, vigencia_fin, firmantes_cliente, firmantes_interno, responsables, activo, parseInt(req.params.id)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }

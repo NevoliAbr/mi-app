@@ -265,6 +265,26 @@ ACCIÓN: reiniciar la app — ensureColumns() crea las columnas
 
 
 ──────────────────────────────────────────────────────────────
+  DEPLOY: 2026-07-10  (activo automático según vigencia)
+──────────────────────────────────────────────────────────────
+
+Cambio de código: server/index.js — POST y PATCH de
+/api/admin/proyectos ahora calculan `activo` automáticamente:
+1 si vigencia_inicio Y vigencia_fin están capturadas, 0 si falta
+alguna. Ya no se puede quedar "activo" sin fechas ni "inactivo"
+teniendo ambas. El toggle manual (/api/admin/proyectos/:id/activo)
+sigue existiendo pero cualquier edición posterior de vigencia lo
+sobreescribe según esta regla.
+
+-- Backfill: alinear los proyectos ya existentes a la regla nueva
+-- (si no se corre, seguirán apareciendo en analitica.html proyectos
+--  viejos con activo=1 pero sin fechas de vigencia)
+UPDATE proyectos SET activo = CASE WHEN vigencia_inicio IS NOT NULL AND vigencia_fin IS NOT NULL THEN 1 ELSE 0 END;
+
+ACCIÓN: ejecutar el query en phpMyAdmin, luego reiniciar la app en Plesk.
+
+
+──────────────────────────────────────────────────────────────
   DEPLOY: AAAA-MM-DD  <- copiar este bloque para futuros deploys
 ──────────────────────────────────────────────────────────────
 

@@ -101,6 +101,7 @@
     .inline-date:focus { border-color:#005D97; background:#fff; }
     .inline-check { width:17px; height:17px; cursor:pointer; accent-color:#005D97; }
     .check-cell   { text-align:center; }
+    .fianza-col   { padding-left:6px !important; padding-right:6px !important; white-space:nowrap; width:1%; }
     .fianza-toggle {
       display:inline-flex; align-items:center; justify-content:center;
       width:26px; height:26px; border-radius:6px;
@@ -252,9 +253,9 @@
               <th style="text-align:center">Nov</th>
               <th style="text-align:center">Dic</th>
               <th>Avance promedio</th>
-              <th style="text-align:center">Fianza<br>Cumplimiento</th>
-              <th style="text-align:center">Fianza<br>Anticipo</th>
-              <th style="text-align:center">Fianza<br>Vicios Ocultos</th>
+              <th class="fianza-col" style="text-align:center" title="Fianza Cumplimiento">F.C.</th>
+              <th class="fianza-col" style="text-align:center" title="Fianza Anticipo">F.A.</th>
+              <th class="fianza-col" style="text-align:center" title="Fianza Vicios Ocultos">F.V.O.</th>
             </tr>
           </thead>
           <tbody id="e-tbody">
@@ -634,9 +635,9 @@
             <span class="prog-pct">${avgProg}%</span>
           </div>
         </td>
-        <td class="check-cell"><span class="fianza-toggle" data-state="${fc}" data-ids="${allIds}" data-field="fianza_cumplimiento" data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
-        <td class="check-cell"><span class="fianza-toggle" data-state="${fa}" data-ids="${allIds}" data-field="fianza_anticipo"     data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
-        <td class="check-cell"><span class="fianza-toggle" data-state="${fv}" data-ids="${allIds}" data-field="fianza_vicios"       data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
+        <td class="check-cell fianza-col"><span class="fianza-toggle" data-state="${fc}" data-ids="${allIds}" data-field="fianza_cumplimiento" data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
+        <td class="check-cell fianza-col"><span class="fianza-toggle" data-state="${fa}" data-ids="${allIds}" data-field="fianza_anticipo"     data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
+        <td class="check-cell fianza-col"><span class="fianza-toggle" data-state="${fv}" data-ids="${allIds}" data-field="fianza_vicios"       data-disabled="${!allIds?'1':'0'}" onclick="cycleFianza(this)"></span></td>
       </tr>`;
     }).join('');
   }
