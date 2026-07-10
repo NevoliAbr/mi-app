@@ -40,7 +40,8 @@
       background:#fff; border-radius:14px;
       box-shadow:0 1px 6px rgba(0,0,0,.08); overflow:hidden;
     }
-    .table-wrap { overflow-x:auto; }
+    .table-wrap { overflow:auto; cursor:grab; }
+    .table-wrap.dragging { cursor:grabbing; user-select:none; }
     table { width:100%; border-collapse:collapse; min-width:1400px; }
     thead { background:#F8FAFC; }
     th {
@@ -358,6 +359,35 @@ load();
       openModal(firmantes, btn.dataset.proyecto);
     } catch {}
   });
+})();
+
+/* ── Drag-to-scroll (grab-to-pan) de la tabla ── */
+(function () {
+  const wrap = document.querySelector('.table-wrap');
+  if (!wrap) return;
+  let isDown = false, moved = false, startX, startY, scrollLeft, scrollTop;
+
+  wrap.addEventListener('mousedown', e => {
+    if (e.target.closest('input, button, select, textarea, a, [contenteditable]')) return;
+    isDown = true; moved = false;
+    wrap.classList.add('dragging');
+    startX = e.pageX; startY = e.pageY;
+    scrollLeft = wrap.scrollLeft; scrollTop = wrap.scrollTop;
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    const dx = e.pageX - startX, dy = e.pageY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    wrap.scrollLeft = scrollLeft - dx;
+    wrap.scrollTop  = scrollTop  - dy;
+  });
+  window.addEventListener('mouseup', () => {
+    isDown = false;
+    wrap.classList.remove('dragging');
+  });
+  wrap.addEventListener('click', e => {
+    if (moved) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
 })();
 </script>
 </body>
