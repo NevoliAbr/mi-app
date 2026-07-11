@@ -2256,9 +2256,11 @@ if (btn.dataset.pdf === 'true') {
 
     /* ── SSE: actualizaciones en tiempo real ── */
     let _reloadTimer = null;
+    let _es = null;
+    let _sseReconnectTimer = null;
     function iniciarSSE() {
-      const es = new EventSource(`${API}/api/entregables/events`);
-      es.addEventListener('entregable_updated', e => {
+      _es = new EventSource(`${API}/api/entregables/events`);
+      _es.addEventListener('entregable_updated', e => {
         try {
           const { actaId } = JSON.parse(e.data);
           // Solo recarga si el acta afectada está en la vista actual
@@ -2267,11 +2269,20 @@ if (btn.dataset.pdf === 'true') {
           _reloadTimer = setTimeout(() => loadEntregables(), 600);
         } catch {}
       });
-      es.onerror = () => {
-        es.close();
-        setTimeout(iniciarSSE, 5000); // reconecta tras 5s si se cae
+      _es.onerror = () => {
+        _es.close();
+        _sseReconnectTimer = setTimeout(iniciarSSE, 5000); // reconecta tras 5s si se cae
       };
     }
+    // No mantener la conexión abierta en pestañas ocultas/inactivas
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearTimeout(_sseReconnectTimer);
+        if (_es) { _es.close(); _es = null; }
+      } else if (!_es) {
+        iniciarSSE();
+      }
+    });
     iniciarSSE();
   </script>
 

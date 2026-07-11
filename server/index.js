@@ -1366,7 +1366,12 @@ app.get('/api/entregables/events', (req, res) => {
   res.flushHeaders();
   res.write('data: connected\n\n');
   sseClients.add(res);
-  req.on('close', () => sseClients.delete(res));
+  // Ping periódico: sin esto nginx corta la conexión por proxy_read_timeout
+  // en cuanto pasa >60s sin actividad real (broadcastEntregable).
+  const heartbeat = setInterval(() => {
+    try { res.write(':ping\n\n'); } catch { clearInterval(heartbeat); sseClients.delete(res); }
+  }, 25000);
+  req.on('close', () => { clearInterval(heartbeat); sseClients.delete(res); });
 });
 
 /* ── Entregables: listar ────────────────────────── */
