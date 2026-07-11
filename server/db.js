@@ -35,6 +35,7 @@ function getMysqlPool() {
     execute:       async (sql, params) => [await rawPool.execute(sql, params ?? [])],
     query:         async (sql, params) => [await rawPool.query(sql, params ?? [])],
     getConnection: () => rawPool.getConnection(),
+    end:           () => rawPool.end(),
   };
   return mysqlPool;
 }
@@ -115,6 +116,7 @@ function wrapMssql(raw) {
       const conn = { release: () => {} };
       return conn;
     },
+    end:           () => raw.close(),
   };
 }
 
@@ -172,4 +174,11 @@ async function switchDB(type) {
   return getPool();
 }
 
-module.exports = { getPool, getDBType, getDBInfo, switchDB };
+// Cierra el pool activo — usar solo al apagar el proceso (SIGTERM/SIGINT)
+async function closePool() {
+  if (!_pool) return;
+  try { await _pool.end(); } catch (err) { console.error('✘ Error cerrando el pool de BD:', err.message); }
+  _pool = null;
+}
+
+module.exports = { getPool, getDBType, getDBInfo, switchDB, closePool };

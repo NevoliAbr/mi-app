@@ -14,6 +14,7 @@ const getPool = _db.getPool;
 const getDBType  = _db.getDBType  || (() => 'mysql');
 const getDBInfo  = _db.getDBInfo  || (() => ({ type: 'mysql', label: 'MySQL', connected: true }));
 const switchDB   = _db.switchDB   || (async () => { throw new Error('switchDB no disponible en esta versión de db.js'); });
+const closePool  = _db.closePool  || (async () => {});
 
 /* ── Mailer (Plesk SMTP) ─────────────────────────── */
 const transporter = nodemailer.createTransport({
@@ -3179,6 +3180,20 @@ async function ensureColumns() {
 
   } catch (err) { console.warn('⚠ ensureColumns:', err.message); }
 }
+let server = null;
 ensureColumns().then(() => {
-  app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
+  server = app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
 });
+
+// Apagado ordenado: al recibir SIGTERM/SIGINT (deploy/restart en Plesk) deja
+// terminar las requests en curso, cierra los streams SSE y libera el pool de
+// BD antes de salir — evita que reinicios acumulen pools de conexiones huérfanos.
+function shutdown(signal) {
+  console.log(`\n${signal} recibido — cerrando servidor de forma ordenada...`);
+  for (const client of sseClients) { try { client.end(); } catch {} }
+  const finish = () => closePool().finally(() => process.exit(0));
+  if (server) server.close(finish); else finish();
+  setTimeout(() => process.exit(1), 8000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
