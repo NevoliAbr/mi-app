@@ -1234,11 +1234,6 @@
       const btn = e.target.closest('.epm-btn');
       if (!btn) return;
       activeId = btn.dataset.id;
-      const acta = entregablesData.find(a => a.id === activeId);
-      if (acta) {
-        mesFilter = acta.mes;
-        document.getElementById('entreg-select-mes').value = mesFilter;
-      }
       renderMonthPills();
       renderEntregables();
       updateProyectoInfoPanel();
