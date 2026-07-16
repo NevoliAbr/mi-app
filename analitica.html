@@ -618,9 +618,10 @@
         const ent = entList.find(e => Number(e.mes) === m.num);
         if (ent) {
           const entProg  = monthProgByNum.get(m.num) || 0;
+          const href = `modulo-entregables.html?proyecto_id=${encodeURIComponent(proyItem.id)}&mes=${m.num}`;
           const cell = entProg === 100
-            ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;background:#D1FAE5;border-radius:50%;font-size:20px;position:relative;z-index:2;box-shadow:0 0 0 3px #A7F3D0,0 0 10px rgba(16,185,129,.4)">✅</span>`
-            : `<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${entProg>0?'#FEF3C7':'#F3F4F6'};color:${entProg>0?'#92400E':'#9CA3AF'}">${entProg}%</span>`;
+            ? `<a href="${href}" title="Ver entregable" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;background:#D1FAE5;border-radius:50%;font-size:20px;position:relative;z-index:2;box-shadow:0 0 0 3px #A7F3D0,0 0 10px rgba(16,185,129,.4);cursor:pointer">✅</a>`
+            : `<a href="${href}" title="Ver entregable" style="text-decoration:none;display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800;background:${entProg>0?'#FEF3C7':'#F3F4F6'};color:${entProg>0?'#92400E':'#9CA3AF'};cursor:pointer">${entProg}%</a>`;
           return `<td style="text-align:center;white-space:nowrap">${cell}</td>`;
         }
         const nota = first ? ((first.meses_nota || {})[m.num] || '') : '';
